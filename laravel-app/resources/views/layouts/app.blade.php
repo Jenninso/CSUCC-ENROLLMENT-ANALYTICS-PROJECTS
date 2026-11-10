@@ -716,7 +716,7 @@
         <header class="app-header border-b sticky top-0 z-30">
             <div class="flex items-center justify-between px-4 sm:px-6 lg:px-8 py-3.5">
                 <div class="flex items-center gap-3 min-w-0">
-                    <button type="button" @click="toggleSidebar()" class="p-1.5 rounded-lg text-gray-500 hover:text-gray-800 hover:bg-black/5" aria-label="Toggle sidebar">
+                    <button type="button" @click="toggleSidebar()" class="lg:hidden p-1.5 rounded-lg text-gray-500 hover:text-gray-800 hover:bg-black/5" aria-label="Open sidebar">
                         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5"/></svg>
                     </button>
                     <div class="min-w-0">

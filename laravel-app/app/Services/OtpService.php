@@ -373,6 +373,14 @@ class OtpService
                 return true;
             }
 
+            $brevo = app(BrevoMailer::class);
+            if ($brevo->enabled()) {
+                $brevo->send(new OtpCodeMail($code, $label, $minutes), $email);
+                $this->lastSendSucceeded = true;
+
+                return true;
+            }
+
             $settings = app(MailSettings::class);
             if (! $settings->isConfigured()) {
                 throw new \RuntimeException('SMTP is not configured. Open Settings and save the Gmail address and App Password used to send OTP.');

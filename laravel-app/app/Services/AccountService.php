@@ -394,6 +394,13 @@ class AccountService
                 return true;
             }
 
+            $brevo = app(BrevoMailer::class);
+            if ($brevo->enabled()) {
+                $brevo->send($mailable, $email);
+
+                return true;
+            }
+
             $settings = app(MailSettings::class);
             if (! $settings->isConfigured()) {
                 throw new \RuntimeException('SMTP is not configured. Open Settings and save the Gmail address and App Password used to send account emails.');

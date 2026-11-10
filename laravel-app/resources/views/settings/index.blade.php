@@ -30,7 +30,10 @@
     </label>
     @if(auth()->user()?->isSuperAdmin())
     <h3 class="font-semibold pt-2">Email / OTP sender</h3>
-    <p class="text-xs text-gray-500">Use a Gmail account with a 16-character App Password (Google Account → Security → 2-Step Verification → App passwords). Regular Gmail login passwords are blocked. Port 465 (SSL) is used for Gmail so OTP mail can be delivered.</p>
+    <p class="text-xs text-gray-500">The free website cannot open Gmail’s mail ports. Create a free Brevo account, verify the Gmail sender, then paste the Brevo API key here. Account emails and OTP codes are sent over HTTPS.</p>
+    <label class="block text-sm">Brevo API key
+        <input type="password" name="brevo_api_key" class="mt-1 w-full border rounded-lg px-3 py-2" placeholder="{{ ($settings['brevo_configured'] ?? false) ? 'Leave blank to keep the saved key' : 'xkeysib-...' }}" autocomplete="off">
+    </label>
     @if($settings['mail_configured'])
         <p class="text-xs text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-lg px-3 py-2">SMTP is configured. OTP codes will be emailed.</p>
     @else

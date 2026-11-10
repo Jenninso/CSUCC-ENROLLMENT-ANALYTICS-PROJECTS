@@ -77,7 +77,8 @@ class SettingsController extends Controller
             'mail_username' => SystemSetting::getValue('mail_username', env('MAIL_USERNAME')),
             'mail_from_address' => SystemSetting::getValue('mail_from_address', env('MAIL_FROM_ADDRESS')),
             'mail_from_name' => SystemSetting::getValue('mail_from_name', env('MAIL_FROM_NAME', 'Enrollment Analytics')),
-            'mail_configured' => app(\App\Services\MailSettings::class)->isConfigured(),
+            'mail_configured' => app(\App\Services\MailSettings::class)->isConfigured() || app(\App\Services\BrevoMailer::class)->enabled(),
+            'brevo_configured' => app(\App\Services\BrevoMailer::class)->enabled(),
         ];
 
         return view('settings.index', compact('settings'));
@@ -97,6 +98,7 @@ class SettingsController extends Controller
             'mail_password' => ['nullable', 'string', 'max:255'],
             'mail_from_address' => ['nullable', 'email', 'max:255'],
             'mail_from_name' => ['nullable', 'string', 'max:255'],
+            'brevo_api_key' => ['nullable', 'string', 'max:255'],
         ]);
 
         foreach (['institution_name', 'decline_threshold_pct', 'growth_threshold_pct', 'retention_target', 'institution_capacity'] as $key) {
@@ -111,6 +113,9 @@ class SettingsController extends Controller
             }
             if (! empty($validated['mail_password'])) {
                 SystemSetting::setValue('mail_password', $validated['mail_password'], 'mail');
+            }
+            if (! empty($validated['brevo_api_key'])) {
+                SystemSetting::setValue('brevo_api_key', $validated['brevo_api_key'], 'mail');
             }
         }
 

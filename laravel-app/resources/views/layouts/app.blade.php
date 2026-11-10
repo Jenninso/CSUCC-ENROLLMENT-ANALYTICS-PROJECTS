@@ -331,6 +331,43 @@
         .theme-sidebar[data-sidebar-tone="light"] .sidebar-footer .text-emerald-200\/60 {
             color: #64748b !important;
         }
+        @media (min-width: 1024px) {
+            aside.theme-sidebar.is-collapsed {
+                width: 4.75rem !important;
+                overflow-x: hidden;
+            }
+            aside.theme-sidebar.is-collapsed .sidebar-header {
+                flex-direction: column;
+                gap: 0.5rem;
+                padding: 0.85rem 0.4rem;
+            }
+            aside.theme-sidebar.is-collapsed .sidebar-brand,
+            aside.theme-sidebar.is-collapsed .sidebar-user-meta,
+            aside.theme-sidebar.is-collapsed nav .ml-8,
+            aside.theme-sidebar.is-collapsed nav svg.w-4,
+            aside.theme-sidebar.is-collapsed nav span.ml-auto {
+                display: none !important;
+            }
+            aside.theme-sidebar.is-collapsed nav a,
+            aside.theme-sidebar.is-collapsed nav button {
+                justify-content: center !important;
+                gap: 0 !important;
+                font-size: 0 !important;
+                padding-left: 0.45rem;
+                padding-right: 0.45rem;
+            }
+            aside.theme-sidebar.is-collapsed nav svg.w-5 {
+                width: 1.35rem;
+                height: 1.35rem;
+            }
+            aside.theme-sidebar.is-collapsed .sidebar-footer {
+                padding-left: 0.4rem;
+                padding-right: 0.4rem;
+            }
+            aside.theme-sidebar.is-collapsed .sidebar-footer > .flex {
+                justify-content: center;
+            }
+        }
         .app-header {
             background: color-mix(in srgb, var(--theme-panel) 92%, transparent);
             backdrop-filter: blur(10px);
@@ -463,12 +500,12 @@
 
     {{-- Sidebar --}}
     <aside data-sidebar-tone="{{ $themeSidebarLight ? 'light' : 'dark' }}"
-           class="theme-sidebar fixed inset-y-0 left-0 z-50 w-64 {{ $themeSidebarLight ? 'text-slate-900' : 'text-white' }} transform transition-transform duration-200 flex flex-col"
-           :class="sidebarOpen ? 'translate-x-0' : (sidebarCollapsed ? '-translate-x-full' : 'max-lg:-translate-x-full')">
+           class="theme-sidebar fixed inset-y-0 left-0 z-50 w-64 {{ $themeSidebarLight ? 'text-slate-900' : 'text-white' }} transform transition-all duration-200 flex flex-col"
+           :class="[sidebarOpen ? 'translate-x-0' : 'max-lg:-translate-x-full', sidebarCollapsed && 'is-collapsed']">
         {{-- Logo --}}
-        <div class="flex items-center gap-3 px-4 py-5 border-b border-emerald-900/60">
+        <div class="sidebar-header flex items-center gap-3 px-4 py-5 border-b border-emerald-900/60">
             <img src="{{ asset('images/branding/logo.png') }}" alt="CSUCC" class="w-11 h-11 rounded-full object-contain bg-black/30 shrink-0 ring-1 ring-white/15">
-            <div class="min-w-0 flex-1">
+            <div class="sidebar-brand min-w-0 flex-1">
                 <p class="text-[10px] font-semibold tracking-[0.18em] text-amber-300/90">CSUCC</p>
                 <h1 class="font-brand text-[0.95rem] font-semibold leading-tight truncate">Enrollment Analytics</h1>
                 <p class="text-[10px] text-emerald-200/70 leading-tight mt-0.5">CEIT · BSIT Program</p>
@@ -482,14 +519,14 @@
         {{-- Navigation --}}
         <nav class="flex-1 overflow-y-auto py-4 px-3 space-y-1">
             {{-- Dashboard --}}
-            <a href="{{ route('dashboard') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium {{ request()->routeIs('dashboard') ? 'theme-primary-bg text-white' : 'text-emerald-100/80 hover:bg-black/20' }}">
+            <a href="{{ route('dashboard') }}" title="Dashboard" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium {{ request()->routeIs('dashboard') ? 'theme-primary-bg text-white' : 'text-emerald-100/80 hover:bg-black/20' }}">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
                 Dashboard
             </a>
 
             @if($navUser?->canAccess('enrollment.view'))
             <div x-data="{ open: {{ request()->routeIs('students.*') ? 'true' : 'false' }} }">
-                <button @click="open = !open" class="w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-sm font-medium {{ request()->routeIs('students.*') ? 'theme-primary-bg text-white' : 'text-emerald-100/80 hover:bg-black/20' }}">
+                <button @click="if ($root.sidebarCollapsed && window.matchMedia('(min-width: 1024px)').matches) { $root.sidebarCollapsed = false; localStorage.setItem('sidebarCollapsed', '0'); open = true; } else { open = !open }" title="Student Records" class="w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-sm font-medium {{ request()->routeIs('students.*') ? 'theme-primary-bg text-white' : 'text-emerald-100/80 hover:bg-black/20' }}">
                     <span class="flex items-center gap-3">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 9h3.75M15 12h3.75M15 15h3.75M4.5 19.5h15a2.25 2.25 0 002.25-2.25V6.75A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25v10.5A2.25 2.25 0 004.5 19.5zm6-10.125a1.875 1.875 0 11-3.75 0 1.875 1.875 0 013.75 0zm1.294 6.336a6.721 6.721 0 01-3.17.789 6.721 6.721 0 01-3.168-.789 3.376 3.376 0 016.338 0z"/></svg>
                         Student Records
@@ -508,7 +545,7 @@
             @if($navUser?->canAccess('enrollment.view'))
             {{-- Enrollment --}}
             <div x-data="{ open: {{ request()->routeIs('enrollment.*') ? 'true' : 'false' }} }">
-                <button @click="open = !open" class="w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-sm font-medium text-emerald-100/80 hover:bg-black/20">
+                <button @click="if ($root.sidebarCollapsed && window.matchMedia('(min-width: 1024px)').matches) { $root.sidebarCollapsed = false; localStorage.setItem('sidebarCollapsed', '0'); open = true; } else { open = !open }" title="Enrollment" class="w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-sm font-medium text-emerald-100/80 hover:bg-black/20">
                     <span class="flex items-center gap-3">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0z"/></svg>
                         Enrollment
@@ -528,7 +565,7 @@
             @if($navUser?->canAccess('analytics.view'))
             {{-- Analytics --}}
             <div x-data="{ open: {{ request()->routeIs('analytics.*') ? 'true' : 'false' }} }">
-                <button @click="open = !open" class="w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-sm font-medium text-emerald-100/80 hover:bg-black/20">
+                <button @click="if ($root.sidebarCollapsed && window.matchMedia('(min-width: 1024px)').matches) { $root.sidebarCollapsed = false; localStorage.setItem('sidebarCollapsed', '0'); open = true; } else { open = !open }" title="Analytics" class="w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-sm font-medium text-emerald-100/80 hover:bg-black/20">
                     <span class="flex items-center gap-3">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z"/></svg>
                         Analytics
@@ -547,7 +584,7 @@
 
             @if($navUser?->canAccess('forecasting.view'))
             {{-- Forecasting --}}
-            <a href="{{ route('forecasting.index') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium {{ request()->routeIs('forecasting.*') ? 'theme-primary-bg text-white' : 'text-emerald-100/80 hover:bg-black/20' }}">
+            <a href="{{ route('forecasting.index') }}" title="Forecasting" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium {{ request()->routeIs('forecasting.*') ? 'theme-primary-bg text-white' : 'text-emerald-100/80 hover:bg-black/20' }}">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/></svg>
                 Forecasting
             </a>
@@ -555,17 +592,17 @@
 
             @if($navUser?->canAccess('analytics.view'))
             {{-- AI Decision Support --}}
-            <a href="{{ route('executive') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium {{ request()->routeIs('executive') ? 'theme-primary-bg text-white' : 'text-emerald-100/80 hover:bg-black/20' }}">
+            <a href="{{ route('executive') }}" title="Executive View" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium {{ request()->routeIs('executive') ? 'theme-primary-bg text-white' : 'text-emerald-100/80 hover:bg-black/20' }}">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z"/></svg>
                 Executive View
             </a>
             @endif
             @if($navUser?->canAccess('ai.view'))
-            <a href="{{ route('ai-support.index') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium {{ request()->routeIs('ai-support.index') || request()->routeIs('ai-support.show') ? 'theme-primary-bg text-white' : 'text-emerald-100/80 hover:bg-black/20' }}">
+            <a href="{{ route('ai-support.index') }}" title="AI Decision Support" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium {{ request()->routeIs('ai-support.index') || request()->routeIs('ai-support.show') ? 'theme-primary-bg text-white' : 'text-emerald-100/80 hover:bg-black/20' }}">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 3.104v5.714a2.25 2.25 0 01-.659 1.591L5 14.5M9.75 3.104c-.251.023-.501.05-.75.082m.75-.082a24.301 24.301 0 014.5 0m0 0v5.714a2.25 2.25 0 00.659 1.591L19 14.5M14.25 3.104c.251.023.501.05.75.082M19 14.5l-2.47 2.47a2.25 2.25 0 01-1.59.659H9.06a2.25 2.25 0 01-1.591-.659L5 14.5m14 0V5a2 2 0 00-2-2H7a2 2 0 00-2 2v9.5"/></svg>
                 AI Decision Support
             </a>
-            <a href="{{ route('ai-support.what-if') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium {{ request()->routeIs('ai-support.what-if') ? 'theme-primary-bg text-white' : 'text-emerald-100/80 hover:bg-black/20' }}">
+            <a href="{{ route('ai-support.what-if') }}" title="What-If Analysis" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium {{ request()->routeIs('ai-support.what-if') ? 'theme-primary-bg text-white' : 'text-emerald-100/80 hover:bg-black/20' }}">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7.5 21L3 16.5m0 0L7.5 12M3 16.5h13.5m0-13.5L21 7.5m0 0L16.5 12M21 7.5H7.5"/></svg>
                 What-If Analysis
             </a>
@@ -573,7 +610,7 @@
 
             @if($navUser?->canAccess('alerts.view'))
             {{-- Alerts --}}
-            <a href="{{ route('alerts.index') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium {{ request()->routeIs('alerts.*') ? 'theme-primary-bg text-white' : 'text-emerald-100/80 hover:bg-black/20' }}">
+            <a href="{{ route('alerts.index') }}" title="Alerts" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium {{ request()->routeIs('alerts.*') ? 'theme-primary-bg text-white' : 'text-emerald-100/80 hover:bg-black/20' }}">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75v-.7V9A6 6 0 006 9v.75a8.967 8.967 0 01-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 01-5.714 0m5.714 0a3 3 0 11-5.714 0"/></svg>
                 Alerts
             </a>
@@ -581,7 +618,7 @@
 
             @if($navUser?->canAccess('reports.view'))
             {{-- Reports --}}
-            <a href="{{ route('reports.index') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium {{ request()->routeIs('reports.*') ? 'theme-primary-bg text-white' : 'text-emerald-100/80 hover:bg-black/20' }}">
+            <a href="{{ route('reports.index') }}" title="Reports" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium {{ request()->routeIs('reports.*') ? 'theme-primary-bg text-white' : 'text-emerald-100/80 hover:bg-black/20' }}">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z"/></svg>
                 Reports
             </a>
@@ -590,7 +627,7 @@
             @if($navUser?->canAccess('data.manage'))
             {{-- Data Management --}}
             <div x-data="{ open: {{ request()->routeIs('data-management.*') ? 'true' : 'false' }} }">
-                <button @click="open = !open" class="w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-sm font-medium text-emerald-100/80 hover:bg-black/20">
+                <button @click="if ($root.sidebarCollapsed && window.matchMedia('(min-width: 1024px)').matches) { $root.sidebarCollapsed = false; localStorage.setItem('sidebarCollapsed', '0'); open = true; } else { open = !open }" title="Data Management" class="w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-sm font-medium text-emerald-100/80 hover:bg-black/20">
                     <span class="flex items-center gap-3">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.25 6.375c0 2.278-3.694 4.125-8.25 4.125S3.75 8.653 3.75 6.375m16.5 0c0-2.278-3.694-4.125-8.25-4.125S3.75 4.097 3.75 6.375m16.5 0v11.25c0 2.278-3.694 4.125-8.25 4.125s-8.25-1.847-8.25-4.125V6.375m16.5 0v3.75m-16.5-3.75v3.75m16.5 0v3.75C20.25 16.153 16.556 18 12 18s-8.25-1.847-8.25-4.125v-3.75"/></svg>
                         Data Management
@@ -608,13 +645,13 @@
             @endif
 
             @if($navUser?->canAccess('users.manage'))
-            <a href="{{ route('users.index') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium {{ request()->routeIs('users.*') ? 'theme-primary-bg text-white' : 'text-emerald-100/80 hover:bg-black/20' }}">
+            <a href="{{ route('users.index') }}" title="Accounts" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium {{ request()->routeIs('users.*') ? 'theme-primary-bg text-white' : 'text-emerald-100/80 hover:bg-black/20' }}">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z"/></svg>
                 Accounts
             </a>
             @endif
             @if($navUser?->canAccess('users.approve'))
-            <a href="{{ route('approvals.index') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium {{ request()->routeIs('approvals.*') ? 'theme-primary-bg text-white' : 'text-emerald-100/80 hover:bg-black/20' }}">
+            <a href="{{ route('approvals.index') }}" title="Approvals" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium {{ request()->routeIs('approvals.*') ? 'theme-primary-bg text-white' : 'text-emerald-100/80 hover:bg-black/20' }}">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                 Approvals
                 @if(($pendingRegistrations ?? 0) > 0)
@@ -623,20 +660,20 @@
             </a>
             @endif
             @if($navUser?->isSuperAdmin())
-            <a href="{{ route('delete-requests.index') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium {{ request()->routeIs('delete-requests.*') ? 'theme-primary-bg text-white' : 'text-emerald-100/80 hover:bg-black/20' }}">
+            <a href="{{ route('delete-requests.index') }}" title="Delete Requests" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium {{ request()->routeIs('delete-requests.*') ? 'theme-primary-bg text-white' : 'text-emerald-100/80 hover:bg-black/20' }}">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0"/></svg>
                 Delete Requests
                 @if(($pendingDeletes ?? 0) > 0)
                     <span class="ml-auto bg-red-400 text-white text-[10px] font-bold px-1.5 py-0.5 rounded">{{ $pendingDeletes }}</span>
                 @endif
             </a>
-            <a href="{{ route('audit-logs.index') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium {{ request()->routeIs('audit-logs.*') ? 'theme-primary-bg text-white' : 'text-emerald-100/80 hover:bg-black/20' }}">
+            <a href="{{ route('audit-logs.index') }}" title="Logs" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium {{ request()->routeIs('audit-logs.*') ? 'theme-primary-bg text-white' : 'text-emerald-100/80 hover:bg-black/20' }}">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                 Logs
             </a>
             @endif
             @if($navUser?->canAccess('logs.view') && ! $navUser?->isSuperAdmin())
-            <a href="{{ route('login-logs.index') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium {{ request()->routeIs('login-logs.*') ? 'theme-primary-bg text-white' : 'text-emerald-100/80 hover:bg-black/20' }}">
+            <a href="{{ route('login-logs.index') }}" title="Login Logs" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium {{ request()->routeIs('login-logs.*') ? 'theme-primary-bg text-white' : 'text-emerald-100/80 hover:bg-black/20' }}">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                 Login Logs
             </a>
@@ -644,12 +681,12 @@
 
             @if($navUser?->canAccess('settings.view'))
             {{-- Settings --}}
-            <a href="{{ route('settings.index') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium {{ request()->routeIs('settings.*') ? 'theme-primary-bg text-white' : 'text-emerald-100/80 hover:bg-black/20' }}">
+            <a href="{{ route('settings.index') }}" title="Settings" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium {{ request()->routeIs('settings.*') ? 'theme-primary-bg text-white' : 'text-emerald-100/80 hover:bg-black/20' }}">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.324.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 011.37.49l1.296 2.247a1.125 1.125 0 01-.26 1.431l-1.003.827c-.293.24-.438.613-.431.992a6.759 6.759 0 010 .255c-.007.378.138.75.43.99l1.005.828c.424.35.534.954.26 1.43l-1.298 2.247a1.125 1.125 0 01-1.369.491l-1.217-.456c-.355-.133-.75-.072-1.076.124a6.57 6.57 0 01-.22.128c-.331.183-.581.495-.644.869l-.213 1.28c-.09.543-.56.941-1.11.941h-2.594c-.55 0-1.02-.398-1.11-.94l-.213-1.281c-.062-.374-.312-.686-.644-.87a6.52 6.52 0 01-.22-.127c-.325-.196-.72-.257-1.076-.124l-1.217.456a1.125 1.125 0 01-1.369-.49l-1.297-2.247a1.125 1.125 0 01.26-1.431l1.004-.827c.292-.24.437-.613.43-.992a6.932 6.932 0 010-.255c.007-.378-.138-.75-.43-.99l-1.004-.828a1.125 1.125 0 01-.26-1.43l1.297-2.247a1.125 1.125 0 011.37-.491l1.216.456c.356.133.751.072 1.076-.124.072-.044.146-.087.22-.128.332-.183.582-.495.644-.869l.214-1.281z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
                 Settings
             </a>
             @endif
-            <a href="{{ route('profile.edit') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium {{ request()->routeIs('profile.*') ? 'theme-primary-bg text-white' : 'text-emerald-100/80 hover:bg-black/20' }}">
+            <a href="{{ route('profile.edit') }}" title="Profile" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium {{ request()->routeIs('profile.*') ? 'theme-primary-bg text-white' : 'text-emerald-100/80 hover:bg-black/20' }}">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z"/></svg>
                 Profile
             </a>
@@ -665,7 +702,7 @@
                         {{ $navUser?->initials() ?? 'U' }}
                     </div>
                 @endif
-                <div class="flex-1 min-w-0">
+                <div class="sidebar-user-meta flex-1 min-w-0">
                     <p class="text-sm font-semibold truncate">{{ $navUser->fullName() }}</p>
                     <p class="text-xs text-emerald-200/60 truncate">{{ $navUser->role->role_name ?? 'User' }}</p>
                 </div>
@@ -674,7 +711,7 @@
     </aside>
 
     {{-- Main Content --}}
-    <div class="flex flex-col min-h-screen min-w-0 transition-[padding] duration-200" :class="sidebarCollapsed ? 'lg:pl-0' : 'lg:pl-64'">
+    <div class="flex flex-col min-h-screen min-w-0 transition-[padding] duration-200" :class="sidebarCollapsed ? 'lg:pl-[4.75rem]' : 'lg:pl-64'">
         {{-- Top Bar --}}
         <header class="app-header border-b sticky top-0 z-30">
             <div class="flex items-center justify-between px-4 sm:px-6 lg:px-8 py-3.5">

@@ -352,6 +352,9 @@ class StudentImportService
         $aliases = [
             'return' => 'returning',
             'returned' => 'returning',
+            'shiftee' => 'shiftee',
+            'shiftees' => 'shiftee',
+            'shift' => 'shiftee',
             'transfer' => 'transferee',
             'transferree' => 'transferee',
             'withdraw' => 'withdraw_stop',

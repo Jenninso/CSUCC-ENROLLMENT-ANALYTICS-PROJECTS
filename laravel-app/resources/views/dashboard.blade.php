@@ -64,6 +64,21 @@
     </div>
 </div>
 
+<div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+    <div class="ui-kpi">
+        <p class="ui-kpi-label">Shiftees</p>
+        <p class="ui-kpi-value">{{ number_format($shifteeStudents ?? 0) }}</p>
+    </div>
+    <div class="ui-kpi">
+        <p class="ui-kpi-label">Transferred</p>
+        <p class="ui-kpi-value">{{ number_format($transferredStudents ?? 0) }}</p>
+    </div>
+    <div class="ui-kpi">
+        <p class="ui-kpi-label">Withdrawn</p>
+        <p class="ui-kpi-value">{{ number_format($withdrawnStudents ?? 0) }}</p>
+    </div>
+</div>
+
 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
     <div class="ui-kpi">
         <p class="ui-kpi-label">Highest-enrolled program</p>

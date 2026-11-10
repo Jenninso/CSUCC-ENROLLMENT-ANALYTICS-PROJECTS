@@ -18,7 +18,7 @@
             <p class="font-medium text-slate-700 mb-2">Required columns:</p>
             <ul class="list-disc list-inside space-y-1">
                 <li>academic_year, semester, program_code</li>
-                <li>year_level (1–6), enrollment_type (new, returning, continuing, transferee, graduating, withdrawn, dropped), enrollment_count</li>
+                <li>year_level (1–6), enrollment_type (new, returning, continuing, shiftee, transferee, graduating, withdrawn, dropped), enrollment_count</li>
             </ul>
         </div>
 

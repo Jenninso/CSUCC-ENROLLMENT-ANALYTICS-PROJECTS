@@ -73,7 +73,7 @@
                     <label class="block text-sm font-medium text-gray-700 mb-1">Enrollment Type</label>
                     <select name="enrollment_type" required class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
                         <option value="">Select Type</option>
-                        @foreach(['new','returning','continuing','transferee','graduating','withdrawn','dropped'] as $type)
+                        @foreach(['new','returning','continuing','shiftee','transferee','graduating','withdrawn','dropped'] as $type)
                             <option value="{{ $type }}" {{ old('enrollment_type', $enrollment->enrollment_type ?? '') == $type ? 'selected' : '' }}>{{ ucfirst($type) }}</option>
                         @endforeach
                     </select>

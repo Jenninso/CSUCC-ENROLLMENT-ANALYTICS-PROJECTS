@@ -1,0 +1,52 @@
+<?php
+
+return [
+    'catalog' => [
+        'dashboard.view' => ['Dashboard', 'dashboard'],
+        'enrollment.view' => ['View enrollment records', 'enrollment'],
+        'enrollment.manage' => ['Add / import enrollment data', 'enrollment'],
+        'analytics.view' => ['Analytics', 'analytics'],
+        'forecasting.view' => ['Forecasting', 'forecasting'],
+        'ai.view' => ['AI decision support', 'ai'],
+        'alerts.view' => ['Alerts', 'alerts'],
+        'reports.view' => ['Reports', 'reports'],
+        'data.manage' => ['Data management', 'data'],
+        'users.manage' => ['Manage accounts', 'users'],
+        'users.approve' => ['Approve / block registrations', 'users'],
+        'users.privileges' => ['Assign privileges', 'users'],
+        'users.create_admin' => ['Create Super Admin / Administrator', 'users'],
+        'users.delete' => ['Delete accounts', 'users'],
+        'logs.view' => ['Login logs', 'logs'],
+        'settings.view' => ['Settings', 'settings'],
+    ],
+
+    'role_defaults' => [
+        'Super Administrator' => ['*'],
+        'Administrator' => [
+            'dashboard.view',
+            'enrollment.view',
+            'enrollment.manage',
+            'analytics.view',
+            'forecasting.view',
+            'ai.view',
+            'alerts.view',
+            'reports.view',
+            'data.manage',
+            'users.manage',
+            'users.approve',
+            'logs.view',
+            'settings.view',
+        ],
+        'User' => [
+            'dashboard.view',
+            'enrollment.view',
+            'analytics.view',
+            'forecasting.view',
+            'ai.view',
+            'alerts.view',
+            'reports.view',
+            'logs.view',
+            'settings.view',
+        ],
+    ],
+];

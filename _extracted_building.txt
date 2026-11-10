@@ -1,0 +1,1637 @@
+I recommend building it as a web-based Enrollment Analytics and Decision Support System with four major layers:
+
+Data Collection & Management
+
+Analytics & Visualization
+
+AI/Prediction
+
+Decision Support & Recommendations
+
+Below is a detailed roadmap you can use as your master prompt for developing the system, followed by the system architecture and diagrams.
+
+1. Proposed System
+
+System Title
+
+Visualization of Enrollment Dynamics Utilizing Data Analytics with AI-Driven Decision Support
+
+Main idea
+
+The system will collect historical and current enrollment data and transform it into useful information such as:
+
+Enrollment trends by year/semester
+
+Enrollment by program
+
+Enrollment by year level
+
+Enrollment by gender, if appropriate and legally/ethically permitted
+
+Enrollment by department/college
+
+New vs. returning students
+
+Retention and dropout patterns
+
+Student population growth/decline
+
+Program demand
+
+Enrollment forecasting
+
+Identification of unusual enrollment changes
+
+AI-generated insights
+
+Recommendations for administrators
+
+The important distinction is that the system should not simply display graphs. It should analyze the data and help administrators answer:
+
+"What happened?" → "Why might it be happening?" → "What is likely to happen next?" → "What should we do?"
+
+2. Master Prompt for Building the System
+
+You can give the following prompt to an AI coding assistant and use it as your overall development specification.
+
+MASTER DEVELOPMENT PROMPT
+
+Project Title
+
+Develop a complete web-based information system entitled:
+
+"Visualization of Enrollment Dynamics Utilizing Data Analytics with AI-Driven Decision Support"
+
+Project Objective
+
+Build a secure, user-friendly, responsive, and data-driven enrollment analytics platform that allows educational administrators to monitor historical and current enrollment patterns, visualize enrollment dynamics, perform statistical and predictive analytics, and receive AI-assisted decision support.
+
+The system must transform raw enrollment records into understandable dashboards, analytical reports, forecasts, alerts, and actionable recommendations.
+
+The system should support the following decision-making cycle:
+
+Data → Information → Analytics → Prediction → AI Insight → Recommendation → Decision
+
+1. SYSTEM USERS
+
+Implement role-based access control.
+
+Administrator
+
+The administrator can:
+
+Manage users
+
+Manage roles and permissions
+
+Import enrollment datasets
+
+Add/edit/delete enrollment records
+
+Manage academic years
+
+Manage semesters
+
+Manage colleges/departments
+
+Manage programs
+
+View all dashboards
+
+Generate reports
+
+Run forecasting
+
+View AI recommendations
+
+Configure system settings
+
+View system activity logs
+
+Enrollment Officer / Registrar
+
+The enrollment officer can:
+
+Upload enrollment datasets
+
+Validate records
+
+View enrollment dashboards
+
+Search/filter enrollment records
+
+Generate enrollment reports
+
+View trends
+
+View forecasts
+
+Export authorized reports
+
+School Administrator / Decision Maker
+
+The decision maker can:
+
+View dashboards
+
+Analyze enrollment trends
+
+Compare programs
+
+View forecasts
+
+Receive AI-generated insights
+
+View alerts
+
+Review recommended actions
+
+Generate management reports
+
+Researcher / Analyst
+
+The analyst can:
+
+Access approved datasets
+
+Perform statistical analysis
+
+Create visualizations
+
+Compare academic periods
+
+Generate analytical reports
+
+2. CORE MODULES
+
+Develop the system using the following modules.
+
+Module A — Authentication and Authorization
+
+Implement:
+
+Login
+
+Logout
+
+Password management
+
+Role-based access control
+
+Session management
+
+Account activation/deactivation
+
+Audit logging
+
+Security requirements:
+
+Password hashing
+
+Input validation
+
+SQL injection protection
+
+CSRF protection where applicable
+
+Authentication middleware
+
+Authorization middleware
+
+Secure sessions
+
+Rate limiting for login attempts
+
+Audit logs
+
+3. DATA MANAGEMENT MODULE
+
+Create a centralized enrollment database.
+
+The system should support:
+
+Academic Information
+
+Academic year
+
+Semester
+
+Term
+
+College
+
+Department
+
+Program
+
+Major
+
+Year level
+
+Enrollment Information
+
+Enrollment count
+
+New students
+
+Returning students
+
+Continuing students
+
+Transferees
+
+Graduating students
+
+Withdrawn students
+
+Dropped students
+
+Retained students
+
+Optional demographic variables
+
+Only include demographic fields that are institutionally necessary and permitted by applicable privacy policies.
+
+Examples:
+
+Sex/gender
+
+Age group
+
+Residency category
+
+Avoid collecting unnecessary personally identifiable information.
+
+4. DATABASE DESIGN
+
+Create normalized relational database tables.
+
+Recommended tables:
+
+users
+
+id
+
+name
+
+email
+
+password_hash
+
+role_id
+
+status
+
+created_at
+
+updated_at
+
+roles
+
+id
+
+role_name
+
+description
+
+academic_years
+
+id
+
+academic_year
+
+start_date
+
+end_date
+
+status
+
+semesters
+
+id
+
+semester_name
+
+academic_year_id
+
+colleges
+
+id
+
+college_name
+
+college_code
+
+departments
+
+id
+
+department_name
+
+department_code
+
+college_id
+
+programs
+
+id
+
+program_name
+
+program_code
+
+department_id
+
+degree_level
+
+status
+
+enrollment_records
+
+id
+
+academic_year_id
+
+semester_id
+
+college_id
+
+department_id
+
+program_id
+
+year_level
+
+enrollment_type
+
+enrollment_count
+
+created_at
+
+updated_at
+
+forecasts
+
+id
+
+program_id
+
+forecast_period
+
+predicted_enrollment
+
+lower_bound
+
+upper_bound
+
+model_used
+
+accuracy_metric
+
+created_at
+
+ai_insights
+
+id
+
+insight_type
+
+title
+
+description
+
+severity
+
+supporting_metric
+
+recommendation
+
+created_at
+
+audit_logs
+
+id
+
+user_id
+
+action
+
+module
+
+timestamp
+
+ip_address
+
+details
+
+Use foreign keys and appropriate indexes.
+
+5. DATA IMPORT MODULE
+
+Allow authorized users to upload:
+
+CSV
+
+Excel
+
+JSON, if required
+
+The import process must contain:
+
+File upload
+
+File validation
+
+Column validation
+
+Data-type validation
+
+Missing-value detection
+
+Duplicate detection
+
+Invalid-value detection
+
+Data preview
+
+Validation report
+
+User confirmation
+
+Database insertion
+
+Import log
+
+Example validation:
+
+If:
+
+academic_year = 2025-2026program = BSITsemester = First Semesteryear_level = 1enrollment_count = 180
+
+the system should verify that the record is valid before storing it.
+
+Do not silently accept corrupted data.
+
+6. DATA CLEANING
+
+Implement automated data-quality checks.
+
+Detect:
+
+Missing values
+
+Duplicate records
+
+Negative enrollment counts
+
+Invalid academic years
+
+Invalid programs
+
+Invalid year levels
+
+Inconsistent naming
+
+Impossible values
+
+Duplicate combinations of academic year + semester + program + year level
+
+Display a data-quality score.
+
+Example:
+
+Data Quality Score: 96%
+
+Issues:
+
+12 missing values
+
+4 duplicate records
+
+2 invalid program codes
+
+Allow authorized users to review and correct errors.
+
+7. ANALYTICS ENGINE
+
+Implement descriptive analytics.
+
+Calculate:
+
+Total Enrollment
+
+Total number of enrolled students for the selected period.
+
+Enrollment Growth
+
+Use:
+
+Growth Rate =
+
+(Current Enrollment - Previous Enrollment)/Previous Enrollment × 100
+
+Year-over-Year Growth
+
+Compare enrollment between academic years.
+
+Semester Growth
+
+Compare semester-level enrollment.
+
+Program Share
+
+Calculate the percentage contribution of each program to total enrollment.
+
+Retention Rate
+
+Where appropriate:
+
+Retention Rate =
+
+Returning/Continuing Students/Eligible Students × 100
+
+Attrition Rate
+
+Where appropriate:
+
+Attrition Rate =
+
+Students Lost/Eligible Students × 100
+
+Clearly document the institution's definitions for retention and attrition.
+
+8. DASHBOARD
+
+Create an interactive administrative dashboard.
+
+The dashboard should contain:
+
+KPI Cards
+
+Display:
+
+Total Enrollment
+
+Enrollment Growth Rate
+
+Highest-Enrolled Program
+
+Lowest-Enrolled Program
+
+New Students
+
+Returning Students
+
+Retention Rate
+
+Forecasted Next-Period Enrollment
+
+Filters
+
+Provide:
+
+Academic year
+
+Semester
+
+College
+
+Department
+
+Program
+
+Year level
+
+Student type
+
+Filters must update dashboard visualizations dynamically.
+
+9. VISUALIZATION MODULE
+
+Create professional interactive charts.
+
+Chart 1 — Enrollment Trend
+
+Line chart showing enrollment across academic years/semesters.
+
+Chart 2 — Enrollment by Program
+
+Bar chart ranking programs by enrollment.
+
+Chart 3 — Enrollment by College
+
+Bar chart comparing colleges.
+
+Chart 4 — Program Distribution
+
+Pie/donut chart showing enrollment share.
+
+Chart 5 — Year-Level Distribution
+
+Show enrollment from:
+
+First Year
+
+Second Year
+
+Third Year
+
+Fourth Year
+
+Other applicable levels
+
+Chart 6 — New vs Returning Students
+
+Stacked bar chart.
+
+Chart 7 — Retention Trend
+
+Line chart across academic periods.
+
+Chart 8 — Enrollment Heatmap
+
+Show:
+
+Program × Academic Year
+
+using enrollment intensity.
+
+Chart 9 — Forecast
+
+Display:
+
+Historical Enrollment+Forecasted Enrollment
+
+Include confidence/prediction intervals where supported.
+
+10. INTERACTIVE VISUALIZATION REQUIREMENTS
+
+Every visualization should support:
+
+Hover tooltips
+
+Filtering
+
+Drill-down
+
+Date/academic-period selection
+
+Program selection
+
+Export
+
+Responsive design
+
+Clicking a college should allow the user to drill down into its departments.
+
+Clicking a department should allow the user to drill down into its programs.
+
+Example:
+
+College↓Department↓Program↓Year Level↓Enrollment Trend
+
+11. AI ANALYTICS MODULE
+
+Implement an AI-assisted analytics layer.
+
+The AI should NOT simply generate generic text.
+
+It should receive verified analytical results from the analytics engine.
+
+For example:
+
+Input:
+
+Current enrollment = 4,500
+
+Previous enrollment = 4,850
+
+Growth = -7.2%
+
+BSIT growth = +14%
+
+BSBA growth = -18%
+
+AI output:
+
+"Overall enrollment declined by approximately 7.2%. However, BSIT increased while BSBA declined significantly. Administrators may investigate whether program-specific demand, capacity, scheduling, or recruitment factors contributed to this difference."
+
+The AI should distinguish between:
+
+FACT
+
+Directly supported by data.
+
+TREND
+
+A statistically or visually observable pattern.
+
+FORECAST
+
+A model-generated estimate.
+
+INTERPRETATION
+
+Possible explanation.
+
+RECOMMENDATION
+
+Suggested action.
+
+Never present speculation as fact.
+
+12. AI INSIGHT GENERATION
+
+Generate insights such as:
+
+Trend Insight
+
+"Enrollment has increased for three consecutive academic periods."
+
+Decline Alert
+
+"Enrollment in Program X decreased significantly compared with the previous period."
+
+Growth Opportunity
+
+"Program Y shows sustained enrollment growth and may warrant capacity assessment."
+
+Capacity Alert
+
+"Projected enrollment may exceed the current planning threshold."
+
+Retention Alert
+
+"Retention has declined across multiple periods."
+
+Anomaly Alert
+
+"Enrollment for this program is substantially different from its historical pattern."
+
+13. PREDICTIVE ANALYTICS
+
+Implement enrollment forecasting.
+
+Possible models:
+
+Baseline
+
+Moving average
+
+Naive forecast
+
+Statistical models
+
+Linear regression
+
+Exponential smoothing
+
+ARIMA/SARIMA where appropriate
+
+Machine-learning models
+
+If sufficient historical data exists:
+
+Random Forest
+
+Gradient Boosting
+
+XGBoost
+
+Other appropriate regression models
+
+Do not automatically use complex AI when simpler models perform better.
+
+The system should compare models using appropriate validation metrics.
+
+Possible metrics:
+
+MAE
+
+RMSE
+
+MAPE
+
+Display model performance to administrators.
+
+14. FORECASTING WORKFLOW
+
+Implement:
+
+Historical Data↓Data Cleaning↓Feature Engineering↓Train/Test Split↓Model Training↓Model Validation↓Model Comparison↓Best Model Selection↓Forecast Generation↓Confidence/Prediction Interval↓Visualization↓AI Interpretation
+
+Forecast:
+
+Next semester
+
+Next academic year
+
+Program-level enrollment
+
+College-level enrollment
+
+The forecast horizon should be configurable.
+
+15. AI DECISION SUPPORT
+
+Create a Decision Support Center.
+
+For every major insight, display:
+
+Situation
+
+What is happening?
+
+Evidence
+
+What data supports it?
+
+Possible Interpretation
+
+What could explain the pattern?
+
+Forecast
+
+What may happen next?
+
+Recommendation
+
+What action could administrators consider?
+
+Priority
+
+Low
+
+Medium
+
+High
+
+Critical
+
+Confidence
+
+Display an appropriate confidence indicator based on the underlying analysis/model.
+
+Example:
+
+Situation:"Enrollment in BSCS has declined for two consecutive semesters."
+
+Evidence:"Enrollment decreased from 320 to 275 students."
+
+Forecast:"Model projects approximately 250–265 students next semester."
+
+Recommendation:"Review recruitment performance, student retention, scheduling constraints, and competitor/program demand indicators before allocating additional recruitment resources."
+
+16. WHAT-IF ANALYSIS
+
+Implement a scenario analysis feature.
+
+Allow administrators to modify assumptions.
+
+Example:
+
+Current enrollment:5,000
+
+Scenario:
+
+Recruitment improvement:+10%
+
+Retention improvement:+5%
+
+Capacity:5,500
+
+The system calculates an estimated scenario outcome.
+
+Display:
+
+Current Scenariovs.Improved Recruitment Scenariovs.Improved Retention Scenario
+
+Clearly label scenario outputs as simulations rather than actual predictions.
+
+17. ALERT SYSTEM
+
+Create automated alerts.
+
+Examples:
+
+Enrollment decline
+
+Trigger when enrollment falls below a configurable threshold.
+
+Rapid growth
+
+Trigger when enrollment exceeds a configurable growth threshold.
+
+Retention decline
+
+Trigger when retention falls below target.
+
+Forecast capacity issue
+
+Trigger when forecast exceeds capacity.
+
+Data anomaly
+
+Trigger when an observation is unusually different from historical patterns.
+
+Alerts should contain:
+
+Alert title
+
+Date
+
+Affected program
+
+Metric
+
+Current value
+
+Expected/reference value
+
+Severity
+
+Explanation
+
+Recommended action
+
+18. REPORT GENERATION
+
+Allow administrators to generate reports.
+
+Reports should include:
+
+Executive summary
+
+Enrollment overview
+
+Historical trends
+
+Program analysis
+
+College analysis
+
+Retention analysis
+
+Forecast
+
+AI-generated insights
+
+Recommendations
+
+Methodology
+
+Data quality information
+
+Export formats:
+
+PDF
+
+Excel
+
+CSV
+
+19. EXECUTIVE DASHBOARD
+
+Create a simplified dashboard for decision makers.
+
+Show only the most important information:
+
+Current enrollment
+
+Enrollment growth
+
+Retention
+
+Top programs
+
+Declining programs
+
+Forecast
+
+Alerts
+
+AI recommendations
+
+Use visual indicators such as:
+
+Green = positiveYellow = needs attentionRed = critical
+
+Do not use color as the only indicator; include text/icons for accessibility.
+
+20. DATA PRIVACY
+
+The system must protect student information.
+
+Prefer aggregated data for analytics.
+
+Do not expose personally identifiable student information in public dashboards.
+
+Implement:
+
+Role-based access
+
+Authentication
+
+Authorization
+
+Encryption where appropriate
+
+Audit logging
+
+Secure file uploads
+
+Data minimization
+
+Access controls
+
+Backup procedures
+
+AI should receive only the minimum information necessary for the requested analysis.
+
+21. AI SAFETY AND GOVERNANCE
+
+The AI must not make autonomous administrative decisions.
+
+It should provide:
+
+"Decision support"
+
+rather than:
+
+"Automatic decision making."
+
+Every AI recommendation should be reviewable by an authorized administrator.
+
+AI responses should include supporting metrics.
+
+The system should avoid statements such as:
+
+"Program X must be closed."
+
+Instead use:
+
+"Program X shows sustained enrollment decline. Administrators may consider reviewing program demand, retention, recruitment, and resource utilization before making any program-level decision."
+
+22. SYSTEM ARCHITECTURE
+
+Use a modular architecture.
+
+Recommended structure:
+
+Frontend↓REST API / Backend↓Authentication & Authorization↓Analytics Service↓AI Decision Support Service↓Forecasting Service↓Database
+
+Use separate services/modules for:
+
+Authentication
+
+Data management
+
+Analytics
+
+Visualization
+
+Forecasting
+
+AI
+
+Reports
+
+Notifications
+
+Audit logging
+
+23. API DESIGN
+
+Create RESTful endpoints.
+
+Example:
+
+GET /api/enrollment
+
+GET /api/enrollment/trends
+
+GET /api/enrollment/programs
+
+GET /api/enrollment/colleges
+
+GET /api/enrollment/retention
+
+GET /api/analytics/summary
+
+POST /api/data/import
+
+POST /api/forecast
+
+GET /api/forecast
+
+POST /api/ai/analyze
+
+GET /api/ai/insights
+
+GET /api/reports
+
+GET /api/alerts
+
+Use authentication and authorization for protected endpoints.
+
+24. RECOMMENDED FRONTEND PAGES
+
+Create:
+
+1. Login
+
+2. Dashboard
+
+3. Enrollment Overview
+
+4. Enrollment Trends
+
+5. Program Analytics
+
+6. College Analytics
+
+7. Retention Analytics
+
+8. Forecasting
+
+9. AI Decision Support
+
+10. Alerts
+
+11. Data Import
+
+12. Data Quality
+
+13. Reports
+
+14. User Management
+
+15. System Settings
+
+16. Audit Logs
+
+25. UI/UX DESIGN
+
+Use a clean academic/institutional dashboard design.
+
+Recommended layout:
+
+Sidebar:
+
+Dashboard
+
+Enrollment
+
+Analytics
+
+Programs
+
+Forecast
+
+AI Decision Support
+
+Alerts
+
+Reports
+
+Data Management
+
+Users
+
+Settings
+
+Top bar:
+
+Search
+
+Academic year
+
+Notifications
+
+User profile
+
+Main dashboard:
+
+KPI cards
+
+Trend charts
+
+Ranking charts
+
+Forecast
+
+AI insights
+
+Alerts
+
+Design requirements:
+
+Responsive
+
+Desktop/tablet/mobile support
+
+Accessible
+
+Clear typography
+
+Consistent colors
+
+Minimal clutter
+
+Dark/light mode if appropriate
+
+26. ANALYTICAL QUESTIONS THE SYSTEM MUST ANSWER
+
+The system should allow administrators to answer:
+
+How many students are enrolled?
+
+Is enrollment increasing or decreasing?
+
+Which programs are growing?
+
+Which programs are declining?
+
+Which college has the highest enrollment?
+
+Which programs contribute the most students?
+
+Which year level has the largest population?
+
+What is the retention trend?
+
+What programs show unusual changes?
+
+What enrollment can we expect next semester?
+
+What enrollment can we expect next academic year?
+
+Which programs may require additional capacity?
+
+Which programs may require recruitment attention?
+
+What patterns are visible in historical data?
+
+What possible actions should administrators consider?
+
+27. DEVELOPMENT PHASES
+
+Follow this order.
+
+Phase 1 — Requirements
+
+Define users
+
+Define objectives
+
+Define KPIs
+
+Define data sources
+
+Define security requirements
+
+Define privacy requirements
+
+Define AI scope
+
+Phase 2 — Database
+
+Create ERD
+
+Create tables
+
+Define relationships
+
+Create migrations
+
+Add indexes
+
+Add constraints
+
+Phase 3 — Backend
+
+Authentication
+
+Authorization
+
+CRUD APIs
+
+Data import
+
+Validation
+
+Analytics APIs
+
+Phase 4 — Frontend
+
+Login
+
+Navigation
+
+Dashboard
+
+Filters
+
+Tables
+
+Charts
+
+Phase 5 — Analytics
+
+Descriptive statistics
+
+Growth calculations
+
+Retention
+
+Program ranking
+
+Trend analysis
+
+Anomaly detection
+
+Phase 6 — Forecasting
+
+Prepare historical dataset
+
+Train baseline models
+
+Train candidate models
+
+Validate models
+
+Compare metrics
+
+Select model
+
+Generate forecast
+
+Phase 7 — AI
+
+Build AI insight service
+
+Pass verified metrics to AI
+
+Generate explanations
+
+Generate recommendations
+
+Add confidence/context
+
+Prevent unsupported claims
+
+Phase 8 — Decision Support
+
+Alerts
+
+Recommendations
+
+What-if analysis
+
+Executive dashboard
+
+Phase 9 — Reports
+
+PDF
+
+Excel
+
+CSV
+
+Executive report
+
+Phase 10 — Testing
+
+Perform:
+
+Unit testing
+
+Integration testing
+
+API testing
+
+UI testing
+
+Security testing
+
+Data validation testing
+
+Forecast accuracy testing
+
+AI output evaluation
+
+User acceptance testing
+
+Phase 11 — Deployment
+
+Prepare:
+
+Production database
+
+Backend deployment
+
+Frontend deployment
+
+Environment variables
+
+HTTPS
+
+Database backups
+
+Logging
+
+Monitoring
+
+28. TEST CASES
+
+Create test cases for:
+
+Authentication
+
+Valid login
+
+Invalid password
+
+Disabled account
+
+Unauthorized page access
+
+Data Import
+
+Valid CSV
+
+Invalid CSV
+
+Missing columns
+
+Duplicate records
+
+Negative enrollment
+
+Empty dataset
+
+Analytics
+
+Correct total enrollment
+
+Correct growth rate
+
+Correct ranking
+
+Correct retention calculation
+
+Forecasting
+
+Historical dataset
+
+Insufficient data
+
+Missing periods
+
+Model failure
+
+Forecast generation
+
+AI
+
+Correct interpretation
+
+Unsupported claim detection
+
+Recommendation generation
+
+Missing data handling
+
+Security
+
+Unauthorized API access
+
+SQL injection
+
+Invalid file upload
+
+Session security
+
+29. EXPECTED FINAL OUTPUT
+
+The finished system should provide:
+
+Input
+
+Historical and current enrollment data.
+
+Processing
+
+Data cleaning+Statistical analytics+Visualization+Forecasting+AI analysis
+
+Output
+
+Interactive dashboards+Enrollment trends+Program analysis+Forecasts+Alerts+AI-generated insights+Decision recommendations+Reports
+
+The final system should demonstrate that data analytics and AI can assist educational administrators in making evidence-based enrollment planning decisions.
+
+30. IMPORTANT DEVELOPMENT RULE
+
+Do not build the entire system at once.
+
+Develop incrementally.
+
+First build:
+
+Database → Authentication → Data Import → Dashboard → Analytics → Forecasting → AI → Decision Support
+
+After every phase:
+
+Test it.
+
+Fix errors.
+
+Document it.
+
+Commit the working version.
+
+Continue to the next phase.
+
+Do not implement AI before the underlying data and analytics are reliable.
+
+The AI layer must be based on validated analytical results rather than raw, unverified data.
+
+Overall System Architecture
+
+System Flow / Data Flow Diagram
+
+Use Case Diagram
+
+Entity Relationship Diagram (ERD)
+
+AI-Driven Decision Support Workflow
+
+1. Overall System Architecture Diagram
+
+│ Authentication │ Authorization │ Data Management │ API Routing│ Authentication │ Authorization │ Data Management │ API RoutingREST API / BACKEND   REST API / BACKEND   Login │ Dashboard │ Enrollment │ Analytics │ Forecast │ AI Support ││ Reports │ Alerts │ Data Management │ Users │ Settings │ Audit Logs │Login │ Dashboard │ Enrollment │ Analytics │ Forecast │ AI Support ││ Reports │ Alerts │ Data Management │ Users │ Settings │ Audit Logs │WEB-BASED USER INTERFACEWEB-BASED USER INTERFACEAdministrator │ Enrollment Officer │ Decision Maker │ ResearcherAdministrator │ Enrollment Officer │ Decision Maker │ ResearcherSYSTEM USERSSYSTEM USERS
+
+│ Authentication │ Authorization │ Data Management │ API Routing
+
+│ Authentication │ Authorization │ Data Management │ API Routing
+
+REST API / BACKEND
+
+REST API / BACKEND
+
+Login │ Dashboard │ Enrollment │ Analytics │ Forecast │ AI Support │
+
+│ Reports │ Alerts │ Data Management │ Users │ Settings │ Audit Logs │
+
+Login │ Dashboard │ Enrollment │ Analytics │ Forecast │ AI Support │
+
+│ Reports │ Alerts │ Data Management │ Users │ Settings │ Audit Logs │
+
+WEB-BASED USER INTERFACE
+
+WEB-BASED USER INTERFACE
+
+Administrator │ Enrollment Officer │ Decision Maker │ Researcher
+
+Administrator │ Enrollment Officer │ Decision Maker │ Researcher
+
+SYSTEM USERS
+
+SYSTEM USERS
+
+2. Data Flow Diagram — Level 0
+
+This is suitable as your Context Diagram.
+
+The external entities are:
+
+Administrator
+
+Enrollment Officer / Registrar
+
+School Administrator / Decision Maker
+
+Researcher / Analyst
+
+The central process is:
+
+Visualization of Enrollment Dynamics Utilizing Data Analytics with AI-Driven Decision Support
+
+3. Data Flow Diagram — Level 1
+
+This gives a more detailed representation of how data moves through the system.
+
+4. AI-Driven Decision Support Workflow
+
+This is probably the most important diagram for your study because it shows how your system goes beyond ordinary visualization.
+
+5. Use Case Diagram
+
+You can structure your use-case diagram like this:
+
+6. Entity Relationship Diagram (ERD)
+
+For your database, I would improve the proposed structure slightly so that the relationships are clearer.
+
+Recommended High-Level Thesis Figure
+
+If you only need one main diagram for your proposal/Chapter 1, I recommend using this simplified conceptual architecture:

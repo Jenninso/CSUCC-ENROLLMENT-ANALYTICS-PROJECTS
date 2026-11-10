@@ -79,6 +79,21 @@
     </div>
 </div>
 
+<div class="ui-panel p-5 mb-6">
+    <h3 class="text-base font-semibold text-gray-800">Decision advice</h3>
+    <p class="text-sm text-gray-500 mt-1 mb-4">The student record does not store a written reason. The advice below uses grades, attendance, and tuition, then states what the college should do next.</p>
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        @foreach($movementAdvice ?? [] as $advice)
+            <div class="rounded-lg border border-gray-200 p-4">
+                <p class="text-xs font-semibold tracking-wide text-gray-500">{{ $advice['title'] }}</p>
+                <p class="mt-2 text-2xl font-bold text-gray-800">{{ number_format($advice['count']) }}</p>
+                <p class="mt-3 text-sm text-gray-700 leading-relaxed"><span class="font-semibold">Why: </span>{{ $advice['reason'] }}</p>
+                <p class="mt-2 text-sm text-gray-700 leading-relaxed"><span class="font-semibold">What to do: </span>{{ $advice['action'] }}</p>
+            </div>
+        @endforeach
+    </div>
+</div>
+
 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
     <div class="ui-kpi">
         <p class="ui-kpi-label">Highest-enrolled program</p>

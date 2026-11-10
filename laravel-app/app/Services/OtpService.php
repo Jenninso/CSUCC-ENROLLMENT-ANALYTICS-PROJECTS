@@ -366,9 +366,8 @@ class OtpService
         $this->lastSendError = null;
 
         try {
-            $mailer = (string) config('mail.default');
-            if (app()->environment('testing') || in_array($mailer, ['log', 'array'], true)) {
-                Mail::mailer($mailer === 'smtp' ? 'array' : $mailer)->to($email)->send(new OtpCodeMail($code, $label, $minutes));
+            if (app()->environment('testing')) {
+                Mail::mailer('array')->to($email)->send(new OtpCodeMail($code, $label, $minutes));
                 $this->lastSendSucceeded = true;
 
                 return true;

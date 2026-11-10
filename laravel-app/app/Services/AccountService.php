@@ -388,9 +388,8 @@ class AccountService
         );
 
         try {
-            $mailer = (string) config('mail.default');
-            if (app()->environment('testing') || in_array($mailer, ['log', 'array'], true)) {
-                Mail::mailer($mailer === 'smtp' ? 'array' : $mailer)->to($email)->send($mailable);
+            if (app()->environment('testing')) {
+                Mail::mailer('array')->to($email)->send($mailable);
 
                 return true;
             }

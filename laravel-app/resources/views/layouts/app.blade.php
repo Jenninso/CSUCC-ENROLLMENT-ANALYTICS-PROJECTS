@@ -19,6 +19,15 @@
       data-theme-mode="{{ $themeModePref }}"
       x-data="{
           sidebarOpen: false,
+          sidebarCollapsed: false,
+          toggleSidebar() {
+              if (window.matchMedia('(min-width: 1024px)').matches) {
+                  this.sidebarCollapsed = !this.sidebarCollapsed;
+                  localStorage.setItem('sidebarCollapsed', this.sidebarCollapsed ? '1' : '0');
+                  return;
+              }
+              this.sidebarOpen = !this.sidebarOpen;
+          },
           themeMode: {{ json_encode($themeModePref) }},
           applyThemeMode() {
               const mode = this.themeMode === 'system'
@@ -30,6 +39,7 @@
       }"
       x-init="
           applyThemeMode();
+          this.sidebarCollapsed = localStorage.getItem('sidebarCollapsed') === '1';
           window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => applyThemeMode());
       ">
 <head>
@@ -452,17 +462,20 @@
     <div x-show="sidebarOpen" x-cloak @click="sidebarOpen = false" class="fixed inset-0 bg-black/50 z-40 lg:hidden"></div>
 
     {{-- Sidebar --}}
-    <aside :class="sidebarOpen ? 'translate-x-0' : '-translate-x-full'"
-           data-sidebar-tone="{{ $themeSidebarLight ? 'light' : 'dark' }}"
-           class="theme-sidebar fixed inset-y-0 left-0 z-50 w-64 {{ $themeSidebarLight ? 'text-slate-900' : 'text-white' }} transform transition-transform lg:translate-x-0 flex flex-col">
+    <aside data-sidebar-tone="{{ $themeSidebarLight ? 'light' : 'dark' }}"
+           class="theme-sidebar fixed inset-y-0 left-0 z-50 w-64 {{ $themeSidebarLight ? 'text-slate-900' : 'text-white' }} transform transition-transform duration-200 flex flex-col"
+           :class="sidebarOpen ? 'translate-x-0' : (sidebarCollapsed ? '-translate-x-full' : 'max-lg:-translate-x-full')">
         {{-- Logo --}}
         <div class="flex items-center gap-3 px-4 py-5 border-b border-emerald-900/60">
             <img src="{{ asset('images/branding/logo.png') }}" alt="CSUCC" class="w-11 h-11 rounded-full object-contain bg-black/30 shrink-0 ring-1 ring-white/15">
-            <div class="min-w-0">
+            <div class="min-w-0 flex-1">
                 <p class="text-[10px] font-semibold tracking-[0.18em] text-amber-300/90">CSUCC</p>
                 <h1 class="font-brand text-[0.95rem] font-semibold leading-tight truncate">Enrollment Analytics</h1>
                 <p class="text-[10px] text-emerald-200/70 leading-tight mt-0.5">CEIT · BSIT Program</p>
             </div>
+            <button type="button" @click="toggleSidebar()" class="shrink-0 p-1.5 rounded-lg hover:bg-black/20" aria-label="Collapse sidebar">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5"/></svg>
+            </button>
         </div>
 
         @php $navUser = auth()->user(); @endphp
@@ -661,12 +674,12 @@
     </aside>
 
     {{-- Main Content --}}
-    <div class="lg:pl-64 flex flex-col min-h-screen min-w-0">
+    <div class="flex flex-col min-h-screen min-w-0 transition-[padding] duration-200" :class="sidebarCollapsed ? 'lg:pl-0' : 'lg:pl-64'">
         {{-- Top Bar --}}
         <header class="app-header border-b sticky top-0 z-30">
             <div class="flex items-center justify-between px-4 sm:px-6 lg:px-8 py-3.5">
                 <div class="flex items-center gap-3 min-w-0">
-                    <button @click="sidebarOpen = !sidebarOpen" class="lg:hidden p-1.5 rounded-lg text-gray-500 hover:text-gray-800 hover:bg-black/5">
+                    <button type="button" @click="toggleSidebar()" class="p-1.5 rounded-lg text-gray-500 hover:text-gray-800 hover:bg-black/5" aria-label="Toggle sidebar">
                         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5"/></svg>
                     </button>
                     <div class="min-w-0">

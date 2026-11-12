@@ -523,13 +523,9 @@
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
                 My portal
             </a>
-            <a href="{{ route('student.spes.index') }}" title="SPES Form" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium {{ request()->routeIs('student.spes.*') ? 'theme-primary-bg text-white' : 'text-emerald-100/80 hover:bg-black/20' }}">
+            <a href="{{ route('student.spes.index') }}" title="SPR" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium {{ request()->routeIs('student.spes.*') ? 'theme-primary-bg text-white' : 'text-emerald-100/80 hover:bg-black/20' }}">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z"/></svg>
-                SPES Form
-            </a>
-            <a href="{{ route('student.reasons.index') }}" title="Status reasons" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium {{ request()->routeIs('student.reasons.*') ? 'theme-primary-bg text-white' : 'text-emerald-100/80 hover:bg-black/20' }}">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7.5 8.25h9m-9 3.75h9m-9 3.75h6M6 20.25h12A2.25 2.25 0 0020.25 18V6A2.25 2.25 0 0018 3.75H6A2.25 2.25 0 003.75 6v12A2.25 2.25 0 006 20.25z"/></svg>
-                Status reasons
+                SPR
             </a>
             @else
             {{-- Dashboard --}}
@@ -557,13 +553,9 @@
             @endif
 
             @if($navUser?->canAccess('enrollment.view'))
-            <a href="{{ route('spes.index') }}" title="SPES Form" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium {{ request()->routeIs('spes.*') ? 'theme-primary-bg text-white' : 'text-emerald-100/80 hover:bg-black/20' }}">
+            <a href="{{ route('spes.index') }}" title="SPR" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium {{ request()->routeIs('spes.*') ? 'theme-primary-bg text-white' : 'text-emerald-100/80 hover:bg-black/20' }}">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z"/></svg>
-                SPES Form
-            </a>
-            <a href="{{ route('student-reasons.index') }}" title="Student reasons" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium {{ request()->routeIs('student-reasons.*') ? 'theme-primary-bg text-white' : 'text-emerald-100/80 hover:bg-black/20' }}">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7.5 8.25h9m-9 3.75h9m-9 3.75h6M6 20.25h12A2.25 2.25 0 0020.25 18V6A2.25 2.25 0 0018 3.75H6A2.25 2.25 0 003.75 6v12A2.25 2.25 0 006 20.25z"/></svg>
-                Student reasons
+                SPR
             </a>
             @endif
 
@@ -579,9 +571,6 @@
                 </button>
                 <div x-show="open" x-cloak class="ml-8 mt-1 space-y-1">
                     <a href="{{ route('enrollment.index') }}" class="block px-3 py-2 rounded-lg text-sm {{ request()->routeIs('enrollment.index') ? 'text-amber-300 bg-emerald-950/50' : 'text-emerald-200/60 hover:text-white' }}">Records</a>
-                    @if($navUser->canAccess('enrollment.manage'))
-                    <a href="{{ route('enrollment.import') }}" class="block px-3 py-2 rounded-lg text-sm {{ request()->routeIs('enrollment.import') ? 'text-amber-300 bg-emerald-950/50' : 'text-emerald-200/60 hover:text-white' }}">Import Data</a>
-                    @endif
                     <a href="{{ route('enrollment.quality') }}" class="block px-3 py-2 rounded-lg text-sm {{ request()->routeIs('enrollment.quality') ? 'text-amber-300 bg-emerald-950/50' : 'text-emerald-200/60 hover:text-white' }}">Data Quality</a>
                 </div>
             </div>

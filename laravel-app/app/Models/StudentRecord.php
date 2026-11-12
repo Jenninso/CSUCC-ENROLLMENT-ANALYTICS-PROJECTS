@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Services\EnrollmentProjection;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -92,6 +93,31 @@ class StudentRecord extends Model
             $record->student_id = strtoupper(trim((string) $record->student_id));
             $record->section = strtoupper(trim((string) $record->section));
             $record->risk_level = self::assessRisk($record->getAttributes());
+        });
+
+        static::saved(function (StudentRecord $record): void {
+            $projection = app(EnrollmentProjection::class);
+            $projection->syncFromStudent($record);
+
+            $previous = [
+                (int) $record->getOriginal('academic_year_id'),
+                (int) $record->getOriginal('semester_id'),
+                (int) $record->getOriginal('program_id'),
+                (int) $record->getOriginal('year_level'),
+            ];
+            $current = [
+                (int) $record->academic_year_id,
+                (int) $record->semester_id,
+                (int) $record->program_id,
+                (int) $record->year_level,
+            ];
+            if ($previous[0] > 0 && $previous !== $current) {
+                $projection->syncSlice(...$previous);
+            }
+        });
+
+        static::deleted(function (StudentRecord $record): void {
+            app(EnrollmentProjection::class)->syncFromStudent($record);
         });
     }
 

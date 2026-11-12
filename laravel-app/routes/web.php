@@ -23,7 +23,6 @@ use App\Http\Controllers\ReportController;
 use App\Http\Controllers\SemesterController;
 use App\Http\Controllers\SettingsController;
 use App\Http\Controllers\StudentAccountController;
-use App\Http\Controllers\StudentReasonController;
 use App\Http\Controllers\SpesApplicationController;
 use App\Http\Controllers\StudentRecordController;
 use App\Http\Controllers\UserController;
@@ -59,6 +58,11 @@ Route::get('/forgot-password/reset', [PasswordResetController::class, 'resetForm
 Route::post('/forgot-password/reset', [PasswordResetController::class, 'reset']);
 Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
+Route::get('/spr', [SpesApplicationController::class, 'publicCreate'])->name('spr.public');
+Route::post('/spr', [SpesApplicationController::class, 'publicStore'])->middleware('throttle:20,1')->name('spr.public.store');
+Route::get('/spr/{token}', [SpesApplicationController::class, 'publicEdit'])->where('token', '[A-Za-z0-9]{40}')->name('spr.public.edit');
+Route::put('/spr/{token}', [SpesApplicationController::class, 'publicUpdate'])->where('token', '[A-Za-z0-9]{40}')->middleware('throttle:20,1')->name('spr.public.update');
+
 Route::middleware(['auth', 'active'])->group(function () {
     Route::get('/setup/password', [AccountSetupController::class, 'passwordForm'])->name('setup.password');
     Route::post('/setup/password', [AccountSetupController::class, 'updatePassword']);
@@ -73,23 +77,11 @@ Route::middleware(['auth', 'active', 'setup', 'student.scope'])->group(function 
         Route::get('spes/create', [SpesApplicationController::class, 'studentCreate'])->name('spes.create');
         Route::post('spes', [SpesApplicationController::class, 'studentStore'])->name('spes.store');
         Route::get('spes/{spes}/print', [SpesApplicationController::class, 'studentPrint'])->name('spes.print');
+        Route::get('spes/{spes}/pdf', [SpesApplicationController::class, 'studentPdf'])->name('spes.pdf');
         Route::get('spes/{spes}/edit', [SpesApplicationController::class, 'studentEdit'])->name('spes.edit');
         Route::put('spes/{spes}', [SpesApplicationController::class, 'studentUpdate'])->name('spes.update');
         Route::delete('spes/{spes}', [SpesApplicationController::class, 'studentDestroy'])->name('spes.destroy');
         Route::get('spes/{spes}', [SpesApplicationController::class, 'studentShow'])->name('spes.show');
-        Route::get('reasons', [StudentReasonController::class, 'index'])->name('reasons.index');
-        Route::get('reasons/create', [StudentReasonController::class, 'create'])->name('reasons.create');
-        Route::post('reasons', [StudentReasonController::class, 'store'])->name('reasons.store');
-        Route::get('reasons/{reason}/edit', [StudentReasonController::class, 'edit'])->name('reasons.edit');
-        Route::put('reasons/{reason}', [StudentReasonController::class, 'update'])->name('reasons.update');
-        Route::delete('reasons/{reason}', [StudentReasonController::class, 'destroy'])->name('reasons.destroy');
-    });
-
-    Route::middleware('permission:enrollment.view')->group(function () {
-        Route::get('student-reasons', [StudentReasonController::class, 'staffIndex'])->name('student-reasons.index');
-    });
-    Route::middleware('permission:enrollment.manage')->group(function () {
-        Route::put('student-reasons/{reason}', [StudentReasonController::class, 'review'])->name('student-reasons.review');
     });
 
     Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
@@ -118,11 +110,13 @@ Route::middleware(['auth', 'active', 'setup', 'student.scope'])->group(function 
         Route::get('spes/{spes}/edit', [SpesApplicationController::class, 'edit'])->name('spes.edit');
         Route::put('spes/{spes}', [SpesApplicationController::class, 'update'])->name('spes.update');
         Route::post('spes/{spes}/student-access', [SpesApplicationController::class, 'allowStudentEdit'])->name('spes.student-access');
+        Route::put('spes/{spes}/status', [SpesApplicationController::class, 'updateStatus'])->name('spes.status');
         Route::delete('spes/{spes}', [SpesApplicationController::class, 'destroy'])->name('spes.destroy');
     });
     Route::middleware('permission:enrollment.view')->group(function () {
         Route::get('spes', [SpesApplicationController::class, 'index'])->name('spes.index');
         Route::get('spes/{spes}/print', [SpesApplicationController::class, 'print'])->name('spes.print');
+        Route::get('spes/{spes}/pdf', [SpesApplicationController::class, 'pdf'])->name('spes.pdf');
         Route::get('spes/{spes}', [SpesApplicationController::class, 'show'])->name('spes.show');
     });
 
@@ -140,10 +134,6 @@ Route::middleware(['auth', 'active', 'setup', 'student.scope'])->group(function 
     Route::middleware('permission:enrollment.manage')->group(function () {
         Route::get('enrollment/create', [EnrollmentRecordController::class, 'create'])->name('enrollment.create');
         Route::post('enrollment', [EnrollmentRecordController::class, 'store'])->name('enrollment.store');
-        Route::get('enrollment/import', [EnrollmentRecordController::class, 'importForm'])->name('enrollment.import');
-        Route::get('enrollment/template', [EnrollmentRecordController::class, 'template'])->name('enrollment.template');
-        Route::post('enrollment/import/preview', [EnrollmentRecordController::class, 'importPreview'])->name('enrollment.import.preview');
-        Route::post('enrollment/import/confirm', [EnrollmentRecordController::class, 'importCommit'])->name('enrollment.import.confirm');
         Route::get('enrollment/{enrollment}/edit', [EnrollmentRecordController::class, 'edit'])->name('enrollment.edit');
         Route::put('enrollment/{enrollment}', [EnrollmentRecordController::class, 'update'])->name('enrollment.update');
         Route::delete('enrollment/{enrollment}', [EnrollmentRecordController::class, 'destroy'])->name('enrollment.destroy');

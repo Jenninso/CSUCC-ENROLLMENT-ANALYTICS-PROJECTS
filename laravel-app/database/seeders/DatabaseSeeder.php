@@ -29,7 +29,7 @@ class DatabaseSeeder extends Seeder
         ]);
         Role::create([
             'role_name' => 'Student',
-            'description' => 'Student portal for the SPES form and academic status reasons.',
+            'description' => 'Student portal for the SPR form.',
         ]);
 
         foreach (config('permissions.catalog') as $key => [$name, $module]) {

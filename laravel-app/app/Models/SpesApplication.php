@@ -57,8 +57,10 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
     'status',
     'student_can_edit',
     'remarks',
+    'spr_data',
     'encoded_by',
     'user_id',
+    'public_token',
 ])]
 class SpesApplication extends Model
 {
@@ -143,6 +145,7 @@ class SpesApplication extends Model
             'has_indigency' => 'boolean',
             'has_photo' => 'boolean',
             'student_can_edit' => 'boolean',
+            'spr_data' => 'array',
         ];
     }
 
@@ -173,7 +176,7 @@ class SpesApplication extends Model
 
     public function studentMayEdit(): bool
     {
-        return ! $this->isLocked() || (bool) $this->student_can_edit;
+        return (bool) $this->student_can_edit;
     }
 
     public function fullName(): string
@@ -206,7 +209,51 @@ class SpesApplication extends Model
 
     public static function referenceFor(int $id, int $year): string
     {
-        return sprintf('SPES-%d-%04d', $year, $id);
+        return sprintf('SPR-%d-%04d', $year, $id);
+    }
+
+    public function paper(): array
+    {
+        $paper = [
+            'last_name' => $this->last_name,
+            'first_name' => $this->first_name,
+            'middle_name' => $this->middle_name,
+            'id_no' => $this->student_id,
+            'birth_date' => $this->birth_date?->format('Y-m-d'),
+            'age' => $this->age,
+            'civil_status' => $this->civil_status,
+            'sex_at_birth' => $this->sex,
+            'place_of_birth' => $this->place_of_birth,
+            'home_purok' => $this->address,
+            'home_barangay' => $this->barangay,
+            'home_city' => $this->city_municipality,
+            'home_province' => $this->province,
+            'home_zip' => $this->zip_code,
+            'mobile' => $this->contact_number,
+            'email' => $this->email,
+            'father_name' => $this->father_name,
+            'father_occupation' => $this->father_occupation,
+            'mother_name' => $this->mother_name,
+            'mother_occupation' => $this->mother_occupation,
+            'signature_name' => $this->applicant_signature,
+            'priority_1' => $this->course,
+            'secondary_school' => $this->school_name,
+            'secondary_address' => $this->school_address,
+        ];
+
+        foreach ($paper as $key => $value) {
+            if ($value === 'N/A') {
+                $paper[$key] = '';
+            }
+        }
+
+        foreach ($this->spr_data ?? [] as $key => $value) {
+            if ($value !== null && $value !== '') {
+                $paper[$key] = $value;
+            }
+        }
+
+        return $paper;
     }
 
     public static function yearLevelFromStudent(int $yearLevel): string

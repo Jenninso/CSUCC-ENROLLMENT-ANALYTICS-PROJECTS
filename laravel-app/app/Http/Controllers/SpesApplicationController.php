@@ -5,10 +5,11 @@ namespace App\Http\Controllers;
 use App\Models\SpesApplication;
 use App\Models\StudentRecord;
 use App\Services\AuditLogger;
+use App\Services\SprPdf;
+use Illuminate\Support\Str;
+use Throwable;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
-use Illuminate\Validation\ValidationException;
-
 class SpesApplicationController extends Controller
 {
     public function index(Request $request)
@@ -56,27 +57,14 @@ class SpesApplicationController extends Controller
         ]);
     }
 
-    public function create(Request $request)
+    public function create()
     {
-        return view('spes.form', [
-            'prefill' => $this->prefillFromStudent($request->integer('student')),
-        ]);
+        return redirect()->route('spes.index')->with('error', 'Only the student can fill out an SPR. Open the saved record and allow one edit.');
     }
 
-    public function store(Request $request, AuditLogger $audit)
+    public function store()
     {
-        $data = $this->fields($request);
-        $data['reference_no'] = 'SPES-PENDING';
-        $data['encoded_by'] = $request->user()?->id;
-
-        $application = SpesApplication::create($data);
-        $application->update([
-            'reference_no' => SpesApplication::referenceFor($application->id, (int) $application->application_year),
-        ]);
-
-        $audit->log('create', 'spes', 'Encoded SPES application '.$application->reference_no.' for '.$application->fullName().'.');
-
-        return redirect()->route('spes.show', $application)->with('success', 'SPES application '.$application->reference_no.' saved.');
+        return redirect()->route('spes.index')->with('error', 'Only the student can fill out an SPR. Open the saved record and allow one edit.');
     }
 
     public function show(SpesApplication $spes)
@@ -88,38 +76,40 @@ class SpesApplicationController extends Controller
 
     public function edit(SpesApplication $spes)
     {
-        return view('spes.form', [
-            'application' => $spes,
-            'prefill' => [],
-        ]);
+        return redirect()->route('spes.show', $spes)->with('error', 'Staff cannot edit this SPR. Allow the student one edit instead.');
     }
 
-    public function update(Request $request, SpesApplication $spes, AuditLogger $audit)
+    public function update(SpesApplication $spes)
     {
-        $data = $this->fields($request);
-        $data['student_can_edit'] = in_array($data['status'], ['approved', 'employed', 'completed'], true)
-            && $request->boolean('allow_student_edit');
-        $spes->update($data);
-        $audit->log('update', 'spes', 'Updated SPES application '.$spes->reference_no.'.');
+        return redirect()->route('spes.show', $spes)->with('error', 'Staff cannot edit this SPR. Allow the student one edit instead.');
+    }
 
-        return redirect()->route('spes.show', $spes)->with('success', 'SPES application updated.');
+    public function updateStatus(Request $request, SpesApplication $spes, AuditLogger $audit)
+    {
+        $data = $request->validate([
+            'status' => ['required', Rule::in(array_keys(SpesApplication::STATUSES))],
+            'remarks' => ['nullable', 'string', 'max:2000'],
+        ]);
+        $spes->update([
+            'status' => $data['status'],
+            'remarks' => $data['remarks'] ?? null,
+        ]);
+        $audit->log('update', 'spes', 'Updated office status for '.$spes->reference_no.' without changing the student answers.');
+
+        return back()->with('success', 'Office status saved. The student answers were not changed.');
     }
 
     public function destroy(SpesApplication $spes, AuditLogger $audit)
     {
         $reference = $spes->reference_no;
         $spes->delete();
-        $audit->log('delete', 'spes', 'Deleted SPES application '.$reference.'.');
+        $audit->log('delete', 'spes', 'Deleted SPR application '.$reference.'.');
 
-        return redirect()->route('spes.index')->with('success', 'SPES application deleted.');
+        return redirect()->route('spes.index')->with('success', 'SPR application deleted.');
     }
 
     public function allowStudentEdit(Request $request, SpesApplication $spes, AuditLogger $audit)
     {
-        if (! $spes->isLocked()) {
-            return back()->with('error', 'The student can still edit this application until it is approved.');
-        }
-
         $allow = $request->boolean('allow');
         $spes->update(['student_can_edit' => $allow]);
         $audit->log('update', 'spes', ($allow ? 'Allowed' : 'Locked').' student editing for '.$spes->reference_no.'.');
@@ -132,6 +122,11 @@ class SpesApplicationController extends Controller
     public function print(SpesApplication $spes)
     {
         return view('spes.print', ['application' => $spes]);
+    }
+
+    public function pdf(SpesApplication $spes, SprPdf $pdf)
+    {
+        return $this->pdfResponse($pdf, $spes, false);
     }
 
     private function prefillFromStudent(int $studentId): array
@@ -158,89 +153,223 @@ class SpesApplicationController extends Controller
         ];
     }
 
-    public function fields(Request $request, bool $asStudent = false, ?string $keepStatus = null): array
+    public function fields(Request $request, bool $asStudent = false, ?string $keepStatus = null, ?SpesApplication $existing = null): array
     {
-        $currentYear = (int) now()->year;
+        $levels = ['post_graduate', 'graduate', 'undergraduate', 'certificate'];
+        $types = ['new_student', 'transferee', 'old_student', 'returnee'];
+        $tracks = ['gas', 'humss', 'stem', 'abm', 'ict', 'he', 'agri', 'industrial', 'arts', 'sports', 'na'];
+        $officeKeys = ['csu_at_total', 'csu_at_english', 'csu_at_math', 'csu_at_science', 'csu_at_logical', 'office_course_1', 'office_course_2', 'office_course_3', 'admission_year', 'admission_test_date'];
+
         $data = $request->validate([
             'student_record_id' => ['nullable', 'integer', 'exists:student_records,id'],
-            'student_id' => ['nullable', 'string', 'max:30'],
+            'id_no' => ['nullable', 'string', 'max:30'],
             'last_name' => ['required', 'string', 'max:80'],
             'first_name' => ['required', 'string', 'max:80'],
             'middle_name' => ['nullable', 'string', 'max:80'],
-            'name_extension' => ['nullable', 'string', 'max:20'],
-            'sex' => ['required', Rule::in(array_keys(SpesApplication::SEXES))],
-            'civil_status' => ['required', Rule::in(array_keys(SpesApplication::CIVIL_STATUSES))],
+            'student_level' => ['nullable', Rule::in($levels)],
+            'admission_type' => ['nullable', Rule::in($types)],
             'birth_date' => ['required', 'date', 'before:today'],
-            'place_of_birth' => ['required', 'string', 'max:150'],
-            'address' => ['required', 'string', 'max:255'],
-            'barangay' => ['required', 'string', 'max:100'],
-            'city_municipality' => ['required', 'string', 'max:100'],
-            'province' => ['required', 'string', 'max:100'],
-            'zip_code' => ['nullable', 'string', 'max:10'],
-            'contact_number' => ['required', 'string', 'max:30'],
+            'age' => ['nullable', 'integer', 'min:1', 'max:120'],
+            'civil_status' => ['nullable', 'string', 'max:20'],
+            'sex_at_birth' => ['nullable', 'string', 'max:20'],
+            'sogie' => ['nullable', 'string', 'max:80'],
+            'place_of_birth' => ['nullable', 'string', 'max:150'],
+            'citizenship' => ['nullable', 'string', 'max:80'],
+            'religion' => ['nullable', 'string', 'max:80'],
+            'home_purok' => ['nullable', 'string', 'max:120'],
+            'home_barangay' => ['nullable', 'string', 'max:100'],
+            'home_city' => ['nullable', 'string', 'max:100'],
+            'home_province' => ['nullable', 'string', 'max:100'],
+            'home_zip' => ['nullable', 'string', 'max:10'],
+            'current_purok' => ['nullable', 'string', 'max:120'],
+            'current_barangay' => ['nullable', 'string', 'max:100'],
+            'current_city' => ['nullable', 'string', 'max:100'],
+            'current_province' => ['nullable', 'string', 'max:100'],
+            'current_zip' => ['nullable', 'string', 'max:10'],
+            'mobile' => ['nullable', 'string', 'max:30'],
+            'ethnicity' => ['nullable', 'string', 'max:80'],
             'email' => ['nullable', 'email', 'max:150'],
+            'first_in_family' => ['nullable', Rule::in(['yes', 'no'])],
+            'preferred_hand' => ['nullable', Rule::in(['right', 'left', 'both'])],
+            'special_needs' => ['nullable', Rule::in(['yes', 'no'])],
+            'special_needs_detail' => ['nullable', 'string', 'max:180'],
+            'four_ps' => ['nullable', Rule::in(['yes', 'no'])],
+            'household_id' => ['nullable', 'string', 'max:40'],
+            'solo_parent' => ['nullable', Rule::in(['yes', 'no'])],
+            'number_of_children' => ['nullable', 'integer', 'min:0', 'max:30'],
+            'living_with_parents' => ['nullable', Rule::in(['yes', 'no'])],
             'father_name' => ['nullable', 'string', 'max:150'],
+            'father_status' => ['nullable', Rule::in(['living', 'deceased'])],
             'father_occupation' => ['nullable', 'string', 'max:100'],
             'mother_name' => ['nullable', 'string', 'max:150'],
+            'mother_status' => ['nullable', Rule::in(['living', 'deceased'])],
             'mother_occupation' => ['nullable', 'string', 'max:100'],
-            'parents_annual_income' => ['required', 'numeric', 'min:0', 'max:9999999999'],
-            'number_of_siblings' => ['required', 'integer', 'min:0', 'max:30'],
-            'education_level' => ['required', Rule::in(array_keys(SpesApplication::EDUCATION_LEVELS))],
-            'school_name' => ['required', 'string', 'max:180'],
-            'school_address' => ['nullable', 'string', 'max:255'],
-            'course' => ['nullable', 'string', 'max:150'],
-            'year_level' => ['required', Rule::in(SpesApplication::YEAR_LEVELS)],
-            'general_average' => ['nullable', 'numeric', 'min:0', 'max:100'],
-            'enrollment_status' => ['required', Rule::in(array_keys(SpesApplication::ENROLLMENT_STATUSES))],
-            'application_year' => ['required', 'integer', 'min:1992', 'max:'.($currentYear + 1)],
-            'work_period' => ['required', Rule::in(array_keys(SpesApplication::WORK_PERIODS))],
-            'preferred_days' => ['required', 'integer', 'min:20', 'max:78'],
-            'beneficiary_type' => ['required', Rule::in(array_keys(SpesApplication::BENEFICIARY_TYPES))],
-            'previous_spes' => ['required', 'boolean'],
-            'previous_year' => ['nullable', 'integer', 'min:1992', 'max:'.$currentYear, 'required_if:previous_spes,1'],
-            'preferred_assignment' => ['nullable', 'string', 'max:150'],
-            'skills' => ['nullable', 'string', 'max:255'],
-            'has_birth_certificate' => ['required', 'boolean'],
-            'has_enrollment_cert' => ['required', 'boolean'],
-            'has_grades' => ['required', 'boolean'],
-            'has_indigency' => ['required', 'boolean'],
-            'has_photo' => ['required', 'boolean'],
-            'application_date' => ['required', 'date', 'before_or_equal:today'],
-            'applicant_signature' => ['required', 'string', 'max:150'],
+            'estimated_income' => ['nullable', 'string', 'max:80'],
+            'support' => ['nullable', 'array'],
+            'support.*' => [Rule::in(['parents', 'guardian', 'student_assistant', 'employed', 'scholarship', 'others'])],
+            'employed_time' => ['nullable', Rule::in(['full_time', 'part_time'])],
+            'scholarship_specify' => ['nullable', 'string', 'max:150'],
+            'others_specify' => ['nullable', 'string', 'max:150'],
+            'guardian_name' => ['nullable', 'string', 'max:150'],
+            'relationship' => ['nullable', 'string', 'max:80'],
+            'guardian_mobile' => ['nullable', 'string', 'max:30'],
+            'guardian_address' => ['nullable', 'string', 'max:255'],
+            'elementary_school' => ['nullable', 'string', 'max:180'],
+            'elementary_address' => ['nullable', 'string', 'max:180'],
+            'elementary_sy' => ['nullable', 'string', 'max:40'],
+            'secondary_school' => ['nullable', 'string', 'max:180'],
+            'secondary_address' => ['nullable', 'string', 'max:180'],
+            'secondary_sy' => ['nullable', 'string', 'max:40'],
+            'last_school' => ['nullable', 'string', 'max:180'],
+            'last_school_address' => ['nullable', 'string', 'max:180'],
+            'last_school_years' => ['nullable', 'string', 'max:40'],
+            'shs_track' => ['nullable', Rule::in($tracks)],
+            'baccalaureate_degree' => ['nullable', 'string', 'max:180'],
+            'baccalaureate_school' => ['nullable', 'string', 'max:180'],
+            'baccalaureate_address' => ['nullable', 'string', 'max:180'],
+            'baccalaureate_years' => ['nullable', 'string', 'max:40'],
+            'preferred_campus' => ['nullable', Rule::in(['main', 'cabadbaran'])],
+            'priority_1' => ['nullable', 'string', 'max:150'],
+            'priority_2' => ['nullable', 'string', 'max:150'],
+            'priority_3' => ['nullable', 'string', 'max:150'],
+            'signature_name' => ['required', 'string', 'max:150'],
             'certified' => ['accepted'],
             'status' => ['required', Rule::in(array_keys(SpesApplication::STATUSES))],
             'remarks' => ['nullable', 'string', 'max:2000'],
+            'csu_at_total' => ['nullable', 'string', 'max:20'],
+            'csu_at_english' => ['nullable', 'string', 'max:20'],
+            'csu_at_math' => ['nullable', 'string', 'max:20'],
+            'csu_at_science' => ['nullable', 'string', 'max:20'],
+            'csu_at_logical' => ['nullable', 'string', 'max:20'],
+            'office_course_1' => ['nullable', 'string', 'max:150'],
+            'office_course_2' => ['nullable', 'string', 'max:150'],
+            'office_course_3' => ['nullable', 'string', 'max:150'],
+            'admission_year' => ['nullable', 'string', 'max:20'],
+            'admission_test_date' => ['nullable', 'date'],
         ]);
 
-        $age = $request->date('birth_date')->age;
-        if ($age < 15 || $age > 30) {
-            throw ValidationException::withMessages([
-                'birth_date' => 'SPES applicants must be at least 15 and not more than 30 years old.',
-            ]);
+        unset($data['certified']);
+        $spr = $data;
+        unset($spr['student_record_id'], $spr['status'], $spr['remarks']);
+        if ($asStudent) {
+            foreach (array_merge($officeKeys, ['remarks']) as $key) {
+                unset($spr[$key]);
+            }
+            foreach ($officeKeys as $key) {
+                if (array_key_exists($key, $existing->spr_data ?? [])) {
+                    $spr[$key] = $existing->spr_data[$key];
+                }
+            }
         }
 
-        unset($data['certified']);
-        $data['age'] = $age;
-        $data['student_record_id'] = ($data['student_record_id'] ?? null) ?: null;
-        $data['student_id'] = trim((string) ($data['student_id'] ?? '')) ?: null;
-        if ($asStudent) {
+        $blank = fn ($value) => ($value === null || $value === '') ? 'N/A' : $value;
+        $row = [
+            'student_record_id' => ($data['student_record_id'] ?? null) ?: null,
+            'student_id' => trim((string) ($data['id_no'] ?? '')) ?: null,
+            'last_name' => $data['last_name'],
+            'first_name' => $data['first_name'],
+            'middle_name' => $data['middle_name'] ?? null,
+            'sex' => $blank($data['sex_at_birth'] ?? null),
+            'civil_status' => $blank($data['civil_status'] ?? null),
+            'birth_date' => $data['birth_date'],
+            'age' => $request->filled('age') ? (int) $request->input('age') : $request->date('birth_date')->age,
+            'place_of_birth' => $blank($data['place_of_birth'] ?? null),
+            'address' => $blank($data['home_purok'] ?? null),
+            'barangay' => $blank($data['home_barangay'] ?? null),
+            'city_municipality' => $blank($data['home_city'] ?? null),
+            'province' => $blank($data['home_province'] ?? null),
+            'zip_code' => $data['home_zip'] ?? null,
+            'contact_number' => $blank($data['mobile'] ?? null),
+            'email' => $data['email'] ?? null,
+            'father_name' => $data['father_name'] ?? null,
+            'father_occupation' => $data['father_occupation'] ?? null,
+            'mother_name' => $data['mother_name'] ?? null,
+            'mother_occupation' => $data['mother_occupation'] ?? null,
+            'parents_annual_income' => 0,
+            'number_of_siblings' => (int) ($data['number_of_children'] ?? 0),
+            'education_level' => $data['student_level'] ?? 'undergraduate',
+            'school_name' => $blank($data['secondary_school'] ?? ($data['elementary_school'] ?? null)),
+            'school_address' => $data['secondary_address'] ?? null,
+            'course' => $data['priority_1'] ?? null,
+            'year_level' => 'N/A',
+            'enrollment_status' => $data['admission_type'] ?? 'new_student',
+            'application_year' => (int) now()->year,
+            'work_period' => 'na',
+            'preferred_days' => 0,
+            'beneficiary_type' => 'student',
+            'previous_spes' => false,
+            'application_date' => now()->toDateString(),
+            'applicant_signature' => $data['signature_name'],
+            'status' => $data['status'] ?? 'submitted',
+            'remarks' => $asStudent ? null : ($data['remarks'] ?? null),
+            'spr_data' => $spr,
+        ];
+
+        if ($asStudent && $request->user()) {
             $studentId = $request->user()->studentNumber();
-            $data['student_id'] = $studentId;
-            $data['status'] = $keepStatus ?: 'submitted';
-            $data['student_record_id'] = StudentRecord::query()
+            $row['student_id'] = $studentId;
+            $row['spr_data']['id_no'] = $studentId;
+            $row['status'] = $keepStatus ?: 'submitted';
+            $row['student_record_id'] = StudentRecord::query()
                 ->where('student_id', $studentId)
                 ->latest('id')
                 ->value('id');
-            unset($data['remarks']);
-        }
-        $data['previous_spes'] = $request->boolean('previous_spes');
-        $data['previous_year'] = $data['previous_spes'] ? (($data['previous_year'] ?? null) ?: null) : null;
-
-        foreach (array_keys(SpesApplication::DOCUMENTS) as $field) {
-            $data[$field] = $request->boolean($field);
+        } elseif ($asStudent) {
+            $row['status'] = $keepStatus ?: 'submitted';
+            $row['user_id'] = null;
         }
 
-        return $data;
+        return $row;
+    }
+
+    public function publicCreate()
+    {
+        return view('spes.public', ['application' => null]);
+    }
+
+    public function publicStore(Request $request, AuditLogger $audit)
+    {
+        $data = $this->fields($request, true, 'submitted');
+        $data['reference_no'] = 'SPR-PENDING';
+        $data['user_id'] = null;
+        $data['encoded_by'] = null;
+        $data['public_token'] = Str::random(40);
+        $data['student_can_edit'] = false;
+
+        $application = SpesApplication::create($data);
+        $application->update([
+            'reference_no' => SpesApplication::referenceFor($application->id, (int) $application->application_year),
+        ]);
+
+        $audit->log('create', 'spes', 'A student without an account submitted '.$application->reference_no.'.');
+
+        return redirect()
+            ->route('spr.public.edit', $application->public_token)
+            ->with('success', 'Your SPR was saved. You cannot change it after saving. Reference '.$application->reference_no.'.');
+    }
+
+    public function publicEdit(string $token)
+    {
+        $application = $this->publicRecord($token);
+
+        return view('spes.public', [
+            'application' => $application,
+            'locked' => true,
+        ]);
+    }
+
+    public function publicUpdate(string $token)
+    {
+        $this->publicRecord($token);
+
+        return redirect()
+            ->route('spr.public.edit', $token)
+            ->with('error', 'This form cannot be edited after it is saved.');
+    }
+
+    private function publicRecord(string $token): SpesApplication
+    {
+        return SpesApplication::query()->where('public_token', $token)->firstOrFail();
     }
 
     public function studentIndex(Request $request)
@@ -267,7 +396,7 @@ class SpesApplicationController extends Controller
     public function studentStore(Request $request, AuditLogger $audit)
     {
         $data = $this->fields($request, true);
-        $data['reference_no'] = 'SPES-PENDING';
+        $data['reference_no'] = 'SPR-PENDING';
         $data['encoded_by'] = $request->user()->id;
         $data['user_id'] = $request->user()->id;
 
@@ -276,14 +405,22 @@ class SpesApplicationController extends Controller
             'reference_no' => SpesApplication::referenceFor($application->id, (int) $application->application_year),
         ]);
 
-        $audit->log('create', 'spes', 'Student submitted SPES application '.$application->reference_no.'.');
+        $audit->log('create', 'spes', 'Student submitted SPR application '.$application->reference_no.'.');
 
-        return redirect()->route('student.spes.show', $application)->with('success', 'Your SPES application '.$application->reference_no.' was submitted.');
+        return redirect()->route('student.spes.show', $application)->with('success', 'Your SPR application '.$application->reference_no.' was submitted.');
     }
 
     public function studentShow(Request $request, SpesApplication $spes)
     {
         $this->authorizeStudent($request, $spes);
+
+        if ($spes->studentMayEdit()) {
+            return view('spes.form', [
+                'application' => $spes,
+                'prefill' => [],
+                'studentMode' => true,
+            ]);
+        }
 
         return view('spes.show', ['application' => $spes, 'studentMode' => true]);
     }
@@ -309,16 +446,11 @@ class SpesApplicationController extends Controller
             return redirect()->route('student.spes.show', $spes)->with('error', 'This application can no longer be edited unless the office allows it.');
         }
 
-        $wasLocked = $spes->isLocked();
-        $spes->update($this->fields($request, true, $spes->status));
-        if ($wasLocked) {
-            $spes->update(['student_can_edit' => false]);
-        }
-        $audit->log('update', 'spes', 'Student updated SPES application '.$spes->reference_no.'.');
+        $spes->update($this->fields($request, true, $spes->status, $spes));
+        $spes->update(['student_can_edit' => false]);
+        $audit->log('update', 'spes', 'Student updated SPR application '.$spes->reference_no.'.');
 
-        $message = $wasLocked
-            ? 'Your changes were saved. The application is locked again until the office allows another edit.'
-            : 'Your SPES application was updated.';
+        $message = 'Your changes were saved. The record is locked again until the office allows another edit.';
 
         return redirect()->route('student.spes.show', $spes)->with('success', $message);
     }
@@ -332,7 +464,7 @@ class SpesApplicationController extends Controller
 
         $reference = $spes->reference_no;
         $spes->delete();
-        $audit->log('delete', 'spes', 'Student withdrew SPES application '.$reference.'.');
+        $audit->log('delete', 'spes', 'Student withdrew SPR application '.$reference.'.');
 
         return redirect()->route('student.spes.index')->with('success', 'Application '.$reference.' was withdrawn.');
     }
@@ -342,6 +474,24 @@ class SpesApplicationController extends Controller
         $this->authorizeStudent($request, $spes);
 
         return view('spes.print', ['application' => $spes, 'studentMode' => true]);
+    }
+
+    public function studentPdf(Request $request, SpesApplication $spes, SprPdf $pdf)
+    {
+        $this->authorizeStudent($request, $spes);
+
+        return $this->pdfResponse($pdf, $spes, true);
+    }
+
+    private function pdfResponse(SprPdf $pdf, SpesApplication $spes, bool $studentMode)
+    {
+        try {
+            return $pdf->download($spes, $studentMode);
+        } catch (Throwable $exception) {
+            report($exception);
+
+            return back()->with('error', 'The PDF could not be created. Use Print form if the download does not start.');
+        }
     }
 
     private function authorizeStudent(Request $request, SpesApplication $spes): void

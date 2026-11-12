@@ -233,7 +233,7 @@ PROMPT;
             $name = $user?->first_name ?: 'there';
 
             return [
-                'reply' => "Hi {$name}! I'm your CSUCC assistant. We can chat about anything in this system — students, enrollment import, analytics, forecasting, AI insights, accounts, or settings. What are you trying to do right now?",
+                'reply' => "Hi {$name}! I'm your CSUCC assistant. We can chat about anything in this system — students, enrollment, analytics, forecasting, AI insights, accounts, or settings. What are you trying to do right now?",
                 'links' => $this->linksFor($user, ['dashboard', 'students.index', 'ai-support.index']),
             ];
         }
@@ -333,8 +333,8 @@ PROMPT;
             ],
             [
                 'keywords' => ['enrollment', 'import', 'csv', 'template', 'data quality', 'upload'],
-                'answer' => "Enrollment Records hold aggregated counts by program, year level, and type.\n\n• View / export from Enrollment.\n• Import: download the CSV template, fill it, preview, then confirm.\n• Data Quality flags gaps and inconsistencies.\n\nNeed manage permission to add, import, edit, or delete.",
-                'routes' => ['enrollment.index', 'enrollment.import', 'enrollment.template', 'enrollment.quality', 'enrollment.create'],
+                'answer' => "Enrollment counts come from the student records for the same year, semester, course, and year level.\n\n• View or export the counts from Enrollment.\n• Add or import students under Student Records. Saving a student updates the matching enrollment count.\n• Data Quality flags gaps and inconsistencies.",
+                'routes' => ['enrollment.index', 'enrollment.quality', 'students.import'],
             ],
             [
                 'keywords' => ['analytic', 'trend', 'retention', 'program analytic', 'college analytic', 'dashboard'],
@@ -394,8 +394,8 @@ PROMPT;
             ],
             [
                 'keywords' => ['export', 'download'],
-                'answer' => 'Export uses your current filters on Students or Enrollment. Enrollment import uses the CSV template from the Import page.',
-                'routes' => ['students.export', 'students.import', 'students.template', 'enrollment.export', 'enrollment.import', 'enrollment.template'],
+                'answer' => 'Export uses your current filters on Students or Enrollment. Import a file from Student Records.',
+                'routes' => ['students.export', 'students.import', 'students.template', 'enrollment.export'],
             ],
             [
                 'keywords' => ['permission', 'access denied', 'cannot see', "can't see", 'unauthorized', 'forbidden'],
@@ -478,8 +478,6 @@ PROMPT;
             'enrollment.create' => 'Add Enrollment',
             'students.import' => 'Import Students',
             'students.template' => 'Student CSV Template',
-            'enrollment.import' => 'Import Enrollment',
-            'enrollment.template' => 'CSV Template',
             'enrollment.quality' => 'Data Quality',
             'enrollment.export' => 'Export Enrollment',
             'analytics.summary' => 'Analytics Summary',
@@ -516,8 +514,6 @@ PROMPT;
             'students.export' => 'enrollment.view',
             'enrollment.index' => 'enrollment.view',
             'enrollment.create' => 'enrollment.manage',
-            'enrollment.import' => 'enrollment.manage',
-            'enrollment.template' => 'enrollment.manage',
             'enrollment.quality' => 'enrollment.view',
             'enrollment.export' => 'enrollment.view',
             'analytics.summary' => 'analytics.view',

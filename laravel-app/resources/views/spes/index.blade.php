@@ -1,18 +1,20 @@
 @extends('layouts.app')
-@section('title', 'SPES Applications')
+@section('title', 'SPR')
 
 @section('content')
 <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-6">
     <div>
-        <h3 class="ui-page-title">SPES Applications</h3>
-        <p class="ui-page-sub">Special Program for the Employment of Students (RA 7323, as amended). This form keeps the legal identity DOLE needs. Academic records stay identified by Student ID only.</p>
+        <h3 class="ui-page-title">SPR</h3>
+        <p class="ui-page-sub">Student Personal Record. The printed form is one long bond page, 8.5 × 13 inches, with the CSU Cabadbaran header.</p>
     </div>
-    @if(auth()->user()?->canAccess('enrollment.manage'))
-    <a href="{{ route('spes.create') }}" class="ui-btn-primary shrink-0">
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.5v15m7.5-7.5h-15"/></svg>
-        New application
-    </a>
-    @endif
+</div>
+
+<div class="ui-panel p-4 mb-4 flex flex-col sm:flex-row sm:items-center gap-3">
+    <div class="grow">
+        <p class="text-sm font-semibold text-gray-900">Share link for students with no account</p>
+        <p class="text-xs text-gray-500 mt-1">They only see the SPR form. They can fill it and save it. They cannot open the rest of the system.</p>
+    </div>
+    <input type="text" readonly value="{{ route('spr.public') }}" class="ui-input sm:max-w-md" onclick="this.select()">
 </div>
 
 <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
@@ -43,12 +45,6 @@
                 <option value="{{ $value }}" {{ request('status') === $value ? 'selected' : '' }}>{{ $label }}</option>
             @endforeach
         </select>
-        <select name="work_period" class="ui-input">
-            <option value="">All work periods</option>
-            @foreach(\App\Models\SpesApplication::WORK_PERIODS as $value => $label)
-                <option value="{{ $value }}" {{ request('work_period') === $value ? 'selected' : '' }}>{{ $label }}</option>
-            @endforeach
-        </select>
         <select name="application_year" class="ui-input">
             <option value="">All years</option>
             @foreach($years as $year)
@@ -69,7 +65,7 @@
                 <th class="text-left">Reference</th>
                 <th class="text-left">Applicant</th>
                 <th class="text-left">Student ID</th>
-                <th class="text-left">Period</th>
+                <th class="text-left">Filed</th>
                 <th class="text-left">Documents</th>
                 <th class="text-left">Status</th>
                 <th class="text-right">Actions</th>
@@ -84,20 +80,18 @@
                     <p class="text-xs text-gray-500 mt-0.5">{{ $application->course ?: \App\Models\SpesApplication::EDUCATION_LEVELS[$application->education_level] }} · {{ $application->year_level }}</p>
                 </td>
                 <td class="font-mono text-xs">{{ $application->student_id ?: '—' }}</td>
-                <td>{{ \App\Models\SpesApplication::WORK_PERIODS[$application->work_period] }} {{ $application->application_year }}</td>
+                <td>{{ $application->application_date?->format('M j, Y') }}</td>
                 <td>{{ $application->documentsAttached() }}/{{ count(\App\Models\SpesApplication::DOCUMENTS) }}</td>
                 <td><span class="px-2 py-0.5 rounded-full text-xs font-medium {{ $application->statusBadgeClass() }}">{{ $application->statusLabel() }}</span></td>
                 <td class="text-right whitespace-nowrap">
                     <a href="{{ route('spes.show', $application) }}" class="ui-link text-xs">View</a>
                     <a href="{{ route('spes.print', $application) }}" class="ui-link text-xs ml-3" target="_blank">Print</a>
-                    @if(auth()->user()?->canAccess('enrollment.manage'))
-                    <a href="{{ route('spes.edit', $application) }}" class="ui-link text-xs ml-3">Edit</a>
-                    @endif
+                    <a href="{{ route('spes.pdf', $application) }}" class="ui-link text-xs ml-3">PDF</a>
                 </td>
             </tr>
             @empty
             <tr>
-                <td colspan="7" class="text-center text-gray-500 py-10">No SPES applications yet.</td>
+                <td colspan="7" class="text-center text-gray-500 py-10">No SPR forms yet.</td>
             </tr>
             @endforelse
         </tbody>

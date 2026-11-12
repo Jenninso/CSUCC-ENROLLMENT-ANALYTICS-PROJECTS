@@ -11,7 +11,6 @@ use App\Models\SecretQuestion;
 use App\Models\Semester;
 use App\Models\SpesApplication;
 use App\Models\StudentRecord;
-use App\Models\StudentStatusReason;
 use App\Models\User;
 use App\Models\UserSecretAnswer;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -22,7 +21,7 @@ class StudentPortalTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_student_account_is_separate_and_can_submit_spes_and_a_reason(): void
+    public function test_student_account_is_separate_and_can_submit_an_spr(): void
     {
         [$student, $other] = $this->students();
 
@@ -33,8 +32,8 @@ class StudentPortalTest extends TestCase
         $this->actingAs($student)
             ->get(route('student.home'))
             ->assertOk()
-            ->assertSee('SPES')
-            ->assertSee('Shift, transfer, or withdrawal');
+            ->assertSee('Student Personal Record')
+            ->assertDontSee('Status reasons');
 
         $this->actingAs($student)
             ->post(route('student.spes.store'), $this->spesPayload())
@@ -53,26 +52,6 @@ class StudentPortalTest extends TestCase
         $this->actingAs($other)
             ->get(route('student.spes.show', $application))
             ->assertForbidden();
-
-        $this->actingAs($student)
-            ->post(route('student.reasons.store'), [
-                'action_type' => 'shift_program',
-                'from_program' => 'BS Information Technology',
-                'to_program' => 'BS Computer Engineering',
-                'reason' => 'I shifted because the mathematics load in my first program no longer matched the work I can take while studying.',
-                'effective_date' => '2026-11-01',
-            ])
-            ->assertRedirect(route('student.reasons.index'));
-
-        $this->actingAs($student)
-            ->post(route('student.reasons.store'), [
-                'action_type' => 'withdraw_subject',
-                'subject_name' => 'Calculus 1',
-                'reason' => 'I withdrew Calculus 1 after missing the first three weeks because of a family emergency.',
-            ])
-            ->assertRedirect(route('student.reasons.index'));
-
-        $this->assertSame(2, StudentStatusReason::query()->where('user_id', $student->id)->count());
 
         $staff = User::factory()->create([
             'role_id' => Role::query()->where('role_name', 'Super Administrator')->value('id'),
@@ -227,34 +206,12 @@ class StudentPortalTest extends TestCase
         return [
             'last_name' => 'Santos',
             'first_name' => 'Maria',
-            'sex' => 'female',
-            'civil_status' => 'single',
             'birth_date' => '2007-03-15',
-            'place_of_birth' => 'Cabadbaran City',
-            'address' => 'P-1',
-            'barangay' => 'Comagascas',
-            'city_municipality' => 'Cabadbaran City',
-            'province' => 'Agusan del Norte',
-            'contact_number' => '09171234567',
-            'parents_annual_income' => 84000,
-            'number_of_siblings' => 2,
-            'education_level' => 'tertiary',
-            'school_name' => 'Caraga State University — Cabadbaran Campus',
-            'course' => 'BS Information Technology',
-            'year_level' => '2nd Year',
-            'enrollment_status' => 'enrolled',
-            'application_year' => 2026,
-            'work_period' => 'summer',
-            'preferred_days' => 20,
-            'beneficiary_type' => 'student',
-            'previous_spes' => '0',
-            'has_birth_certificate' => '0',
-            'has_enrollment_cert' => '0',
-            'has_grades' => '0',
-            'has_indigency' => '0',
-            'has_photo' => '0',
-            'application_date' => '2026-11-12',
-            'applicant_signature' => 'Maria Santos',
+            'home_city' => 'Cabadbaran City',
+            'mobile' => '09171234567',
+            'student_level' => 'undergraduate',
+            'priority_1' => 'BS Information Technology',
+            'signature_name' => 'Maria Santos',
             'certified' => '1',
             'status' => 'approved',
         ];

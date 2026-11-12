@@ -6,7 +6,6 @@ use App\Models\Role;
 use App\Models\SecretQuestion;
 use App\Models\SpesApplication;
 use App\Models\StudentRecord;
-use App\Models\StudentStatusReason;
 use App\Rules\PersonName;
 use App\Services\AccountService;
 use App\Services\AuditLogger;
@@ -151,7 +150,6 @@ class StudentAccountController extends Controller
             'studentId' => $studentId,
             'record' => StudentRecord::query()->with('program')->where('student_id', $studentId)->latest('id')->first(),
             'spesCount' => SpesApplication::query()->where('user_id', $user->id)->count(),
-            'reasonCount' => StudentStatusReason::query()->where('user_id', $user->id)->count(),
         ]);
     }
 

@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Models\AcademicYear;
 use App\Models\College;
 use App\Models\Department;
+use App\Models\EnrollmentRecord;
 use App\Models\Program;
 use App\Models\Role;
 use App\Models\Semester;
@@ -80,6 +81,39 @@ class StudentRecordTest extends TestCase
         $this->assertSame('low', $record->risk_level);
         $this->assertSame('returning', $record->student_type);
         $this->assertArrayNotHasKey('name', $record->getAttributes());
+
+        $enrollment = EnrollmentRecord::query()
+            ->where('program_id', $program->id)
+            ->where('year_level', 1)
+            ->where('enrollment_type', 'returning')
+            ->first();
+        $this->assertNotNull($enrollment);
+        $this->assertSame(1, $enrollment->enrollment_count);
+
+        $this->actingAs($user)->put(route('students.update', $record), [
+            'student_id' => '2025-01001',
+            'gender' => 'female',
+            'age' => 19,
+            'college_id' => $program->department->college_id,
+            'program_id' => $program->id,
+            'year_level' => 1,
+            'section' => 'a',
+            'academic_year_id' => $year->id,
+            'semester_id' => $semester->id,
+            'gpa' => 1.75,
+            'average_grade' => 90,
+            'attendance_percent' => 95,
+            'subjects_count' => 8,
+            'failed_subjects' => 0,
+            'units_enrolled' => 24,
+            'enrolled_status' => 'dropped',
+            'student_type' => 'returning',
+            'scholarship_status' => 'none',
+            'tuition_status' => 'paid',
+        ])->assertRedirect();
+
+        $this->assertNull(EnrollmentRecord::query()->where('enrollment_type', 'returning')->first());
+        $this->assertSame(1, EnrollmentRecord::query()->where('enrollment_type', 'dropped')->value('enrollment_count'));
 
         $this->actingAs($user)
             ->get(route('students.index'))

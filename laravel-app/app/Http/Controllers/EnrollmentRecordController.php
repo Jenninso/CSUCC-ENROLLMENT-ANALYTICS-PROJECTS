@@ -11,7 +11,6 @@ use App\Models\Semester;
 use App\Services\AnalyticsService;
 use App\Services\AuditLogger;
 use App\Services\DataQualityService;
-use App\Services\ImportService;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 use Symfony\Component\HttpFoundation\StreamedResponse;
@@ -52,16 +51,6 @@ class EnrollmentRecordController extends Controller
         return view('enrollment.create', array_merge($this->formData(), ['enrollment' => $enrollment]));
     }
 
-    public function template(): StreamedResponse
-    {
-        return response()->streamDownload(function () {
-            $handle = fopen('php://output', 'w');
-            fputcsv($handle, ['academic_year', 'semester', 'program_code', 'year_level', 'enrollment_type', 'enrollment_count']);
-            fputcsv($handle, ['2025-2026', 'First Semester', 'BSIT', '1', 'new', '180']);
-            fclose($handle);
-        }, 'enrollment_import_template.csv');
-    }
-
     public function update(Request $request, EnrollmentRecord $enrollment, AuditLogger $audit)
     {
         $enrollment->update($this->validated($request, $enrollment->id));
@@ -76,44 +65,6 @@ class EnrollmentRecordController extends Controller
         $audit->log('delete', 'enrollment', 'Deleted enrollment record #'.$enrollment->id);
 
         return redirect()->route('enrollment.index')->with('success', 'Enrollment record deleted.');
-    }
-
-    public function importForm()
-    {
-        return view('enrollment.import', [
-            'preview' => session('import_preview'),
-        ]);
-    }
-
-    public function importPreview(Request $request, ImportService $importer)
-    {
-        $request->validate([
-            'file' => ['required', 'file', 'mimes:csv,txt', 'max:10240'],
-        ]);
-
-        $parsed = $importer->parse($request->file('file')->getRealPath());
-        if (! $parsed['ok']) {
-            return back()->withErrors(['file' => implode(' ', $parsed['errors'])]);
-        }
-
-        $report = $importer->validate($parsed['rows']);
-        session(['import_preview' => $report]);
-
-        return redirect()->route('enrollment.import')->with('success', 'Validation complete. Review the report before confirming.');
-    }
-
-    public function importCommit(ImportService $importer, AuditLogger $audit)
-    {
-        $preview = session('import_preview');
-        if (! $preview || empty($preview['valid'])) {
-            return redirect()->route('enrollment.import')->with('error', 'No validated rows to import.');
-        }
-
-        $count = $importer->commit($preview['valid']);
-        $audit->log('import', 'enrollment', "Imported {$count} enrollment records.");
-        session()->forget('import_preview');
-
-        return redirect()->route('enrollment.index')->with('success', "{$count} records imported. Invalid rows were not stored.");
     }
 
     public function quality(DataQualityService $quality)

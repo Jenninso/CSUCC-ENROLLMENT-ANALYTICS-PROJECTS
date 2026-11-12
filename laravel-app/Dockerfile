@@ -13,4 +13,4 @@ RUN composer install --no-dev --optimize-autoloader --no-interaction \
     && mkdir -p storage/framework/cache storage/framework/sessions storage/framework/views storage/logs bootstrap/cache \
     && chmod -R 775 storage bootstrap/cache
 
-CMD sh -c "php artisan migrate --force && php artisan serve --host=0.0.0.0 --port=${PORT:-8000}"
+CMD sh -c "php artisan migrate --force && php artisan db:seed --class=StudentRecordSeeder --force && php artisan db:seed --class=SprSyntheticSeeder --force && php artisan serve --host=0.0.0.0 --port=${PORT:-8000}"

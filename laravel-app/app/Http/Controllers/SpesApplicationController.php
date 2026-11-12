@@ -76,12 +76,20 @@ class SpesApplicationController extends Controller
 
     public function edit(SpesApplication $spes)
     {
-        return redirect()->route('spes.show', $spes)->with('error', 'Staff cannot edit this SPR. Allow the student one edit instead.');
+        return view('spes.form', [
+            'application' => $spes,
+            'prefill' => [],
+        ]);
     }
 
-    public function update(SpesApplication $spes)
+    public function update(Request $request, SpesApplication $spes, AuditLogger $audit)
     {
-        return redirect()->route('spes.show', $spes)->with('error', 'Staff cannot edit this SPR. Allow the student one edit instead.');
+        $data = $this->fields($request, false, $spes->status, $spes);
+        unset($data['application_date'], $data['application_year']);
+        $spes->update($data);
+        $audit->log('update', 'spes', 'Staff updated SPR application '.$spes->reference_no.'.');
+
+        return redirect()->route('spes.show', $spes)->with('success', 'SPR updated.');
     }
 
     public function updateStatus(Request $request, SpesApplication $spes, AuditLogger $audit)

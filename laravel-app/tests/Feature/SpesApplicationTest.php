@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\Permission;
 use App\Models\Role;
 use App\Models\SpesApplication;
 use App\Models\User;
@@ -29,29 +30,31 @@ class SpesApplicationTest extends TestCase
 
         $this->actingAs($staff)
             ->get(route('spes.edit', $application))
-            ->assertRedirect(route('spes.show', $application));
+            ->assertOk()
+            ->assertSee('Save SPR');
 
         $this->actingAs($staff)
             ->put(route('spes.update', $application), $this->payload(['last_name' => 'Changed']))
             ->assertRedirect(route('spes.show', $application));
 
-        $this->assertSame('Santos', $application->fresh()->last_name);
+        $this->assertSame('Changed', $application->fresh()->last_name);
 
         $this->actingAs($staff)
             ->put(route('spes.status', $application), ['status' => 'approved', 'remarks' => 'Checked'])
             ->assertRedirect();
 
         $this->assertSame('approved', $application->fresh()->status);
-        $this->assertSame('Santos', $application->fresh()->last_name);
+        $this->assertSame('Changed', $application->fresh()->last_name);
         $this->assertFalse($application->fresh()->student_can_edit);
 
         $this->actingAs($staff)
             ->get(route('spes.show', $application))
             ->assertOk()
             ->assertSee('SPR-2026-')
-            ->assertSee('Santos')
+            ->assertSee('Changed')
             ->assertSee('Maria')
             ->assertSee('Students do not sign in')
+            ->assertSee('Edit SPR')
             ->assertDontSee('Allow one edit');
 
         $this->actingAs($staff)
@@ -86,6 +89,50 @@ class SpesApplicationTest extends TestCase
         preg_match('/\/Count\s+(\d+)/', $pdf, $match);
 
         return isset($match[1]) ? (int) $match[1] : 0;
+    }
+
+    public function test_staff_role_can_edit_a_student_spr(): void
+    {
+        $staff = $this->officeUser(['spr.edit', 'enrollment.view']);
+
+        $this->post(route('spr.public.store'), $this->payload())->assertRedirect();
+        $application = SpesApplication::query()->first();
+
+        $this->actingAs($staff)
+            ->get(route('spes.index'))
+            ->assertOk()
+            ->assertSee('Actions')
+            ->assertSee(route('spes.show', $application), false)
+            ->assertSee(route('spes.edit', $application), false)
+            ->assertSee(route('spes.print', $application), false)
+            ->assertSee(route('spes.pdf', $application), false);
+
+        $this->actingAs($staff)
+            ->put(route('spes.update', $application), $this->payload(['first_name' => 'Ana']))
+            ->assertRedirect(route('spes.show', $application));
+
+        $this->assertSame('Ana', $application->fresh()->first_name);
+        $this->assertSame('Santos', $application->fresh()->last_name);
+    }
+
+    public function test_staff_without_spr_edit_cannot_change_the_form(): void
+    {
+        $staff = $this->officeUser(['enrollment.view']);
+
+        $this->post(route('spr.public.store'), $this->payload())->assertRedirect();
+        $application = SpesApplication::query()->first();
+
+        $this->actingAs($staff)
+            ->get(route('spes.index'))
+            ->assertOk()
+            ->assertSee('Actions')
+            ->assertDontSee(route('spes.edit', $application), false);
+
+        $this->actingAs($staff)
+            ->put(route('spes.update', $application), $this->payload(['first_name' => 'Ana']))
+            ->assertForbidden();
+
+        $this->assertSame('Maria', $application->fresh()->first_name);
     }
 
     public function test_a_younger_student_can_still_save_the_spr(): void
@@ -125,6 +172,26 @@ class SpesApplicationTest extends TestCase
 
         $this->assertSame('Maria', $application->fresh()->first_name);
         $this->get(route('spr.public.edit', 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'))->assertNotFound();
+    }
+
+    private function officeUser(array $permissionKeys): User
+    {
+        $role = Role::firstOrCreate(['role_name' => 'User'], ['description' => 'Staff']);
+        $ids = [];
+        foreach ($permissionKeys as $key) {
+            $ids[] = Permission::query()->firstOrCreate(
+                ['key' => $key],
+                ['name' => $key, 'module' => 'enrollment']
+            )->id;
+        }
+        $role->permissions()->sync($ids);
+
+        return User::factory()->create([
+            'role_id' => $role->id,
+            'status' => 'active',
+            'must_change_password' => false,
+            'credentials_completed_at' => now(),
+        ]);
     }
 
     private function staff(): User

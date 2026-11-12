@@ -86,13 +86,15 @@ Route::middleware(['auth', 'active', 'setup', 'student.scope'])->group(function 
         Route::put('students/{student}', [StudentRecordController::class, 'update'])->name('students.update');
         Route::delete('students/{student}', [StudentRecordController::class, 'destroy'])->name('students.destroy');
     });
+    Route::middleware('permission:spr.edit')->group(function () {
+        Route::get('spes/{spes}/edit', [SpesApplicationController::class, 'edit'])->name('spes.edit');
+        Route::put('spes/{spes}', [SpesApplicationController::class, 'update'])->name('spes.update');
+        Route::put('spes/{spes}/status', [SpesApplicationController::class, 'updateStatus'])->name('spes.status');
+    });
     Route::middleware('permission:enrollment.manage')->group(function () {
         Route::get('spes/create', [SpesApplicationController::class, 'create'])->name('spes.create');
         Route::post('spes', [SpesApplicationController::class, 'store'])->name('spes.store');
-        Route::get('spes/{spes}/edit', [SpesApplicationController::class, 'edit'])->name('spes.edit');
-        Route::put('spes/{spes}', [SpesApplicationController::class, 'update'])->name('spes.update');
         Route::post('spes/{spes}/student-access', [SpesApplicationController::class, 'allowStudentEdit'])->name('spes.student-access');
-        Route::put('spes/{spes}/status', [SpesApplicationController::class, 'updateStatus'])->name('spes.status');
         Route::delete('spes/{spes}', [SpesApplicationController::class, 'destroy'])->name('spes.destroy');
     });
     Route::middleware('permission:enrollment.view')->group(function () {

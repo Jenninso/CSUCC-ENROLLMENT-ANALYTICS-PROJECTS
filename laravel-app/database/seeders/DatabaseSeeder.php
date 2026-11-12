@@ -33,7 +33,10 @@ class DatabaseSeeder extends Seeder
         ]);
 
         foreach (config('permissions.catalog') as $key => [$name, $module]) {
-            Permission::create(['key' => $key, 'name' => $name, 'module' => $module]);
+            Permission::query()->updateOrCreate(
+                ['key' => $key],
+                ['name' => $name, 'module' => $module]
+            );
         }
 
         $permissions = Permission::query()->pluck('id', 'key');

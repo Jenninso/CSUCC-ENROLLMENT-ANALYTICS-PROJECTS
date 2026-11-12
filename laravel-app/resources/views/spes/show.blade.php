@@ -22,20 +22,25 @@
                 <button type="submit" class="ui-btn-secondary text-red-700 border-red-200 hover:bg-red-50">Withdraw</button>
             </form>
             @endif
-        @elseif(auth()->user()?->canAccess('enrollment.manage'))
-        <form method="POST" action="{{ route('spes.destroy', $application) }}" onsubmit="return confirm('Delete {{ $application->reference_no }}?')">
-            @csrf @method('DELETE')
-            <button type="submit" class="ui-btn-secondary text-red-700 border-red-200 hover:bg-red-50">Delete</button>
-        </form>
+        @else
+            @if(auth()->user()?->canAccess('spr.edit'))
+            <a href="{{ route('spes.edit', $application) }}" class="ui-btn-primary">Edit SPR</a>
+            @endif
+            @if(auth()->user()?->canAccess('enrollment.manage'))
+            <form method="POST" action="{{ route('spes.destroy', $application) }}" onsubmit="return confirm('Delete {{ $application->reference_no }}?')">
+                @csrf @method('DELETE')
+                <button type="submit" class="ui-btn-secondary text-red-700 border-red-200 hover:bg-red-50">Delete</button>
+            </form>
+            @endif
         @endif
     </div>
 </div>
 
 @unless($studentMode)
 <div class="mb-4 max-w-[8.5in] rounded-lg border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-950">
-    <p>Students do not sign in. The answers stay as submitted. Staff can set the office status and remarks.</p>
+    <p>Students do not sign in. Staff with the SPR edit privilege can correct the form and set the office status.</p>
 </div>
-@if(auth()->user()?->canAccess('enrollment.manage'))
+@if(auth()->user()?->canAccess('spr.edit'))
 <form method="POST" action="{{ route('spes.status', $application) }}" class="mb-4 max-w-[8.5in] ui-panel p-4 flex flex-wrap items-end gap-3">
     @csrf @method('PUT')
     <div>

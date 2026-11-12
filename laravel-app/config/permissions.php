@@ -5,6 +5,7 @@ return [
         'dashboard.view' => ['Dashboard', 'dashboard'],
         'enrollment.view' => ['View enrollment records', 'enrollment'],
         'enrollment.manage' => ['Add / import enrollment data', 'enrollment'],
+        'spr.edit' => ['Edit student SPR', 'enrollment'],
         'analytics.view' => ['Analytics', 'analytics'],
         'forecasting.view' => ['Forecasting', 'forecasting'],
         'ai.view' => ['AI decision support', 'ai'],
@@ -27,6 +28,7 @@ return [
             'dashboard.view',
             'enrollment.view',
             'enrollment.manage',
+            'spr.edit',
             'analytics.view',
             'forecasting.view',
             'ai.view',
@@ -44,6 +46,7 @@ return [
         'User' => [
             'dashboard.view',
             'enrollment.view',
+            'spr.edit',
             'analytics.view',
             'forecasting.view',
             'ai.view',

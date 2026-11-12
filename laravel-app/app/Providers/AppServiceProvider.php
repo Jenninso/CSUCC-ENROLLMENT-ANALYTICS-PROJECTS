@@ -46,12 +46,15 @@ class AppServiceProvider extends ServiceProvider
 
     private function loadSprStatisticsWhenEmpty(): void
     {
-        if ($this->app->runningUnitTests() || ! Schema::hasTable('spes_applications')) {
+        // Skip during image builds and Artisan commands. `composer install` boots the
+        // app for package discovery before Postgres exists, and a missing sqlite file
+        // would fail the Render build.
+        if ($this->app->runningInConsole() || $this->app->runningUnitTests()) {
             return;
         }
 
         try {
-            if (DB::table('spes_applications')->count() > 0) {
+            if (! Schema::hasTable('spes_applications') || DB::table('spes_applications')->count() > 0) {
                 return;
             }
 

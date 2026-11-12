@@ -47,6 +47,8 @@ use Database\Factories\UserFactory;
 #[Hidden(['password', 'remember_token'])]
 class User extends Authenticatable
 {
+    public const DEFAULT_THEME_COLOR = '#ffffff';
+
     public const THEME_COLORS = [
         '#0b5d3b' => 'Forest green',
         '#047857' => 'Emerald',
@@ -97,6 +99,17 @@ class User extends Authenticatable
 
     /** @use HasFactory<UserFactory> */
     use HasFactory, Notifiable;
+
+    /**
+     * New accounts open on the light sidebar with green labels.
+     *
+     * @var array<string, mixed>
+     */
+    protected $attributes = [
+        'theme_mode' => 'light',
+        'theme_color' => self::DEFAULT_THEME_COLOR,
+        'theme_background' => 'sand',
+    ];
 
     private ?array $permissionCache = null;
 
@@ -356,16 +369,16 @@ class User extends Authenticatable
 
     public function resolvedThemeColor(): string
     {
-        $color = strtolower((string) ($this->theme_color ?: '#0b5d3b'));
+        $color = strtolower((string) ($this->theme_color ?: self::DEFAULT_THEME_COLOR));
 
-        return array_key_exists($color, self::THEME_COLORS) ? $color : '#0b5d3b';
+        return array_key_exists($color, self::THEME_COLORS) ? $color : self::DEFAULT_THEME_COLOR;
     }
 
     public function resolvedThemeBackgroundKey(): string
     {
-        $key = (string) ($this->theme_background ?: 'default');
+        $key = (string) ($this->theme_background ?: 'sand');
 
-        return array_key_exists($key, self::THEME_BACKGROUNDS) ? $key : 'default';
+        return array_key_exists($key, self::THEME_BACKGROUNDS) ? $key : 'sand';
     }
 
     public function resolvedThemeBackground(): string

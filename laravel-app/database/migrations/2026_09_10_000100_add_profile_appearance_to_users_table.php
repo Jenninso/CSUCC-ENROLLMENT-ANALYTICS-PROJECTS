@@ -11,8 +11,8 @@ return new class extends Migration
         Schema::table('users', function (Blueprint $table) {
             $table->string('avatar_path')->nullable()->after('email');
             $table->string('theme_mode', 16)->default('light')->after('avatar_path');
-            $table->string('theme_color', 32)->default('#0b5d3b')->after('theme_mode');
-            $table->string('theme_background', 32)->default('default')->after('theme_color');
+            $table->string('theme_color', 32)->default('#ffffff')->after('theme_mode');
+            $table->string('theme_background', 32)->default('sand')->after('theme_color');
         });
     }
 

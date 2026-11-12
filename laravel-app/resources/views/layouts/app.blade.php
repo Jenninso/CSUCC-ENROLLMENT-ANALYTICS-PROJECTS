@@ -1,14 +1,14 @@
 @php
     $themeUser = auth()->user();
     $themeModePref = $themeUser?->theme_mode ?: 'light';
-    $themeColor = $themeUser?->resolvedThemeColor() ?? '#0b5d3b';
-    $themeSidebar = $themeUser?->themeSidebarColor() ?? '#0a2f22';
-    $themeOnPrimary = $themeUser?->themeOnPrimaryColor() ?? '#ffffff';
-    $themeSidebarLight = $themeUser?->themeSidebarIsLight() ?? false;
+    $themeColor = $themeUser?->resolvedThemeColor() ?? '#ffffff';
+    $themeSidebar = $themeUser?->themeSidebarColor() ?? '#ffffff';
+    $themeOnPrimary = $themeUser?->themeOnPrimaryColor() ?? '#0f172a';
+    $themeSidebarLight = $themeUser?->themeSidebarIsLight() ?? true;
     // Text links on light panels must stay readable when primary is white.
     $themeLink = $themeSidebarLight ? '#0b5d3b' : $themeColor;
     $themeBackgrounds = \App\Models\User::THEME_BACKGROUNDS;
-    $themeBgKey = $themeUser?->resolvedThemeBackgroundKey() ?? 'default';
+    $themeBgKey = $themeUser?->resolvedThemeBackgroundKey() ?? 'sand';
     $themeBgLight = $themeBackgrounds[$themeBgKey]['light'] ?? '#f3f4f6';
     $themeBgDark = $themeBackgrounds[$themeBgKey]['dark'] ?? '#0f172a';
     $themeBgIsImage = $themeUser?->themeBackgroundIsImage() ?? false;
@@ -281,9 +281,9 @@
         }
         .theme-primary-bg.text-white { color: var(--theme-on-primary) !important; }
 
-        /* White theme: light sidebar with dark text */
+        /* White theme: light sidebar with dark green text */
         .theme-sidebar[data-sidebar-tone="light"] {
-            color: #0f172a;
+            color: #042f24;
             border-right: 1px solid #e2e8f0;
             box-shadow: 4px 0 24px rgba(15, 23, 42, 0.06);
         }
@@ -295,41 +295,41 @@
         }
         .theme-sidebar[data-sidebar-tone="light"] .text-amber-300\/90,
         .theme-sidebar[data-sidebar-tone="light"] .text-emerald-200\/70 {
-            color: #64748b !important;
+            color: #047857 !important;
         }
         .theme-sidebar[data-sidebar-tone="light"] nav a,
         .theme-sidebar[data-sidebar-tone="light"] nav button {
-            color: #334155 !important;
+            color: #042f24 !important;
         }
         .theme-sidebar[data-sidebar-tone="light"] nav a:hover,
         .theme-sidebar[data-sidebar-tone="light"] nav button:hover {
-            background: rgba(15, 23, 42, 0.06) !important;
-            color: #0f172a !important;
+            background: #f4f8f5 !important;
+            color: #021c15 !important;
         }
         .theme-sidebar[data-sidebar-tone="light"] nav .theme-primary-bg,
         .theme-sidebar[data-sidebar-tone="light"] nav .theme-primary-bg.text-white {
-            background: #e2e8f0 !important;
-            color: #0f172a !important;
-            box-shadow: inset 3px 0 0 #0f172a;
+            background: #f4f8f5 !important;
+            color: #042f24 !important;
+            box-shadow: inset 3px 0 0 #042f24;
         }
         .theme-sidebar[data-sidebar-tone="light"] nav .text-amber-300,
         .theme-sidebar[data-sidebar-tone="light"] nav a.bg-emerald-950\/50,
         .theme-sidebar[data-sidebar-tone="light"] nav .bg-emerald-950\/50 {
-            color: #0f172a !important;
-            background: #f1f5f9 !important;
+            color: #042f24 !important;
+            background: #f4f8f5 !important;
         }
         .theme-sidebar[data-sidebar-tone="light"] nav .text-emerald-200\/60,
         .theme-sidebar[data-sidebar-tone="light"] nav .hover\:text-white:hover {
-            color: #475569 !important;
+            color: #047857 !important;
         }
         .theme-sidebar[data-sidebar-tone="light"] nav a.text-emerald-200\/60:hover {
-            color: #0f172a !important;
+            color: #021c15 !important;
         }
         .theme-sidebar[data-sidebar-tone="light"] .sidebar-footer {
             border-color: #e2e8f0 !important;
         }
         .theme-sidebar[data-sidebar-tone="light"] .sidebar-footer .text-emerald-200\/60 {
-            color: #64748b !important;
+            color: #047857 !important;
         }
         @media (min-width: 1024px) {
             aside.theme-sidebar.is-collapsed {
@@ -500,7 +500,7 @@
 
     {{-- Sidebar --}}
     <aside data-sidebar-tone="{{ $themeSidebarLight ? 'light' : 'dark' }}"
-           class="theme-sidebar fixed inset-y-0 left-0 z-50 w-64 {{ $themeSidebarLight ? 'text-slate-900' : 'text-white' }} transform transition-all duration-200 flex flex-col"
+           class="theme-sidebar fixed inset-y-0 left-0 z-50 w-64 {{ $themeSidebarLight ? 'text-[#042f24]' : 'text-white' }} transform transition-all duration-200 flex flex-col"
            :class="[sidebarOpen ? 'translate-x-0' : 'max-lg:-translate-x-full', sidebarCollapsed && 'is-collapsed']">
         {{-- Logo --}}
         <div class="sidebar-header flex items-center gap-3 px-4 py-5 border-b border-emerald-900/60">

@@ -78,12 +78,17 @@ class AnalyticsController extends Controller
     {
         $collegeId = $request->integer('college_id') ?: null;
         $data = $analytics->dashboard($request->only(['academic_year_id', 'college_id', 'department_id']));
+        $previousFilters = $data['filters'];
+        if ($data['previousAY'] ?? null) {
+            $previousFilters['academic_year_id'] = $data['previousAY']->id;
+        }
+        $previousTotals = $analytics->collegeRanking($previousFilters)->keyBy('id');
         $total = max($data['collegeRows']->sum('total'), 1);
-        $collegeStats = $data['collegeRows']->map(function ($row) use ($total) {
+        $collegeStats = $data['collegeRows']->map(function ($row) use ($total, $analytics, $previousTotals) {
             $row['departments'] = $row['department_count'];
-            $row['programs'] = 0;
+            $row['programs'] = $row['program_count'];
             $row['share'] = round(($row['total'] / $total) * 100, 2);
-            $row['growth'] = 0;
+            $row['growth'] = $analytics->growthRate($row['total'], (int) ($previousTotals[$row['id']]['total'] ?? 0));
 
             return $row;
         });
@@ -91,14 +96,15 @@ class AnalyticsController extends Controller
         $departments = $collegeId
             ? Department::query()->where('college_id', $collegeId)->with('programs')->get()
             : collect();
+        $departmentStats = $analytics->departmentRanking($data['filters']);
+        if ($collegeId) {
+            $departmentStats = $departmentStats->whereIn('id', $departments->pluck('id'))->values();
+        }
 
         return view('analytics.colleges', [
             'colleges' => $collegeStats,
             'collegeStats' => $collegeStats,
-            'departmentStats' => $departments->map(fn ($d) => [
-                'department_name' => $d->department_name,
-                'total' => $data['topPrograms']->where('college', $d->college?->college_name)->sum('current'),
-            ]),
+            'departmentStats' => $departmentStats,
             'latestAY' => $data['latestAY'],
             'selectedCollege' => $collegeId ? College::find($collegeId) : null,
             'departments' => $departments,
@@ -107,19 +113,48 @@ class AnalyticsController extends Controller
         ]);
     }
 
-    public function retentionAnalytics(AnalyticsService $analytics)
+    public function retentionAnalytics(Request $request, AnalyticsService $analytics)
     {
-        $retentionData = $analytics->retentionByYear();
-        $latest = $retentionData->last();
+        $filters = $request->only(['academic_year_id', 'semester_name', 'college_id', 'program_id', 'year_level']);
+        $scope = collect($filters)->except('academic_year_id')->filter(fn ($value) => $value !== null && $value !== '')->all();
+        $retentionData = $analytics->retentionByYear($scope);
+        $latest = ! empty($filters['academic_year_id'])
+            ? $retentionData->firstWhere('academic_year_id', (int) $filters['academic_year_id'])
+            : null;
+        $latest ??= $retentionData->reverse()->first(fn ($row) => ($row['total'] ?? 0) > 0) ?? $retentionData->last();
+        $previousYearId = null;
+        if ($latest) {
+            $current = \App\Models\AcademicYear::query()->find($latest['academic_year_id']);
+            $previousYearId = $analytics->previousAcademicYear($current)?->id;
+            $filters['academic_year_id'] = $latest['academic_year_id'];
+        }
 
-        return view('analytics.retention', [
+        $movement = [];
+        if ($latest) {
+            $yearFilters = array_merge($scope, ['academic_year_id' => $latest['academic_year_id']]);
+            $movement = [
+                ['label' => 'New', 'count' => $analytics->typeTotal($yearFilters, 'new')],
+                ['label' => 'Shiftees', 'count' => $analytics->typeTotal($yearFilters, 'shiftee')],
+                ['label' => 'Transferred', 'count' => $analytics->typeTotal($yearFilters, 'transferee')],
+                ['label' => 'Graduating', 'count' => $analytics->typeTotal($yearFilters, 'graduating')],
+                ['label' => 'Withdrawn', 'count' => $analytics->typeTotal($yearFilters, 'withdrawn')],
+                ['label' => 'Drop', 'count' => $analytics->typeTotal($yearFilters, 'dropped')],
+            ];
+        }
+
+        return view('analytics.retention', array_merge($analytics->filterOptions(), [
+            'filters' => $filters,
             'retentionData' => $retentionData,
+            'retentionYear' => $latest['academic_year'] ?? null,
             'retentionRate' => $latest['retention_rate'] ?? 0,
             'attritionRate' => $latest['attrition_rate'] ?? 0,
             'returningStudents' => $latest['returning'] ?? 0,
-            'programRetention' => collect(),
+            'movementCounts' => $movement,
+            'programRetention' => $latest
+                ? $analytics->programRetention($latest['academic_year_id'], $previousYearId, $scope)
+                : collect(),
             'retentionTrend' => $retentionData->map(fn ($row) => ['period' => $row['academic_year'], 'rate' => $row['retention_rate']]),
             'attritionTrend' => $retentionData->map(fn ($row) => ['period' => $row['academic_year'], 'rate' => $row['attrition_rate']]),
-        ]);
+        ]));
     }
 }

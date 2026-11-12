@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\College;
 use App\Services\AuditLogger;
+use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
 
 class CollegeController extends Controller
@@ -49,7 +50,11 @@ class CollegeController extends Controller
 
     public function destroy(College $college, AuditLogger $audit)
     {
-        $college->delete();
+        try {
+            $college->delete();
+        } catch (QueryException) {
+            return back()->with('error', 'This college has departments or enrollment records and cannot be deleted.');
+        }
         $audit->log('delete', 'colleges', $college->college_name);
 
         return redirect()->route('data-management.colleges.index')->with('success', 'College deleted.');

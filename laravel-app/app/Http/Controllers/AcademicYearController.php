@@ -3,8 +3,12 @@
 namespace App\Http\Controllers;
 
 use App\Models\AcademicYear;
+use App\Models\EnrollmentRecord;
+use App\Models\StudentRecord;
 use App\Services\AuditLogger;
+use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 
 class AcademicYearController extends Controller
@@ -44,7 +48,20 @@ class AcademicYearController extends Controller
 
     public function destroy(AcademicYear $academicYear, AuditLogger $audit)
     {
-        $academicYear->delete();
+        $hasEnrollment = EnrollmentRecord::query()->where('academic_year_id', $academicYear->id)->exists();
+        $hasStudents = StudentRecord::query()->where('academic_year_id', $academicYear->id)->exists();
+        if ($hasEnrollment || $hasStudents) {
+            return back()->with('error', 'This academic year has enrollment or student records and cannot be deleted.');
+        }
+
+        try {
+            DB::transaction(function () use ($academicYear) {
+                $academicYear->semesters()->delete();
+                $academicYear->delete();
+            });
+        } catch (QueryException) {
+            return back()->with('error', 'This academic year is still used by other records and cannot be deleted.');
+        }
         $audit->log('delete', 'academic_years', $academicYear->academic_year);
 
         return redirect()->route('data-management.academic-years.index')->with('success', 'Academic year deleted.');

@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\AcademicYear;
 use App\Models\College;
+use App\Models\Department;
 use App\Models\EnrollmentRecord;
 use App\Models\Program;
 use App\Models\Semester;
@@ -35,6 +36,14 @@ class AnalyticsService
     public function latestAcademicYear(): ?AcademicYear
     {
         return AcademicYear::query()->orderByDesc('start_date')->first();
+    }
+
+    public function latestAcademicYearWithEnrollment(): ?AcademicYear
+    {
+        return AcademicYear::query()
+            ->whereIn('id', EnrollmentRecord::query()->select('academic_year_id')->distinct())
+            ->orderByDesc('start_date')
+            ->first();
     }
 
     public function previousAcademicYear(?AcademicYear $current): ?AcademicYear
@@ -87,11 +96,15 @@ class AnalyticsService
     public function dashboard(array $filters = []): array
     {
         $latest = $this->latestAcademicYear();
-        $previous = $this->previousAcademicYear($latest);
+        $selected = ! empty($filters['academic_year_id'])
+            ? AcademicYear::query()->find($filters['academic_year_id'])
+            : ($this->latestAcademicYearWithEnrollment() ?? $latest);
 
-        if (empty($filters['academic_year_id']) && $latest) {
-            $filters['academic_year_id'] = $latest->id;
+        if ($selected && empty($filters['academic_year_id'])) {
+            $filters['academic_year_id'] = $selected->id;
         }
+
+        $previous = $this->previousAcademicYear($selected ?? $latest);
 
         $currentFilters = $filters;
         $previousFilters = $filters;
@@ -103,7 +116,19 @@ class AnalyticsService
         $previousTotal = $previous ? $this->total($previousFilters) : 0;
         $growth = $this->growthRate($total, $previousTotal);
         $newStudents = $this->typeTotal($currentFilters, 'new');
+        $previousNew = $previous ? $this->typeTotal($previousFilters, 'new') : 0;
         $returning = $this->typeTotal($currentFilters, 'returning') + $this->typeTotal($currentFilters, 'continuing');
+        $previousReturning = $previous
+            ? $this->typeTotal($previousFilters, 'returning') + $this->typeTotal($previousFilters, 'continuing')
+            : 0;
+        $shiftees = $this->typeTotal($currentFilters, 'shiftee');
+        $previousShiftees = $previous ? $this->typeTotal($previousFilters, 'shiftee') : 0;
+        $transferred = $this->typeTotal($currentFilters, 'transferee');
+        $previousTransferred = $previous ? $this->typeTotal($previousFilters, 'transferee') : 0;
+        $withdrawn = $this->typeTotal($currentFilters, 'withdrawn');
+        $previousWithdrawn = $previous ? $this->typeTotal($previousFilters, 'withdrawn') : 0;
+        $dropped = $this->typeTotal($currentFilters, 'dropped');
+        $previousDropped = $previous ? $this->typeTotal($previousFilters, 'dropped') : 0;
         $retained = $this->retainedTotal($currentFilters);
         $retentionRate = $previousTotal > 0 ? round(($retained / $previousTotal) * 100, 2) : 0.0;
         $attritionRate = $previousTotal > 0 ? round((($previousTotal - $retained) / $previousTotal) * 100, 2) : 0.0;
@@ -132,10 +157,17 @@ class AnalyticsService
             'previousEnrollment' => $previousTotal,
             'growthRate' => $growth,
             'newStudents' => $newStudents,
+            'newStudentsGrowth' => $this->growthRate($newStudents, $previousNew),
             'returningStudents' => $returning,
-            'shifteeStudents' => $this->typeTotal($currentFilters, 'shiftee'),
-            'transferredStudents' => $this->typeTotal($currentFilters, 'transferee'),
-            'withdrawnStudents' => $this->typeTotal($currentFilters, 'withdrawn'),
+            'returningStudentsGrowth' => $this->growthRate($returning, $previousReturning),
+            'shifteeStudents' => $shiftees,
+            'shifteeStudentsGrowth' => $this->growthRate($shiftees, $previousShiftees),
+            'transferredStudents' => $transferred,
+            'transferredStudentsGrowth' => $this->growthRate($transferred, $previousTransferred),
+            'withdrawnStudents' => $withdrawn,
+            'withdrawnStudentsGrowth' => $this->growthRate($withdrawn, $previousWithdrawn),
+            'droppedStudents' => $dropped,
+            'droppedStudentsGrowth' => $this->growthRate($dropped, $previousDropped),
             'retentionRate' => $retentionRate,
             'attritionRate' => $attritionRate,
             'highestProgram' => $programRows->first(),
@@ -232,13 +264,31 @@ class AnalyticsService
             ->groupBy('college_id')
             ->pluck('total', 'college_id');
 
-        return College::query()->withCount('departments')->orderBy('college_name')->get()->map(function (College $college) use ($totals) {
+        return College::query()->withCount(['departments', 'programs'])->orderBy('college_name')->get()->map(function (College $college) use ($totals) {
             return [
                 'id' => $college->id,
                 'college_name' => $college->college_name,
                 'college_code' => $college->college_code,
                 'total' => (int) ($totals[$college->id] ?? 0),
                 'department_count' => $college->departments_count,
+                'program_count' => $college->programs_count,
+            ];
+        })->sortByDesc('total')->values();
+    }
+
+    public function departmentRanking(array $filters): Collection
+    {
+        $totals = $this->applyFilters(EnrollmentRecord::query(), $filters)
+            ->select('department_id', DB::raw('SUM(enrollment_count) as total'))
+            ->groupBy('department_id')
+            ->pluck('total', 'department_id');
+
+        return Department::query()->with('college')->orderBy('department_name')->get()->map(function (Department $department) use ($totals) {
+            return [
+                'id' => $department->id,
+                'department_name' => $department->department_name,
+                'college' => $department->college?->college_name,
+                'total' => (int) ($totals[$department->id] ?? 0),
             ];
         })->sortByDesc('total')->values();
     }
@@ -283,18 +333,23 @@ class AnalyticsService
         ];
     }
 
-    public function retentionByYear(): Collection
+    public function retentionByYear(array $filters = []): Collection
     {
         $years = AcademicYear::query()->orderBy('start_date')->get();
+        unset($filters['academic_year_id']);
 
-        return $years->map(function (AcademicYear $year, int $index) use ($years) {
-            $total = $this->total(['academic_year_id' => $year->id]);
-            $retained = $this->retainedTotal(['academic_year_id' => $year->id]);
-            $newStudents = $this->typeTotal(['academic_year_id' => $year->id], 'new');
+        return $years->map(function (AcademicYear $year, int $index) use ($years, $filters) {
+            $current = array_merge($filters, ['academic_year_id' => $year->id]);
+            $total = $this->total($current);
+            $retained = $this->retainedTotal($current);
+            $newStudents = $this->typeTotal($current, 'new');
             $previous = $index > 0 ? $years[$index - 1] : null;
-            $previousTotal = $previous ? $this->total(['academic_year_id' => $previous->id]) : 0;
+            $previousTotal = $previous
+                ? $this->total(array_merge($filters, ['academic_year_id' => $previous->id]))
+                : 0;
 
             return [
+                'academic_year_id' => $year->id,
                 'academic_year' => $year->academic_year,
                 'total' => $total,
                 'returning' => $retained,
@@ -304,6 +359,43 @@ class AnalyticsService
                 'attrition_rate' => $previousTotal > 0 ? round((max($previousTotal - $retained, 0) / $previousTotal) * 100, 2) : 0,
             ];
         });
+    }
+
+    public function programRetention(int $academicYearId, ?int $previousYearId, array $filters = []): Collection
+    {
+        unset($filters['academic_year_id']);
+        $retained = $this->applyFilters(
+            EnrollmentRecord::query()->whereIn('enrollment_type', ['returning', 'continuing']),
+            array_merge($filters, ['academic_year_id' => $academicYearId])
+        )
+            ->select('program_id', DB::raw('SUM(enrollment_count) as total'))
+            ->groupBy('program_id')
+            ->pluck('total', 'program_id');
+
+        $previous = $previousYearId
+            ? $this->applyFilters(
+                EnrollmentRecord::query(),
+                array_merge($filters, ['academic_year_id' => $previousYearId])
+            )
+                ->select('program_id', DB::raw('SUM(enrollment_count) as total'))
+                ->groupBy('program_id')
+                ->pluck('total', 'program_id')
+            : collect();
+
+        return Program::query()->orderBy('program_name')->get()->map(function (Program $program) use ($retained, $previous) {
+            $cohort = (int) ($previous[$program->id] ?? 0);
+            $returned = (int) ($retained[$program->id] ?? 0);
+            $retention = $cohort > 0 ? round(($returned / $cohort) * 100, 2) : 0;
+            $attrition = $cohort > 0 ? round((max($cohort - $returned, 0) / $cohort) * 100, 2) : 0;
+
+            return [
+                'program_name' => $program->program_name,
+                'cohort' => $cohort,
+                'returned' => $returned,
+                'retention' => $retention,
+                'attrition' => $attrition,
+            ];
+        })->filter(fn ($row) => $row['cohort'] > 0 || $row['returned'] > 0)->values();
     }
 
     public function seriesByProgram(?int $programId = null, ?int $collegeId = null): array

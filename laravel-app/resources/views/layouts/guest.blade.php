@@ -90,11 +90,16 @@
         }
     </style>
 </head>
-<body class="min-h-screen flex flex-col" x-data="{ navOpen: false }" @keydown.escape.window="navOpen = false">
+<body class="min-h-screen flex flex-col {{ request()->routeIs('login') ? 'lg:h-screen lg:overflow-hidden' : '' }}" x-data="{ navOpen: false }" @keydown.escape.window="navOpen = false">
     <div aria-hidden="true" class="pointer-events-none fixed inset-0 -z-10 bg-cover bg-center bg-no-repeat"
          style="background-image: url('{{ asset('images/branding/campus-building.jpg') }}');"></div>
+    @if(request()->routeIs('login'))
+    <div aria-hidden="true" class="pointer-events-none fixed inset-0 -z-10 bg-[#02140e]/55 backdrop-blur-sm"></div>
+    @else
     <div aria-hidden="true" class="pointer-events-none fixed inset-0 -z-10 bg-gradient-to-br from-[#053822]/90 via-[#0b5d3b]/85 to-[#0a2f22]/92"></div>
+    @endif
 
+    @unless(request()->routeIs('login', 'student.register'))
     <header class="sticky top-0 z-40 border-b border-white/10 bg-[#0a2f22]/80 backdrop-blur-md">
         <div class="mx-auto max-w-6xl px-4 sm:px-6">
             <div class="flex h-16 items-center justify-between gap-4">
@@ -136,14 +141,15 @@
             </div>
         </div>
     </header>
+    @endunless
 
-    <main class="relative z-10 w-full flex-1 px-4 py-8 sm:py-10">
+    <main class="relative z-10 w-full flex-1 px-4 py-8 sm:py-10 {{ request()->routeIs('login') ? 'lg:flex lg:items-center lg:py-6 lg:min-h-0' : (request()->routeIs('student.register') ? 'lg:flex lg:items-center lg:py-6' : '') }}">
         <div class="mx-auto w-full @yield('container-class', 'max-w-md')">
             @yield('content')
         </div>
     </main>
 
-    <footer class="relative z-10 mt-auto border-t border-white/10 bg-[#071a14]/85 backdrop-blur-md">
+    <footer class="relative z-10 mt-auto border-t border-white/10 bg-[#071a14]/85 backdrop-blur-md {{ request()->routeIs('login') ? 'lg:hidden' : '' }}">
         <div class="mx-auto max-w-6xl px-4 sm:px-6 py-10">
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
                 <div class="sm:col-span-2 lg:col-span-1">
@@ -155,7 +161,11 @@
                         </div>
                     </div>
                     <p class="text-sm text-emerald-100/75 mt-4 leading-relaxed">
+                        @if(request()->routeIs('login'))
+                        Decision support for CEIT enrollment planning at Caraga State University Cabadbaran Campus.
+                        @else
                         Decision support for CEIT and BSIT enrollment planning at Caraga State University Cabadbaran Campus.
+                        @endif
                     </p>
                 </div>
 
@@ -172,7 +182,7 @@
                     <h2 class="text-xs font-semibold uppercase tracking-wider text-amber-300/90 mb-3">Legal</h2>
                     <ul class="space-y-2 text-sm">
                         <li><a href="{{ route('terms') }}" class="text-emerald-100/85 hover:text-white transition">Terms and Conditions</a></li>
-                        <li><span class="text-emerald-100/60">CEIT &amp; BSIT use only</span></li>
+                        <li><span class="text-emerald-100/60">CEIT use only</span></li>
                     </ul>
                 </div>
 
@@ -193,5 +203,22 @@
             </div>
         </div>
     </footer>
+    @if(request()->routeIs('login'))
+    <footer class="relative z-10 hidden shrink-0 border-t border-white/10 bg-[#03140e]/80 lg:block">
+        <div class="mx-auto flex max-w-3xl items-center justify-between gap-6 px-2 py-3">
+            <p class="shrink-0 text-[11px] tracking-wide text-white/60">&copy; {{ date('Y') }} CSUCC Cabadbaran Campus</p>
+            <nav class="flex items-center text-[11px] tracking-wide text-white/70" aria-label="Footer">
+                <a href="{{ route('home') }}" class="px-2.5 hover:text-white">Home</a>
+                <span class="text-white/25" aria-hidden="true">|</span>
+                <a href="{{ route('about') }}" class="px-2.5 hover:text-white">About</a>
+                <span class="text-white/25" aria-hidden="true">|</span>
+                <a href="{{ route('terms') }}" class="px-2.5 hover:text-white">Terms</a>
+                <span class="text-white/25" aria-hidden="true">|</span>
+                <span class="px-2.5 text-white/50">CEIT use only</span>
+            </nav>
+            <p class="shrink-0 text-[11px] tracking-wide text-white/45">Enrollment Analytics</p>
+        </div>
+    </footer>
+    @endif
 </body>
 </html>

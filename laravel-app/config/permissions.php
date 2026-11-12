@@ -18,6 +18,7 @@ return [
         'users.delete' => ['Delete accounts', 'users'],
         'logs.view' => ['Login logs', 'logs'],
         'settings.view' => ['Settings', 'settings'],
+        'student.portal' => ['Student portal', 'student'],
     ],
 
     'role_defaults' => [
@@ -36,6 +37,9 @@ return [
             'users.approve',
             'logs.view',
             'settings.view',
+        ],
+        'Student' => [
+            'student.portal',
         ],
         'User' => [
             'dashboard.view',

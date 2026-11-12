@@ -42,55 +42,69 @@
 </form>
 
 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+    @php
+        $yearChange = function ($rate) use ($previousAY) {
+            if (empty($previousAY)) {
+                return ['No prior year', 'text-gray-400'];
+            }
+            $rate = (float) ($rate ?? 0);
+            $up = $rate >= 0;
+
+            return [
+                ($up ? 'Up' : 'Down').' '.abs($rate).'% vs '.$previousAY->academic_year,
+                $up ? 'text-emerald-600' : 'text-red-600',
+            ];
+        };
+        [$totalChange, $totalChangeClass] = $yearChange($growthRate ?? 0);
+        [$newChange, $newChangeClass] = $yearChange($newStudentsGrowth ?? 0);
+        [$returningChange, $returningChangeClass] = $yearChange($returningStudentsGrowth ?? 0);
+        [$shifteeChange, $shifteeChangeClass] = $yearChange($shifteeStudentsGrowth ?? 0);
+        [$transferredChange, $transferredChangeClass] = $yearChange($transferredStudentsGrowth ?? 0);
+        [$withdrawnChange, $withdrawnChangeClass] = $yearChange($withdrawnStudentsGrowth ?? 0);
+        [$droppedChange, $droppedChangeClass] = $yearChange($droppedStudentsGrowth ?? 0);
+    @endphp
     <div class="ui-kpi">
         <p class="ui-kpi-label">Total Enrollment</p>
         <p class="ui-kpi-value">{{ number_format($totalEnrollment ?? 0) }}</p>
-        <p class="mt-2 text-sm font-medium {{ ($growthRate ?? 0) >= 0 ? 'text-emerald-600' : 'text-red-600' }}">
-            {{ ($growthRate ?? 0) >= 0 ? 'Up' : 'Down' }} {{ abs($growthRate ?? 0) }}% vs last year
-        </p>
+        <p class="mt-2 text-sm font-medium {{ $totalChangeClass }}">{{ $totalChange }}</p>
     </div>
     <div class="ui-kpi">
         <p class="ui-kpi-label">New Students</p>
         <p class="ui-kpi-value">{{ number_format($newStudents ?? 0) }}</p>
+        <p class="mt-2 text-sm font-medium {{ $newChangeClass }}">{{ $newChange }}</p>
     </div>
     <div class="ui-kpi">
         <p class="ui-kpi-label">Returning / Continuing</p>
         <p class="ui-kpi-value">{{ number_format($returningStudents ?? 0) }}</p>
+        <p class="mt-2 text-sm font-medium {{ $returningChangeClass }}">{{ $returningChange }}</p>
     </div>
     <div class="ui-kpi">
         <p class="ui-kpi-label">Retention Rate</p>
         <p class="ui-kpi-value">{{ $retentionRate ?? 0 }}%</p>
-        <p class="text-xs text-gray-400 mt-1.5">Returning + continuing ÷ previous-year total</p>
+        <p class="text-xs text-gray-400 mt-1.5">{{ empty($previousAY) ? 'No prior year to compare' : 'Returning + continuing ÷ '.$previousAY->academic_year.' total' }}</p>
     </div>
 </div>
 
-<div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
     <div class="ui-kpi">
         <p class="ui-kpi-label">Shiftees</p>
         <p class="ui-kpi-value">{{ number_format($shifteeStudents ?? 0) }}</p>
+        <p class="mt-2 text-sm font-medium {{ $shifteeChangeClass }}">{{ $shifteeChange }}</p>
     </div>
     <div class="ui-kpi">
         <p class="ui-kpi-label">Transferred</p>
         <p class="ui-kpi-value">{{ number_format($transferredStudents ?? 0) }}</p>
+        <p class="mt-2 text-sm font-medium {{ $transferredChangeClass }}">{{ $transferredChange }}</p>
     </div>
     <div class="ui-kpi">
         <p class="ui-kpi-label">Withdrawn</p>
         <p class="ui-kpi-value">{{ number_format($withdrawnStudents ?? 0) }}</p>
+        <p class="mt-2 text-sm font-medium {{ $withdrawnChangeClass }}">{{ $withdrawnChange }}</p>
     </div>
-</div>
-
-<div class="ui-panel p-5 mb-6">
-    <h3 class="text-base font-semibold text-gray-800">Decision advice</h3>
-    <p class="text-sm text-gray-500 mt-1 mb-4">The student record does not store a written reason. The advice below uses grades, attendance, and tuition, then states what the college should do next.</p>
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        @foreach($movementAdvice ?? [] as $advice)
-            <div class="rounded-lg border border-gray-200 p-4">
-                <p class="text-xs font-semibold tracking-wide text-gray-500">{{ $advice['title'] }}</p>
-                <p class="mt-2 text-2xl font-bold text-gray-800">{{ number_format($advice['count']) }}</p>
-                <p class="mt-3 text-sm text-gray-700 leading-relaxed"><span class="font-semibold">Why: </span>{{ $advice['reason'] }}</p>
-                <p class="mt-2 text-sm text-gray-700 leading-relaxed"><span class="font-semibold">What to do: </span>{{ $advice['action'] }}</p>
-            </div>
-        @endforeach
+    <div class="ui-kpi">
+        <p class="ui-kpi-label">Drop</p>
+        <p class="ui-kpi-value">{{ number_format($droppedStudents ?? 0) }}</p>
+        <p class="mt-2 text-sm font-medium {{ $droppedChangeClass }}">{{ $droppedChange }}</p>
     </div>
 </div>
 

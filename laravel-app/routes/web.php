@@ -22,6 +22,9 @@ use App\Http\Controllers\RegistrationApprovalController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\SemesterController;
 use App\Http\Controllers\SettingsController;
+use App\Http\Controllers\StudentAccountController;
+use App\Http\Controllers\StudentReasonController;
+use App\Http\Controllers\SpesApplicationController;
 use App\Http\Controllers\StudentRecordController;
 use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
@@ -35,6 +38,11 @@ Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:40
 Route::get('/login/otp', [AuthController::class, 'otpForm'])->name('login.otp');
 Route::post('/login/otp', [AuthController::class, 'verifyOtp'])->middleware('throttle:10,1');
 Route::post('/login/otp/resend', [AuthController::class, 'resendOtp'])->middleware('throttle:5,1')->name('login.otp.resend');
+Route::get('/student/register', [StudentAccountController::class, 'create'])->name('student.register');
+Route::post('/student/register', [StudentAccountController::class, 'store'])->middleware('throttle:8,1');
+Route::get('/student/register/otp', [StudentAccountController::class, 'otpForm'])->name('student.register.otp');
+Route::post('/student/register/otp', [StudentAccountController::class, 'verifyOtp'])->middleware('throttle:10,1');
+Route::post('/student/register/otp/resend', [StudentAccountController::class, 'resendOtp'])->middleware('throttle:5,1')->name('student.register.otp.resend');
 Route::get('/register', [RegisterController::class, 'create'])->name('register');
 Route::get('/register/check', [RegisterController::class, 'check'])->middleware('throttle:30,1')->name('register.check');
 Route::post('/register', [RegisterController::class, 'store'])->middleware('throttle:8,1');
@@ -58,7 +66,32 @@ Route::middleware(['auth', 'active'])->group(function () {
     Route::post('/setup/credentials', [AccountSetupController::class, 'storeCredentials']);
 });
 
-Route::middleware(['auth', 'active', 'setup'])->group(function () {
+Route::middleware(['auth', 'active', 'setup', 'student.scope'])->group(function () {
+    Route::middleware('role:Student')->prefix('student')->name('student.')->group(function () {
+        Route::get('/', [StudentAccountController::class, 'home'])->name('home');
+        Route::get('spes', [SpesApplicationController::class, 'studentIndex'])->name('spes.index');
+        Route::get('spes/create', [SpesApplicationController::class, 'studentCreate'])->name('spes.create');
+        Route::post('spes', [SpesApplicationController::class, 'studentStore'])->name('spes.store');
+        Route::get('spes/{spes}/print', [SpesApplicationController::class, 'studentPrint'])->name('spes.print');
+        Route::get('spes/{spes}/edit', [SpesApplicationController::class, 'studentEdit'])->name('spes.edit');
+        Route::put('spes/{spes}', [SpesApplicationController::class, 'studentUpdate'])->name('spes.update');
+        Route::delete('spes/{spes}', [SpesApplicationController::class, 'studentDestroy'])->name('spes.destroy');
+        Route::get('spes/{spes}', [SpesApplicationController::class, 'studentShow'])->name('spes.show');
+        Route::get('reasons', [StudentReasonController::class, 'index'])->name('reasons.index');
+        Route::get('reasons/create', [StudentReasonController::class, 'create'])->name('reasons.create');
+        Route::post('reasons', [StudentReasonController::class, 'store'])->name('reasons.store');
+        Route::get('reasons/{reason}/edit', [StudentReasonController::class, 'edit'])->name('reasons.edit');
+        Route::put('reasons/{reason}', [StudentReasonController::class, 'update'])->name('reasons.update');
+        Route::delete('reasons/{reason}', [StudentReasonController::class, 'destroy'])->name('reasons.destroy');
+    });
+
+    Route::middleware('permission:enrollment.view')->group(function () {
+        Route::get('student-reasons', [StudentReasonController::class, 'staffIndex'])->name('student-reasons.index');
+    });
+    Route::middleware('permission:enrollment.manage')->group(function () {
+        Route::put('student-reasons/{reason}', [StudentReasonController::class, 'review'])->name('student-reasons.review');
+    });
+
     Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
     Route::get('/dashboard', [DashboardController::class, 'index']);
     Route::get('/executive', [DashboardController::class, 'executive'])->name('executive');
@@ -79,6 +112,20 @@ Route::middleware(['auth', 'active', 'setup'])->group(function () {
         Route::put('students/{student}', [StudentRecordController::class, 'update'])->name('students.update');
         Route::delete('students/{student}', [StudentRecordController::class, 'destroy'])->name('students.destroy');
     });
+    Route::middleware('permission:enrollment.manage')->group(function () {
+        Route::get('spes/create', [SpesApplicationController::class, 'create'])->name('spes.create');
+        Route::post('spes', [SpesApplicationController::class, 'store'])->name('spes.store');
+        Route::get('spes/{spes}/edit', [SpesApplicationController::class, 'edit'])->name('spes.edit');
+        Route::put('spes/{spes}', [SpesApplicationController::class, 'update'])->name('spes.update');
+        Route::post('spes/{spes}/student-access', [SpesApplicationController::class, 'allowStudentEdit'])->name('spes.student-access');
+        Route::delete('spes/{spes}', [SpesApplicationController::class, 'destroy'])->name('spes.destroy');
+    });
+    Route::middleware('permission:enrollment.view')->group(function () {
+        Route::get('spes', [SpesApplicationController::class, 'index'])->name('spes.index');
+        Route::get('spes/{spes}/print', [SpesApplicationController::class, 'print'])->name('spes.print');
+        Route::get('spes/{spes}', [SpesApplicationController::class, 'show'])->name('spes.show');
+    });
+
     Route::middleware('permission:enrollment.view')->group(function () {
         Route::get('students', [StudentRecordController::class, 'index'])->name('students.index');
         Route::get('students/export', [StudentRecordController::class, 'exportCsv'])->name('students.export');

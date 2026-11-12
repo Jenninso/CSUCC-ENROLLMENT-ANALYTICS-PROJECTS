@@ -18,9 +18,15 @@ return Application::configure(basePath: dirname(__DIR__))
             'active' => \App\Http\Middleware\EnsureUserIsActive::class,
             'permission' => \App\Http\Middleware\PermissionMiddleware::class,
             'setup' => \App\Http\Middleware\EnsureAccountSetup::class,
+            'student.scope' => \App\Http\Middleware\ConfineStudent::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
+        $exceptions->dontFlash([
+            'answer_1',
+            'answer_2',
+            'answer_3',
+        ]);
         $exceptions->shouldRenderJsonWhen(
             fn (Request $request) => $request->is('api/*') || $request->expectsJson(),
         );

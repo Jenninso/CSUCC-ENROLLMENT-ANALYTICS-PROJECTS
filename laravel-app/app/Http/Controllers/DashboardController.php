@@ -7,12 +7,11 @@ use App\Models\Alert;
 use App\Models\Department;
 use App\Models\Forecast;
 use App\Services\AnalyticsService;
-use App\Services\MovementAdviceService;
 use Illuminate\Http\Request;
 
 class DashboardController extends Controller
 {
-    public function index(Request $request, AnalyticsService $analytics, MovementAdviceService $movement)
+    public function index(Request $request, AnalyticsService $analytics)
     {
         $filters = $request->only([
             'academic_year_id', 'semester_id', 'semester_name', 'college_id', 'department_id', 'program_id', 'year_level', 'enrollment_type',
@@ -26,9 +25,8 @@ class DashboardController extends Controller
         $insights = AiInsight::query()->latest()->limit(5)->get();
         $alerts = Alert::query()->latest()->limit(5)->get();
         $unreadAlerts = Alert::query()->where('is_read', false)->count();
-        $movementAdvice = $movement->summarize($data['filters'] ?? $filters);
 
-        return view('dashboard', array_merge($data, $options, compact('forecast', 'insights', 'alerts', 'unreadAlerts', 'filters', 'movementAdvice')));
+        return view('dashboard', array_merge($data, $options, compact('forecast', 'insights', 'alerts', 'unreadAlerts', 'filters')));
     }
 
     public function executive(Request $request, AnalyticsService $analytics)

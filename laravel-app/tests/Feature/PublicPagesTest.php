@@ -12,7 +12,9 @@ class PublicPagesTest extends TestCase
             ->assertOk()
             ->assertSee('About this system')
             ->assertSee('Home')
-            ->assertSee('Terms');
+            ->assertSee('Terms')
+            ->assertSee('CEIT use only')
+            ->assertDontSee('BSIT use only');
     }
 
     public function test_guests_can_view_terms_page(): void
@@ -36,13 +38,13 @@ class PublicPagesTest extends TestCase
             ->assertDontSee('Need an account?');
     }
 
-    public function test_login_page_includes_public_navigation(): void
+    public function test_login_page_hides_site_header_and_limits_footer_to_ceit(): void
     {
         $this->get(route('login'))
             ->assertOk()
-            ->assertSee('Home')
-            ->assertSee('About')
-            ->assertSee('Terms')
+            ->assertDontSee('Open menu')
+            ->assertSee('CEIT use only')
+            ->assertDontSee('BSIT use only')
             ->assertSee('Cabadbaran Campus');
     }
 }

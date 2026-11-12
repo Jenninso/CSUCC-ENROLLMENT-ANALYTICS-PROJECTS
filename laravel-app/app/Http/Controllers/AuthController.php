@@ -17,7 +17,7 @@ class AuthController extends Controller
     public function showLogin(Request $request, LoginAttemptGuard $guard)
     {
         if (Auth::check()) {
-            return redirect()->route('dashboard');
+            return redirect()->route(Auth::user()->isStudent() ? 'student.home' : 'dashboard');
         }
 
         return $this->loginView($request, $guard);
@@ -216,6 +216,10 @@ class AuthController extends Controller
         }
         if (! $user->hasCompletedCredentials()) {
             return redirect()->route('setup.credentials');
+        }
+
+        if ($user->isStudent()) {
+            return redirect()->route('student.home');
         }
 
         return redirect()->intended(route('dashboard'));

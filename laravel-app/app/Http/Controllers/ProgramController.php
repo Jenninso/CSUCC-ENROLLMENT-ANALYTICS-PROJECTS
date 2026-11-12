@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Department;
 use App\Models\Program;
 use App\Services\AuditLogger;
+use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
 
 class ProgramController extends Controller
@@ -48,7 +49,11 @@ class ProgramController extends Controller
 
     public function destroy(Program $program, AuditLogger $audit)
     {
-        $program->delete();
+        try {
+            $program->delete();
+        } catch (QueryException) {
+            return back()->with('error', 'This program is used by enrollment records and cannot be deleted.');
+        }
         $audit->log('delete', 'programs', $program->program_name);
 
         return redirect()->route('data-management.programs.index')->with('success', 'Program deleted.');

@@ -10,6 +10,7 @@
     </div>
     @if(auth()->user()?->canAccess('enrollment.manage'))
     <div class="flex gap-2 shrink-0">
+        <a href="{{ route('spes.create', ['student' => $student->id]) }}" class="ui-btn-secondary">SPES form</a>
         <a href="{{ route('students.edit', $student) }}" class="ui-btn-primary">Edit</a>
         <form method="POST" action="{{ route('students.destroy', $student) }}" onsubmit="return confirm('Delete the record for {{ $student->student_id }}?')">
             @csrf @method('DELETE')

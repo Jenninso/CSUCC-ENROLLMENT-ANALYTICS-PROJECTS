@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\College;
 use App\Models\Department;
 use App\Services\AuditLogger;
+use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
 
 class DepartmentController extends Controller
@@ -48,7 +49,11 @@ class DepartmentController extends Controller
 
     public function destroy(Department $department, AuditLogger $audit)
     {
-        $department->delete();
+        try {
+            $department->delete();
+        } catch (QueryException) {
+            return back()->with('error', 'This department has programs or enrollment records and cannot be deleted.');
+        }
         $audit->log('delete', 'departments', $department->department_name);
 
         return redirect()->route('data-management.departments.index')->with('success', 'Department deleted.');

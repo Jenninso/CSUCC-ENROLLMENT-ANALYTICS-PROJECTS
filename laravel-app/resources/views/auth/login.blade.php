@@ -1,15 +1,25 @@
 @extends('layouts.guest')
 @section('title', 'Sign In')
+@section('container-class', 'max-w-3xl')
 
 @section('content')
-<div class="text-center mb-8">
-    <img src="{{ asset('images/branding/logo.png') }}" alt="CSUCC Logo"
-         class="mx-auto w-24 h-24 object-contain drop-shadow-lg mb-5 rounded-full bg-black/25 p-1.5 ring-1 ring-white/20">
-    <p class="text-[11px] uppercase tracking-[0.22em] text-amber-300/95 font-semibold">CSUCC</p>
-    <h1 class="font-brand text-2xl sm:text-3xl font-semibold text-white mt-2 leading-snug">
-        Caraga State University<br class="sm:hidden"> Cabadbaran Campus
+<div class="mx-auto w-full overflow-hidden rounded-2xl border border-white/15 shadow-[0_18px_50px_rgba(0,0,0,0.32)] lg:grid lg:grid-cols-2">
+<div class="relative border-b border-white/10 px-7 py-8 text-center sm:px-8 lg:flex lg:flex-col lg:justify-center lg:border-b-0 lg:border-r lg:px-10 lg:py-11 lg:text-left">
+    <div aria-hidden="true" class="pointer-events-none absolute inset-0 bg-[#04281c]/60 backdrop-blur-xl"></div>
+    <div class="pointer-events-none absolute inset-y-0 left-0 z-10 w-0.5 bg-[#d4a017]" aria-hidden="true"></div>
+    <div class="relative z-10 flex items-center justify-center gap-3.5 lg:justify-start">
+        <img src="{{ asset('images/branding/logo.png') }}" alt="CSUCC Logo"
+             class="h-14 w-14 shrink-0 rounded-full bg-black/25 object-contain p-1 ring-1 ring-white/30 lg:h-16 lg:w-16">
+        <div class="text-left">
+            <p class="text-[10px] font-semibold uppercase tracking-[0.24em] text-amber-200/90">CSUCC</p>
+            <p class="mt-1 text-sm font-medium text-white/95">Enrollment Analytics</p>
+        </div>
+    </div>
+    <h1 class="font-brand relative z-10 mt-8 text-[1.65rem] font-semibold leading-[1.2] text-white">
+        Caraga State University<br>Cabadbaran Campus
     </h1>
-    <p class="text-emerald-50/90 text-sm mt-3 max-w-sm mx-auto">Enrollment Analytics &amp; Decision Support for CEIT and BSIT.</p>
+    <div class="relative z-10 mx-auto mt-4 h-px w-10 bg-[#d4a017] lg:mx-0"></div>
+    <p class="relative z-10 mx-auto mt-4 max-w-xs text-[13px] leading-relaxed text-white/75 lg:mx-0">Enrollment Analytics &amp; Decision Support for CEIT.</p>
 </div>
 
 @php
@@ -18,7 +28,7 @@
         : $lockoutSeconds.'s';
 @endphp
 <div
-    class="bg-white/95 backdrop-blur-md rounded-2xl shadow-2xl p-8 border border-white/25"
+    class="bg-white px-7 py-8 sm:px-8 lg:px-10 lg:py-11"
     x-data="{
         remaining: {{ (int) $lockoutSeconds }},
         timer: null,
@@ -43,9 +53,9 @@
         }
     }"
 >
-    <div class="text-center mb-6">
-        <h2 class="text-xl font-semibold text-gray-900">Sign in</h2>
-        <p class="text-sm text-gray-500 mt-1">Use your campus account credentials</p>
+    <div class="mb-6 border-b border-gray-100 pb-5">
+        <h2 class="bg-gradient-to-r from-[#064e32] via-[#0b5d3b] to-[#1f9d5a] bg-clip-text text-3xl font-bold tracking-tight text-transparent">Sign in</h2>
+        <p class="mt-1 text-sm text-gray-500">Use your campus account credentials</p>
     </div>
 
     @if(session('success'))
@@ -68,25 +78,25 @@
     </div>
     @endif
 
-    <form method="POST" action="{{ route('login') }}" class="space-y-5">
+    <form method="POST" action="{{ route('login') }}" class="space-y-4">
         @csrf
         <div>
-            <label for="username" class="block text-sm font-medium text-gray-700 mb-1.5">Username</label>
+            <label for="username" class="mb-1.5 block text-[13px] font-semibold text-gray-700">Username</label>
             <input type="text" name="username" id="username" value="{{ old('username') }}" required autofocus
                    autocomplete="username"
                    :disabled="remaining > 0"
                    placeholder=""
-                   class="ui-input disabled:bg-gray-100 disabled:text-gray-500">
+                   class="ui-input border-gray-200 bg-[#f7f8f7] disabled:bg-gray-100 disabled:text-gray-500">
         </div>
         <div>
-            <label for="password" class="block text-sm font-medium text-gray-700 mb-1.5">Password</label>
+            <label for="password" class="mb-1.5 block text-[13px] font-semibold text-gray-700">Password</label>
             <input type="password" name="password" id="password" required
                    :disabled="remaining > 0"
-                   class="ui-input disabled:bg-gray-100 disabled:text-gray-500">
+                   class="ui-input border-gray-200 bg-[#f7f8f7] disabled:bg-gray-100 disabled:text-gray-500">
         </div>
-        <div class="flex items-center justify-between">
-            <label class="flex items-center gap-2 text-sm text-gray-600">
-                <input type="checkbox" name="remember" class="rounded border-gray-300 text-emerald-700 focus:ring-emerald-600" :disabled="remaining > 0">
+        <div class="flex items-center justify-between pt-1">
+            <label class="flex items-center gap-2 text-[13px] text-gray-600">
+                <input type="checkbox" name="remember" class="rounded border-gray-300 text-[#0b5d3b] focus:ring-[#0b5d3b]" :disabled="remaining > 0">
                 Remember me
             </label>
             @if($showForgotPassword)
@@ -96,10 +106,14 @@
         <button type="submit"
                 :disabled="remaining > 0"
                 :class="remaining > 0 ? 'opacity-50 cursor-not-allowed' : ''"
-                class="ui-btn-primary w-full py-3">
-            <span x-show="remaining <= 0">Sign In</span>
+                class="ui-btn-primary mt-1 w-full py-3 tracking-wide">
+            <span x-show="remaining <= 0">Sign in</span>
             <span x-show="remaining > 0" x-cloak>Wait <span x-text="clock()">{{ $lockoutLabel }}</span></span>
         </button>
+        <p class="pt-3 text-center text-sm text-gray-600">
+            Student? <a href="{{ route('student.register') }}" class="font-medium text-emerald-800 hover:underline">Create a student account</a>
+        </p>
     </form>
+</div>
 </div>
 @endsection

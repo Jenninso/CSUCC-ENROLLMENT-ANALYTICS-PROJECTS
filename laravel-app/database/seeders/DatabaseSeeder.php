@@ -27,6 +27,10 @@ class DatabaseSeeder extends Seeder
             'role_name' => 'User',
             'description' => 'Standard staff access based on assigned privileges.',
         ]);
+        Role::create([
+            'role_name' => 'Student',
+            'description' => 'Student portal for the SPES form and academic status reasons.',
+        ]);
 
         foreach (config('permissions.catalog') as $key => [$name, $module]) {
             Permission::create(['key' => $key, 'name' => $name, 'module' => $module]);

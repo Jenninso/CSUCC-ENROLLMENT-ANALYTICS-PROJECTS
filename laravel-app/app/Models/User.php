@@ -187,6 +187,16 @@ class User extends Authenticatable
         return $this->hasRole('Administrator');
     }
 
+    public function isStudent(): bool
+    {
+        return $this->hasRole('Student');
+    }
+
+    public function studentNumber(): string
+    {
+        return strtoupper(trim((string) $this->employee_id));
+    }
+
     public function isStaffAdmin(): bool
     {
         return $this->isSuperAdmin() || $this->isAdministrator();

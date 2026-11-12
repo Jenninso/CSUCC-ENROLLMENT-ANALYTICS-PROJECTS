@@ -2,19 +2,62 @@
 @section('title', 'Retention Analytics')
 
 @section('content')
+<form method="GET" class="ui-panel p-4 mb-6 grid grid-cols-2 lg:grid-cols-6 gap-3">
+    <select name="academic_year_id" class="ui-input">
+        <option value="">Latest year with enrollment</option>
+        @foreach($academicYears ?? [] as $ay)
+            <option value="{{ $ay->id }}" @selected(($filters['academic_year_id'] ?? '') == $ay->id)>{{ $ay->academic_year }}</option>
+        @endforeach
+    </select>
+    <select name="semester_name" class="ui-input">
+        <option value="">All semesters</option>
+        @foreach($semesters ?? [] as $sem)
+            <option value="{{ $sem->semester_name }}" @selected(($filters['semester_name'] ?? '') === $sem->semester_name)>{{ $sem->semester_name }}</option>
+        @endforeach
+    </select>
+    <select name="college_id" class="ui-input">
+        <option value="">All colleges</option>
+        @foreach($colleges ?? [] as $college)
+            <option value="{{ $college->id }}" @selected(($filters['college_id'] ?? '') == $college->id)>{{ $college->college_name }}</option>
+        @endforeach
+    </select>
+    <select name="program_id" class="ui-input">
+        <option value="">All programs</option>
+        @foreach($programs ?? [] as $program)
+            <option value="{{ $program->id }}" @selected(($filters['program_id'] ?? '') == $program->id)>{{ $program->program_code }}</option>
+        @endforeach
+    </select>
+    <select name="year_level" class="ui-input">
+        <option value="">All year levels</option>
+        @for($i = 1; $i <= 4; $i++)
+            <option value="{{ $i }}" @selected(($filters['year_level'] ?? '') == $i)>{{ \App\Models\EnrollmentRecord::yearLevelLabel($i) }}</option>
+        @endfor
+    </select>
+    <button class="ui-btn-primary">Apply filters</button>
+</form>
+
 <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
     <div class="bg-white rounded-lg shadow-sm p-5">
-        <p class="text-sm text-gray-500">Overall Retention</p>
+        <p class="text-sm text-gray-500">Overall Retention{{ $retentionYear ? ' · '.$retentionYear : '' }}</p>
         <p class="text-2xl font-bold text-emerald-600 mt-1">{{ $retentionRate ?? 0 }}%</p>
     </div>
     <div class="bg-white rounded-lg shadow-sm p-5">
-        <p class="text-sm text-gray-500">Attrition Rate</p>
+        <p class="text-sm text-gray-500">Attrition Rate{{ $retentionYear ? ' · '.$retentionYear : '' }}</p>
         <p class="text-2xl font-bold text-rose-600 mt-1">{{ $attritionRate ?? 0 }}%</p>
     </div>
     <div class="bg-white rounded-lg shadow-sm p-5">
-        <p class="text-sm text-gray-500">Returning Students</p>
+        <p class="text-sm text-gray-500">Returning / Continuing{{ $retentionYear ? ' · '.$retentionYear : '' }}</p>
         <p class="text-2xl font-bold text-gray-800 mt-1">{{ number_format($returningStudents ?? 0) }}</p>
     </div>
+</div>
+
+<div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4 mb-6">
+    @foreach($movementCounts ?? [] as $item)
+        <div class="bg-white rounded-lg shadow-sm p-5">
+            <p class="text-sm text-gray-500">{{ $item['label'] }}{{ $retentionYear ? ' · '.$retentionYear : '' }}</p>
+            <p class="text-2xl font-bold text-gray-800 mt-1">{{ number_format($item['count']) }}</p>
+        </div>
+    @endforeach
 </div>
 
 <div class="bg-white rounded-lg shadow-sm p-5 mb-6">
@@ -29,7 +72,7 @@
 
 <div class="bg-white rounded-lg shadow-sm overflow-hidden">
     <div class="px-5 py-4 border-b">
-        <h3 class="text-lg font-semibold text-gray-800">Retention by Program</h3>
+        <h3 class="text-lg font-semibold text-gray-800">Retention by Program{{ $retentionYear ? ' · '.$retentionYear : '' }}</h3>
     </div>
     <div class="overflow-x-auto">
         <table class="w-full text-sm">

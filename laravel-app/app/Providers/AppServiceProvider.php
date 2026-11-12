@@ -6,6 +6,7 @@ use App\Models\Alert;
 use App\Models\DeleteRequest;
 use App\Models\RegistrationRequest;
 use Database\Seeders\SprSyntheticSeeder;
+use Database\Seeders\StudentRecordSeeder;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\View;
@@ -54,10 +55,17 @@ class AppServiceProvider extends ServiceProvider
         }
 
         try {
-            if (! Schema::hasTable('spes_applications') || DB::table('spes_applications')->count() > 0) {
+            if (! Schema::hasTable('spes_applications') || ! Schema::hasTable('student_records')) {
                 return;
             }
 
+            $linkedToStudents = DB::table('spes_applications')->whereNotNull('student_record_id')->count();
+            $hasUnmatchedDummy = DB::table('spes_applications')->where('student_id', 'like', '____-00%')->exists();
+            if ($linkedToStudents > 0 && ! $hasUnmatchedDummy) {
+                return;
+            }
+
+            (new StudentRecordSeeder)->run();
             (new SprSyntheticSeeder)->run();
         } catch (\Throwable $e) {
             report($e);

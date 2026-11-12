@@ -3,6 +3,8 @@
 namespace Database\Seeders;
 
 use App\Models\AcademicYear;
+use App\Models\College;
+use App\Models\Department;
 use App\Models\Program;
 use App\Models\Semester;
 use App\Models\StudentRecord;
@@ -12,12 +14,8 @@ class StudentRecordSeeder extends Seeder
 {
     public function run(): void
     {
-        $year = AcademicYear::query()->where('status', 'active')->orderByDesc('id')->first()
-            ?? AcademicYear::query()->orderByDesc('id')->first();
-
-        if (! $year) {
-            return;
-        }
+        $this->ensurePrograms();
+        $year = $this->cohortYear();
 
         $semesters = Semester::query()
             ->where('academic_year_id', $year->id)
@@ -41,6 +39,63 @@ class StudentRecordSeeder extends Seeder
 
             $this->seedCohort($program, $year, $semesters, $cohort);
         }
+    }
+
+    private function ensurePrograms(): void
+    {
+        $college = College::query()->updateOrCreate(
+            ['college_code' => config('scope.college_code')],
+            ['college_name' => config('scope.college_name')]
+        );
+
+        $departments = [];
+        foreach (config('scope.departments') as $code => $name) {
+            $departments[$code] = Department::query()->updateOrCreate(
+                ['department_code' => $code],
+                ['department_name' => $name, 'college_id' => $college->id]
+            );
+        }
+
+        foreach (config('scope.programs') as $code => $program) {
+            Program::query()->updateOrCreate(
+                ['program_code' => $code],
+                [
+                    'program_name' => $program['name'],
+                    'department_id' => $departments[$program['department']]->id,
+                    'degree_level' => config('scope.degree_level'),
+                    'status' => 'active',
+                ]
+            );
+        }
+    }
+
+    private function cohortYear(): AcademicYear
+    {
+        $year = AcademicYear::query()->firstOrCreate(
+            ['academic_year' => '2025-2026'],
+            [
+                'start_date' => '2025-08-01',
+                'end_date' => '2026-07-31',
+                'status' => 'active',
+            ]
+        );
+
+        if (Semester::query()->where('academic_year_id', $year->id)->doesntExist()) {
+            Semester::query()->create([
+                'semester_name' => 'First Semester',
+                'semester_order' => 1,
+                'academic_year_id' => $year->id,
+                'is_active' => true,
+            ]);
+            Semester::query()->create([
+                'semester_name' => 'Second Semester',
+                'semester_order' => 2,
+                'academic_year_id' => $year->id,
+                'is_active' => true,
+            ]);
+        }
+
+        return $year;
     }
 
     /**

@@ -5,8 +5,10 @@ namespace Tests\Feature;
 use App\Models\Permission;
 use App\Models\Role;
 use App\Models\SpesApplication;
+use App\Models\StudentRecord;
 use App\Models\User;
 use Database\Seeders\SprSyntheticSeeder;
+use Database\Seeders\StudentRecordSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -136,16 +138,18 @@ class SpesApplicationTest extends TestCase
         $this->assertSame('Maria', $application->fresh()->first_name);
     }
 
-    public function test_synthetic_spr_seeder_fills_statistics_without_student_records(): void
+    public function test_spr_records_use_the_same_students_as_the_roster(): void
     {
-        $this->assertSame(0, SpesApplication::query()->count());
-
+        $this->seed(StudentRecordSeeder::class);
         $this->seed(SprSyntheticSeeder::class);
 
-        $this->assertSame(72, SpesApplication::query()->count());
-        $this->assertSame(12, SpesApplication::query()->where('status', 'submitted')->count());
-        $this->assertSame(12, SpesApplication::query()->where('status', 'approved')->count());
-        $this->assertSame(12, SpesApplication::query()->where('status', 'employed')->count());
+        $studentIds = StudentRecord::query()->distinct()->orderBy('student_id')->pluck('student_id');
+        $sprIds = SpesApplication::query()->orderBy('student_id')->pluck('student_id');
+
+        $this->assertSame($studentIds->all(), $sprIds->all());
+        $this->assertSame(88, $studentIds->count());
+        $this->assertTrue($studentIds->contains('2022-04001'));
+        $this->assertFalse($sprIds->contains('2026-00001'));
     }
 
     public function test_a_younger_student_can_still_save_the_spr(): void

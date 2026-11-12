@@ -48,21 +48,38 @@ class AcademicYearController extends Controller
 
     public function destroy(AcademicYear $academicYear, AuditLogger $audit)
     {
-        $hasEnrollment = EnrollmentRecord::query()->where('academic_year_id', $academicYear->id)->exists();
-        $hasStudents = StudentRecord::query()->where('academic_year_id', $academicYear->id)->exists();
-        if ($hasEnrollment || $hasStudents) {
-            return back()->with('error', 'This academic year has enrollment or student records and cannot be deleted.');
+        $semesterIds = $academicYear->semesters()->pluck('id');
+        $hasStudents = StudentRecord::query()
+            ->where(function ($query) use ($academicYear, $semesterIds) {
+                $query->where('academic_year_id', $academicYear->id);
+                if ($semesterIds->isNotEmpty()) {
+                    $query->orWhereIn('semester_id', $semesterIds);
+                }
+            })
+            ->exists();
+        if ($hasStudents) {
+            return back()->with('error', 'This academic year has student records and cannot be deleted.');
         }
 
+        $hasEnrollment = EnrollmentRecord::query()->where('academic_year_id', $academicYear->id)->exists();
+        if ($academicYear->isActive() && $hasEnrollment) {
+            return back()->with('error', 'The active academic year still has enrollment records and cannot be deleted. Set it to inactive first if those counts should be removed with the year.');
+        }
+
+        $label = $academicYear->academic_year;
         try {
-            DB::transaction(function () use ($academicYear) {
+            DB::transaction(function () use ($academicYear, $semesterIds) {
+                EnrollmentRecord::query()->where('academic_year_id', $academicYear->id)->delete();
+                if ($semesterIds->isNotEmpty()) {
+                    EnrollmentRecord::query()->whereIn('semester_id', $semesterIds)->delete();
+                }
                 $academicYear->semesters()->delete();
                 $academicYear->delete();
             });
         } catch (QueryException) {
             return back()->with('error', 'This academic year is still used by other records and cannot be deleted.');
         }
-        $audit->log('delete', 'academic_years', $academicYear->academic_year);
+        $audit->log('delete', 'academic_years', $label);
 
         return redirect()->route('data-management.academic-years.index')->with('success', 'Academic year deleted.');
     }

@@ -36,7 +36,7 @@
                     <td class="px-4 py-3 text-center">
                         <div class="flex items-center justify-center gap-2">
                             <a href="{{ route('data-management.academic-years.edit', $item) }}" class="text-indigo-600 hover:text-indigo-800 text-xs font-medium">Edit</a>
-                            <form method="POST" action="{{ route('data-management.academic-years.destroy', $item) }}" onsubmit="return confirm('Delete this academic year?')">
+                            <form method="POST" action="{{ route('data-management.academic-years.destroy', $item) }}" onsubmit="return confirm('{{ ($item->status ?? '') === 'active' ? 'Delete this academic year?' : 'Delete this inactive academic year? Its semesters and enrollment counts will be removed.' }}')">
                                 @csrf @method('DELETE')
                                 <button type="submit" class="text-red-600 hover:text-red-800 text-xs font-medium">Delete</button>
                             </form>

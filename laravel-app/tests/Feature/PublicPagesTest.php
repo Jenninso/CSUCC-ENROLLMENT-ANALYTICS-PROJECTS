@@ -38,13 +38,16 @@ class PublicPagesTest extends TestCase
             ->assertDontSee('Need an account?');
     }
 
-    public function test_login_page_hides_site_header_and_limits_footer_to_ceit(): void
+    public function test_login_page_keeps_footer_without_public_links(): void
     {
         $this->get(route('login'))
             ->assertOk()
             ->assertDontSee('Open menu')
-            ->assertSee('CEIT use only')
+            ->assertSee('CSUCC Cabadbaran Campus')
+            ->assertDontSee('CEIT use only')
             ->assertDontSee('BSIT use only')
-            ->assertSee('Cabadbaran Campus');
+            ->assertDontSee('>Home<')
+            ->assertDontSee('>About<')
+            ->assertDontSee('>Terms<');
     }
 }

@@ -43,25 +43,39 @@
 
 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
     @php
-        $yearChange = function ($rate) use ($previousAY) {
+        $yearChange = function ($rate, bool $increaseIsGood = true) use ($previousAY) {
             if (empty($previousAY)) {
                 return ['No prior year', 'text-gray-400'];
             }
             $rate = (float) ($rate ?? 0);
-            $up = $rate >= 0;
+            if ($rate == 0.0) {
+                return ['No change vs '.$previousAY->academic_year, 'text-gray-400'];
+            }
+            $up = $rate > 0;
+            $favorable = $increaseIsGood ? $up : ! $up;
 
             return [
                 ($up ? 'Up' : 'Down').' '.abs($rate).'% vs '.$previousAY->academic_year,
-                $up ? 'text-emerald-600' : 'text-red-600',
+                $favorable ? 'text-emerald-600' : 'text-red-600',
             ];
         };
         [$totalChange, $totalChangeClass] = $yearChange($growthRate ?? 0);
         [$newChange, $newChangeClass] = $yearChange($newStudentsGrowth ?? 0);
         [$returningChange, $returningChangeClass] = $yearChange($returningStudentsGrowth ?? 0);
-        [$shifteeChange, $shifteeChangeClass] = $yearChange($shifteeStudentsGrowth ?? 0);
-        [$transferredChange, $transferredChangeClass] = $yearChange($transferredStudentsGrowth ?? 0);
-        [$withdrawnChange, $withdrawnChangeClass] = $yearChange($withdrawnStudentsGrowth ?? 0);
-        [$droppedChange, $droppedChangeClass] = $yearChange($droppedStudentsGrowth ?? 0);
+        $studentShare = function ($rate) use ($totalEnrollment) {
+            return ((float) $rate).'% of '.number_format($totalEnrollment ?? 0).' students';
+        };
+        $countTone = function ($count) {
+            return ($count ?? 0) > 0 ? 'text-red-600' : 'text-emerald-600';
+        };
+        $shifteeChange = $studentShare($shifteeRate ?? 0);
+        $shifteeChangeClass = $countTone($shifteeStudents ?? 0);
+        $transferredChange = $studentShare($transferredRate ?? 0);
+        $transferredChangeClass = $countTone($transferredStudents ?? 0);
+        $withdrawnChange = $studentShare($withdrawnRate ?? 0);
+        $withdrawnChangeClass = $countTone($withdrawnStudents ?? 0);
+        $droppedChange = $studentShare($droppedRate ?? 0);
+        $droppedChangeClass = $countTone($droppedStudents ?? 0);
     @endphp
     <div class="ui-kpi">
         <p class="ui-kpi-label">Total Enrollment</p>

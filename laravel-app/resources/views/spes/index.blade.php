@@ -11,8 +11,8 @@
 
 <div class="ui-panel p-4 mb-4 flex flex-col sm:flex-row sm:items-center gap-3">
     <div class="grow">
-        <p class="text-sm font-semibold text-gray-900">Share link for students with no account</p>
-        <p class="text-xs text-gray-500 mt-1">They only see the SPR form. They can fill it and save it. They cannot open the rest of the system.</p>
+        <p class="text-sm font-semibold text-gray-900">Share link for students</p>
+        <p class="text-xs text-gray-500 mt-1">Students do not sign in. They only see the SPR form, fill it, and save it.</p>
     </div>
     <input type="text" readonly value="{{ route('spr.public') }}" class="ui-input sm:max-w-md" onclick="this.select()">
 </div>

@@ -98,7 +98,8 @@
     }
     .spr-sheet h2 { font-size: 8.5pt; margin: 0; }
     .spr-sheet p { margin: 0; }
-    .spr-head img { width: 100%; height: 0.62in; object-fit: contain; object-position: center; display: block; }
+    .spr-head { margin: -0.03in -0.07in 4px; }
+    .spr-head img { width: 100%; height: auto; display: block; }
     .spr-title { text-align: center; margin: 2px 0; }
     .spr-title span { display: inline-block; border: 1.5px solid #111; font-weight: 700; letter-spacing: 0.03em; padding: 0 8px; font-size: 10pt; line-height: 1.2; }
     .spr-row { display: flex; gap: 6px; align-items: flex-end; margin-top: 0; }
@@ -134,7 +135,7 @@
 <div class="spr-wrap {{ $editing ? 'is-editing' : '' }}">
     <section class="spr-sheet">
         <div class="spr-head">
-            <img src="{{ $headerSrc ?? asset('images/branding/csu-cabadbaran-header.png') }}" alt="Caraga State University Cabadbaran City">
+            <img src="{{ $headerSrc ?? asset('images/branding/csu-cabadbaran-header.png').'?v=4' }}" alt="Caraga State University Cabadbaran City">
         </div>
         <div class="spr-title"><span>STUDENT PERSONAL RECORD (SPR)</span></div>
         <p><strong>Direction:</strong> Please fill-out the required information clearly. Put “N/A” for information not applicable to you.</p>

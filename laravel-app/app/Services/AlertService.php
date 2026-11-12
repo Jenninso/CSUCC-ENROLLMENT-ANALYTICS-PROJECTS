@@ -7,7 +7,10 @@ use App\Models\SystemSetting;
 
 class AlertService
 {
-    public function __construct(private AnalyticsService $analytics) {}
+    public function __construct(
+        private AnalyticsService $analytics,
+        private StudentRiskAnalysis $studentRisk,
+    ) {}
 
     public function evaluate(): array
     {
@@ -81,6 +84,8 @@ class AlertService
                 ]);
             }
         }
+
+        $this->studentRisk->raiseWarnings();
 
         return $created;
     }

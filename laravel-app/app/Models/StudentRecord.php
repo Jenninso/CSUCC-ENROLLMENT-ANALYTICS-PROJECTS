@@ -123,7 +123,8 @@ class StudentRecord extends Model
 
     /**
      * GPA uses the 1.00 (highest) to 5.00 (failing) scale.
-     * Risk is derived so a name is never required to flag a student.
+     * Classification uses academic indicators only. Tuition, income,
+     * and family circumstances are never used to raise the risk level.
      */
     public static function assessRisk(array $attributes): string
     {
@@ -132,7 +133,6 @@ class StudentRecord extends Model
         $failed = (int) ($attributes['failed_subjects'] ?? 0);
         $enrolled = (string) ($attributes['enrolled_status'] ?? 'enrolled');
         $studentType = (string) ($attributes['student_type'] ?? 'new');
-        $tuition = (string) ($attributes['tuition_status'] ?? 'paid');
 
         if (
             in_array($enrolled, ['dropped', 'withdrawn'], true)
@@ -144,7 +144,7 @@ class StudentRecord extends Model
             return 'critical';
         }
 
-        if ($failed >= 2 || $attendance < 75 || $gpa >= 2.75 || $tuition === 'unpaid') {
+        if ($failed >= 2 || $attendance < 75 || $gpa >= 2.75) {
             return 'high';
         }
 
@@ -152,7 +152,6 @@ class StudentRecord extends Model
             $failed >= 1
             || $attendance < 85
             || $gpa >= 2.25
-            || $tuition === 'partial'
             || in_array($enrolled, ['not_enrolled', 'on_leave'], true)
         ) {
             return 'moderate';

@@ -9,6 +9,7 @@ use App\Models\Semester;
 use App\Models\StudentRecord;
 use App\Services\AuditLogger;
 use App\Services\StudentImportService;
+use App\Services\StudentRiskAnalysis;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 use Symfony\Component\HttpFoundation\StreamedResponse;
@@ -54,11 +55,14 @@ class StudentRecordController extends Controller
         return redirect()->route('students.index')->with('success', 'Student record saved. Risk level is '.$record->riskLabel().'.');
     }
 
-    public function show(StudentRecord $student)
+    public function show(StudentRecord $student, StudentRiskAnalysis $analysis)
     {
         $student->load(['program.department.college', 'academicYear', 'semester']);
 
-        return view('students.show', ['student' => $student]);
+        return view('students.show', [
+            'student' => $student,
+            'analysis' => $analysis->forStudent($student),
+        ]);
     }
 
     public function edit(StudentRecord $student)

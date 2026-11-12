@@ -17,7 +17,17 @@ class AuthController extends Controller
     public function showLogin(Request $request, LoginAttemptGuard $guard)
     {
         if (Auth::check()) {
-            return redirect()->route(Auth::user()->isStudent() ? 'student.home' : 'dashboard');
+            if (Auth::user()->isStudent()) {
+                Auth::logout();
+                $request->session()->invalidate();
+                $request->session()->regenerateToken();
+
+                return redirect()->route('login')->withErrors([
+                    'username' => 'Student accounts are not used. This sign-in is for staff only.',
+                ]);
+            }
+
+            return redirect()->route('dashboard');
         }
 
         return $this->loginView($request, $guard);
@@ -57,6 +67,12 @@ class AuthController extends Controller
 
         $passwordOk = $user && Hash::check($credentials['password'], $user->password);
         $inactiveMessage = null;
+
+        if ($passwordOk && $user->isStudent()) {
+            return back()->withErrors([
+                'username' => 'Student accounts are not used. This sign-in is for staff only.',
+            ])->onlyInput('username');
+        }
 
         if ($passwordOk) {
             if ($user->isInactive()) {
@@ -160,6 +176,14 @@ class AuthController extends Controller
             return back()->withErrors(['otp' => $result['message'] ?? 'Invalid verification code.']);
         }
 
+        if ($user->isStudent()) {
+            $request->session()->forget('login_otp');
+
+            return redirect()->route('login')->withErrors([
+                'username' => 'Student accounts are not used. This sign-in is for staff only.',
+            ]);
+        }
+
         $remember = (bool) ($pending['remember'] ?? false);
         $request->session()->forget('login_otp');
         $request->session()->regenerate();
@@ -206,7 +230,7 @@ class AuthController extends Controller
         $request->session()->invalidate();
         $request->session()->regenerateToken();
 
-        return redirect()->route('login');
+        return redirect()->route('login')->with('logged_out', true);
     }
 
     private function postLoginRedirect(User $user)
@@ -216,10 +240,6 @@ class AuthController extends Controller
         }
         if (! $user->hasCompletedCredentials()) {
             return redirect()->route('setup.credentials');
-        }
-
-        if ($user->isStudent()) {
-            return redirect()->route('student.home');
         }
 
         return redirect()->intended(route('dashboard'));

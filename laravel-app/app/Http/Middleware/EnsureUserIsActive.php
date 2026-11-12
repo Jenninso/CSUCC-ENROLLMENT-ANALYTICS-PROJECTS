@@ -12,6 +12,16 @@ class EnsureUserIsActive
     public function handle(Request $request, Closure $next): Response
     {
         $user = $request->user();
+        if ($user?->isStudent()) {
+            Auth::logout();
+            $request->session()->invalidate();
+            $request->session()->regenerateToken();
+
+            return redirect()->route('login')->withErrors([
+                'username' => 'Student accounts are not used. This sign-in is for staff only.',
+            ]);
+        }
+
         if ($user && ! $user->isActive()) {
             Auth::logout();
             $request->session()->invalidate();

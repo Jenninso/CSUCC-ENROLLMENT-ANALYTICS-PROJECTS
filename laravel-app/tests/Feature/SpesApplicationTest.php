@@ -14,17 +14,9 @@ class SpesApplicationTest extends TestCase
 
     public function test_staff_can_save_and_print_a_spes_application(): void
     {
-        $student = $this->student();
         $staff = $this->staff();
 
-        $this->actingAs($student)
-            ->get(route('student.spes.create'))
-            ->assertOk()
-            ->assertSee('Student Personal Record (SPR)')
-            ->assertSee('8.5 × 13 inches');
-
-        $this->actingAs($student)
-            ->post(route('student.spes.store'), $this->payload())
+        $this->post(route('spr.public.store'), $this->payload())
             ->assertRedirect();
 
         $application = SpesApplication::query()->first();
@@ -59,7 +51,8 @@ class SpesApplicationTest extends TestCase
             ->assertSee('SPR-2026-')
             ->assertSee('Santos')
             ->assertSee('Maria')
-            ->assertSee('Allow one edit');
+            ->assertSee('Students do not sign in')
+            ->assertDontSee('Allow one edit');
 
         $this->actingAs($staff)
             ->get(route('spes.print', $application))
@@ -97,11 +90,7 @@ class SpesApplicationTest extends TestCase
 
     public function test_a_younger_student_can_still_save_the_spr(): void
     {
-        $student = $this->student();
-
-        $this->actingAs($student)
-            ->from(route('student.spes.create'))
-            ->post(route('student.spes.store'), $this->payload(['birth_date' => '2014-01-01']))
+        $this->post(route('spr.public.store'), $this->payload(['birth_date' => '2014-01-01']))
             ->assertRedirect();
 
         $this->assertDatabaseCount('spes_applications', 1);
@@ -143,20 +132,6 @@ class SpesApplicationTest extends TestCase
         $role = Role::firstOrCreate(['role_name' => 'Super Administrator'], ['description' => 'Super Admin']);
 
         return User::factory()->create([
-            'role_id' => $role->id,
-            'status' => 'active',
-            'must_change_password' => false,
-            'credentials_completed_at' => now(),
-        ]);
-    }
-
-    private function student(): User
-    {
-        $role = Role::firstOrCreate(['role_name' => 'Student'], ['description' => 'Student portal']);
-
-        return User::factory()->create([
-            'employee_id' => '2025-01001',
-            'username' => '2025-01001',
             'role_id' => $role->id,
             'status' => 'active',
             'must_change_password' => false,

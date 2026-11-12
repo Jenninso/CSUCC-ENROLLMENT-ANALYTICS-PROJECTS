@@ -203,6 +203,9 @@ class AccountSecurityTest extends TestCase
 
         $this->post('/logout')->assertRedirect(route('login'));
         $this->assertGuest();
+        $this->get(route('login'))
+            ->assertOk()
+            ->assertSee('popstate', false);
         $this->assertFalse($user->fresh()->isOnline());
         $this->assertSame('Offline', $user->fresh()->presenceLabel());
     }

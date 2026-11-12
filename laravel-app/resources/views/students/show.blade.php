@@ -118,4 +118,12 @@
         </div>
     </dl>
 </div>
+
+<div class="ui-panel p-5 max-w-4xl mt-4">
+    <div class="flex items-start justify-between gap-3 mb-2">
+        <h3 class="text-base font-semibold text-gray-800">At-risk analysis</h3>
+        <a href="{{ route('at-risk.show', $student) }}" class="ui-link text-sm">Full report</a>
+    </div>
+    <p class="text-sm text-gray-700 leading-relaxed">{{ $analysis['narrative'] }}</p>
+</div>
 @endsection

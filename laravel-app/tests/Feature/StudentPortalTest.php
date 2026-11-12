@@ -2,218 +2,42 @@
 
 namespace Tests\Feature;
 
-use App\Models\AcademicYear;
-use App\Models\College;
-use App\Models\Department;
-use App\Models\Program;
 use App\Models\Role;
-use App\Models\SecretQuestion;
-use App\Models\Semester;
-use App\Models\SpesApplication;
-use App\Models\StudentRecord;
 use App\Models\User;
-use App\Models\UserSecretAnswer;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Facades\Mail;
 use Tests\TestCase;
 
 class StudentPortalTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_student_account_is_separate_and_can_submit_an_spr(): void
+    public function test_login_has_no_separate_student_account(): void
     {
-        [$student, $other] = $this->students();
-
-        $this->actingAs($student)
-            ->get(route('students.index'))
-            ->assertRedirect(route('student.home'));
-
-        $this->actingAs($student)
-            ->get(route('student.home'))
+        $this->get(route('login'))
             ->assertOk()
-            ->assertSee('Student Personal Record')
-            ->assertDontSee('Status reasons');
+            ->assertDontSee('Create a student account')
+            ->assertDontSee('Student?');
 
-        $this->actingAs($student)
-            ->post(route('student.spes.store'), $this->spesPayload())
-            ->assertRedirect();
-
-        $application = SpesApplication::query()->first();
-        $this->assertSame($student->id, $application->user_id);
-        $this->assertSame('2025-01001', $application->student_id);
-        $this->assertSame('submitted', $application->status);
-
-        $application->update(['status' => 'approved', 'student_can_edit' => false]);
-        $this->actingAs($student)
-            ->get(route('student.spes.edit', $application))
-            ->assertRedirect(route('student.spes.show', $application));
-
-        $this->actingAs($other)
-            ->get(route('student.spes.show', $application))
-            ->assertForbidden();
-
-        $staff = User::factory()->create([
-            'role_id' => Role::query()->where('role_name', 'Super Administrator')->value('id'),
-            'status' => 'active',
-            'must_change_password' => false,
-            'credentials_completed_at' => now(),
-        ]);
-
-        $this->actingAs($staff)
-            ->post(route('spes.student-access', $application), ['allow' => '1'])
-            ->assertRedirect();
-
-        $this->assertTrue($application->fresh()->student_can_edit);
-
-        $this->actingAs($student)
-            ->get(route('student.spes.edit', $application))
-            ->assertOk()
-            ->assertSee('Double check your Form');
+        $this->get('/student/register')->assertNotFound();
     }
 
-    public function test_student_registration_requires_an_existing_student_id(): void
+    public function test_a_student_account_cannot_sign_in(): void
     {
-        Mail::fake();
-        $this->scope();
-        foreach (['What is your pet?', 'What is your city?', 'What is your school?'] as $question) {
-            SecretQuestion::create(['question' => $question, 'is_active' => true]);
-        }
-        $questions = SecretQuestion::query()->orderBy('id')->pluck('id');
-
-        $this->post(route('student.register'), [
-            'student_id' => '2099-00001',
-            'first_name' => 'Maria',
-            'last_name' => 'Santos',
-            'email' => 'maria.student@example.com',
-            'password' => 'Password1a',
-            'password_confirmation' => 'Password1a',
-            'question_1' => $questions[0],
-            'question_2' => $questions[1],
-            'question_3' => $questions[2],
-            'answer_1' => 'cat',
-            'answer_2' => 'city',
-            'answer_3' => 'school',
-        ])->assertSessionHasErrors('student_id')
-            ->assertDontSee('value="cat"', false)
-            ->assertDontSee('>cat<', false);
-
-        StudentRecord::create([
-            'student_id' => '2025-01001',
-            'gender' => 'female',
-            'age' => 19,
-            'program_id' => Program::query()->value('id'),
-            'year_level' => 2,
-            'section' => 'A',
-            'academic_year_id' => AcademicYear::query()->value('id'),
-            'semester_id' => Semester::query()->value('id'),
-            'gpa' => 1.75,
-            'average_grade' => 90,
-            'attendance_percent' => 95,
-            'subjects_count' => 8,
-            'failed_subjects' => 0,
-            'units_enrolled' => 23,
-            'enrolled_status' => 'enrolled',
-            'student_type' => 'returning',
-            'scholarship_status' => 'none',
-            'tuition_status' => 'paid',
-            'risk_level' => 'low',
-        ]);
-
-        $this->post(route('student.register'), [
-            'student_id' => '2025-01001',
-            'first_name' => 'Maria',
-            'last_name' => 'Santos',
-            'email' => 'maria.student@example.com',
-            'password' => 'Password1a',
-            'password_confirmation' => 'Password1a',
-            'question_1' => $questions[0],
-            'question_2' => $questions[1],
-            'question_3' => $questions[2],
-            'answer_1' => 'cat',
-            'answer_2' => 'city',
-            'answer_3' => 'school',
-        ])->assertRedirect(route('student.register.otp'));
-
-        $this->post(route('student.register.otp'), ['otp' => session('otp_hint')])
-            ->assertRedirect(route('login'));
-
-        $this->assertDatabaseHas('users', [
+        $role = Role::firstOrCreate(['role_name' => 'Student'], ['description' => 'Student portal']);
+        $student = User::factory()->create([
             'employee_id' => '2025-01001',
             'username' => '2025-01001',
-            'role_id' => Role::query()->where('role_name', 'Student')->value('id'),
-        ]);
-
-        $stored = UserSecretAnswer::query()->first();
-        $this->assertNotNull($stored);
-        $this->assertNotSame('cat', $stored->answer_hash);
-        $this->assertTrue(password_verify('cat', $stored->answer_hash));
-    }
-
-    private function students(): array
-    {
-        $this->scope();
-        $role = Role::query()->where('role_name', 'Student')->first();
-        $make = fn (string $id, string $email) => User::factory()->create([
-            'employee_id' => $id,
-            'username' => strtolower($id),
-            'email' => $email,
-            'first_name' => 'Maria',
-            'last_name' => 'Santos',
             'role_id' => $role->id,
             'status' => 'active',
             'must_change_password' => false,
             'credentials_completed_at' => now(),
         ]);
 
-        return [$make('2025-01001', 'one@student.test'), $make('2025-01002', 'two@student.test')];
-    }
+        $this->post(route('login'), [
+            'username' => $student->username,
+            'password' => 'password',
+        ])->assertSessionHasErrors('username');
 
-    private function scope(): void
-    {
-        Role::firstOrCreate(['role_name' => 'Super Administrator'], ['description' => 'Super Admin']);
-        Role::firstOrCreate(['role_name' => 'Student'], ['description' => 'Student portal']);
-        $college = College::create([
-            'college_name' => 'College of Engineering and Information Technology',
-            'college_code' => 'CEIT',
-        ]);
-        $department = Department::create([
-            'department_name' => 'Information Technology',
-            'department_code' => 'IT',
-            'college_id' => $college->id,
-        ]);
-        Program::create([
-            'program_name' => 'BS Information Technology',
-            'program_code' => 'BSIT',
-            'department_id' => $department->id,
-            'degree_level' => 'Bachelor',
-            'status' => 'active',
-        ]);
-        $year = AcademicYear::create([
-            'academic_year' => '2025-2026',
-            'start_date' => '2025-08-01',
-            'end_date' => '2026-07-31',
-            'status' => 'active',
-        ]);
-        Semester::create([
-            'semester_name' => 'First Semester',
-            'academic_year_id' => $year->id,
-        ]);
-    }
-
-    private function spesPayload(): array
-    {
-        return [
-            'last_name' => 'Santos',
-            'first_name' => 'Maria',
-            'birth_date' => '2007-03-15',
-            'home_city' => 'Cabadbaran City',
-            'mobile' => '09171234567',
-            'student_level' => 'undergraduate',
-            'priority_1' => 'BS Information Technology',
-            'signature_name' => 'Maria Santos',
-            'certified' => '1',
-            'status' => 'approved',
-        ];
+        $this->assertGuest();
     }
 }

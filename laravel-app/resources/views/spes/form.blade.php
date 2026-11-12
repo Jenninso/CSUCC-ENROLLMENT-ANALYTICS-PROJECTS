@@ -46,12 +46,6 @@
     @include('spes.paper', ['editing' => true])
     <div class="max-w-[8.5in] mx-auto mt-4 ui-panel p-4 flex flex-wrap items-end gap-3">
         @unless($studentMode)
-        @if(isset($application) && $application->user_id)
-        <label class="flex items-start gap-2 text-sm text-gray-800 sm:col-span-2 w-full">
-            <input type="checkbox" name="allow_student_edit" value="1" class="mt-0.5 rounded border-gray-300" @checked(old('allow_student_edit', $application->student_can_edit))>
-            <span>Allow the student to edit this record. After they save an approved record, it locks again.</span>
-        </label>
-        @endif
         <div>
             <label class="block text-sm font-medium text-gray-700 mb-1">Office status</label>
             <select name="status" class="ui-input">

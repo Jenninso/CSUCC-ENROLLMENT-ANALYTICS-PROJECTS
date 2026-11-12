@@ -29,7 +29,7 @@ class UserController extends Controller
             ->paginate(15)
             ->withQueryString();
 
-        $roles = Role::orderBy('role_name')->get();
+        $roles = Role::query()->where('role_name', '!=', 'Student')->orderBy('role_name')->get();
 
         return view('users.index', compact('users', 'roles'));
     }
@@ -126,7 +126,9 @@ class UserController extends Controller
     public function edit(User $user)
     {
         $this->assertCanUpdate($user);
-        $roles = Role::orderBy('role_name')->get();
+        $roles = Role::orderBy('role_name')->get()
+            ->reject(fn ($role) => $role->role_name === 'Student')
+            ->values();
         if (! auth()->user()->isSuperAdmin()) {
             $roles = $roles->whereIn('role_name', ['Administrator', 'User'])->values();
         }
@@ -142,6 +144,10 @@ class UserController extends Controller
         if (! auth()->user()->isSuperAdmin()) {
             $ids = Role::query()->whereIn('role_name', ['Administrator', 'User'])->pluck('id')->all();
             $roleRule = ['required', Rule::in($ids)];
+        }
+        $studentRoleId = Role::query()->where('role_name', 'Student')->value('id');
+        if ($studentRoleId) {
+            $roleRule[] = Rule::notIn([(int) $studentRoleId]);
         }
 
         $request->merge([

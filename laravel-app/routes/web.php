@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\AccountSetupController;
+use App\Http\Controllers\AtRiskController;
 use App\Http\Controllers\AcademicYearController;
 use App\Http\Controllers\AlertController;
 use App\Http\Controllers\AnalyticsController;
@@ -22,7 +23,6 @@ use App\Http\Controllers\RegistrationApprovalController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\SemesterController;
 use App\Http\Controllers\SettingsController;
-use App\Http\Controllers\StudentAccountController;
 use App\Http\Controllers\SpesApplicationController;
 use App\Http\Controllers\StudentRecordController;
 use App\Http\Controllers\UserController;
@@ -37,11 +37,6 @@ Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:40
 Route::get('/login/otp', [AuthController::class, 'otpForm'])->name('login.otp');
 Route::post('/login/otp', [AuthController::class, 'verifyOtp'])->middleware('throttle:10,1');
 Route::post('/login/otp/resend', [AuthController::class, 'resendOtp'])->middleware('throttle:5,1')->name('login.otp.resend');
-Route::get('/student/register', [StudentAccountController::class, 'create'])->name('student.register');
-Route::post('/student/register', [StudentAccountController::class, 'store'])->middleware('throttle:8,1');
-Route::get('/student/register/otp', [StudentAccountController::class, 'otpForm'])->name('student.register.otp');
-Route::post('/student/register/otp', [StudentAccountController::class, 'verifyOtp'])->middleware('throttle:10,1');
-Route::post('/student/register/otp/resend', [StudentAccountController::class, 'resendOtp'])->middleware('throttle:5,1')->name('student.register.otp.resend');
 Route::get('/register', [RegisterController::class, 'create'])->name('register');
 Route::get('/register/check', [RegisterController::class, 'check'])->middleware('throttle:30,1')->name('register.check');
 Route::post('/register', [RegisterController::class, 'store'])->middleware('throttle:8,1');
@@ -71,19 +66,6 @@ Route::middleware(['auth', 'active'])->group(function () {
 });
 
 Route::middleware(['auth', 'active', 'setup', 'student.scope'])->group(function () {
-    Route::middleware('role:Student')->prefix('student')->name('student.')->group(function () {
-        Route::get('/', [StudentAccountController::class, 'home'])->name('home');
-        Route::get('spes', [SpesApplicationController::class, 'studentIndex'])->name('spes.index');
-        Route::get('spes/create', [SpesApplicationController::class, 'studentCreate'])->name('spes.create');
-        Route::post('spes', [SpesApplicationController::class, 'studentStore'])->name('spes.store');
-        Route::get('spes/{spes}/print', [SpesApplicationController::class, 'studentPrint'])->name('spes.print');
-        Route::get('spes/{spes}/pdf', [SpesApplicationController::class, 'studentPdf'])->name('spes.pdf');
-        Route::get('spes/{spes}/edit', [SpesApplicationController::class, 'studentEdit'])->name('spes.edit');
-        Route::put('spes/{spes}', [SpesApplicationController::class, 'studentUpdate'])->name('spes.update');
-        Route::delete('spes/{spes}', [SpesApplicationController::class, 'studentDestroy'])->name('spes.destroy');
-        Route::get('spes/{spes}', [SpesApplicationController::class, 'studentShow'])->name('spes.show');
-    });
-
     Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
     Route::get('/dashboard', [DashboardController::class, 'index']);
     Route::get('/executive', [DashboardController::class, 'executive'])->name('executive');
@@ -118,6 +100,17 @@ Route::middleware(['auth', 'active', 'setup', 'student.scope'])->group(function 
         Route::get('spes/{spes}/print', [SpesApplicationController::class, 'print'])->name('spes.print');
         Route::get('spes/{spes}/pdf', [SpesApplicationController::class, 'pdf'])->name('spes.pdf');
         Route::get('spes/{spes}', [SpesApplicationController::class, 'show'])->name('spes.show');
+    });
+
+    Route::middleware('permission:enrollment.manage')->group(function () {
+        Route::post('at-risk/warnings', [AtRiskController::class, 'warnings'])->name('at-risk.warnings');
+        Route::post('at-risk/{student}/interventions', [AtRiskController::class, 'storeIntervention'])->name('at-risk.interventions.store');
+        Route::put('at-risk/interventions/{intervention}', [AtRiskController::class, 'updateIntervention'])->name('at-risk.interventions.update');
+    });
+    Route::middleware('permission:enrollment.view')->group(function () {
+        Route::get('at-risk', [AtRiskController::class, 'index'])->name('at-risk.index');
+        Route::get('at-risk/{student}/print', [AtRiskController::class, 'print'])->name('at-risk.print');
+        Route::get('at-risk/{student}', [AtRiskController::class, 'show'])->name('at-risk.show');
     });
 
     Route::middleware('permission:enrollment.view')->group(function () {

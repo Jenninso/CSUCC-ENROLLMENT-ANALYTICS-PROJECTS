@@ -103,5 +103,6 @@ class DatabaseSeeder extends Seeder
         $this->call(EnrollmentDemoSeeder::class);
         $this->call(CeitBsitScopeSeeder::class);
         $this->call(StudentRecordSeeder::class);
+        $this->call(SprSyntheticSeeder::class);
     }
 }

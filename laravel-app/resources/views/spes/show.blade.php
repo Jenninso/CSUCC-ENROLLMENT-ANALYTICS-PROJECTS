@@ -32,28 +32,8 @@
 </div>
 
 @unless($studentMode)
-<div class="mb-4 max-w-[8.5in] rounded-lg border px-4 py-3 text-sm flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 {{ $application->student_can_edit ? 'border-emerald-300 bg-emerald-50 text-emerald-950' : 'border-amber-300 bg-amber-50 text-amber-950' }}">
-    @if(! $application->user_id)
-        <p>This record is not linked to a student account. Staff cannot type on the form.</p>
-    @elseif($application->student_can_edit)
-        <p>The student can edit this record once. It locks again after they save. Staff cannot change the answers.</p>
-        @if(auth()->user()?->canAccess('enrollment.manage'))
-        <form method="POST" action="{{ route('spes.student-access', $application) }}">
-            @csrf
-            <input type="hidden" name="allow" value="0">
-            <button type="submit" class="ui-btn-secondary">Lock student editing</button>
-        </form>
-        @endif
-    @else
-        <p>This SPR is locked. Only the student can edit it, and only after you allow one edit.</p>
-        @if(auth()->user()?->canAccess('enrollment.manage'))
-        <form method="POST" action="{{ route('spes.student-access', $application) }}">
-            @csrf
-            <input type="hidden" name="allow" value="1">
-            <button type="submit" class="ui-btn-primary">Allow one edit</button>
-        </form>
-        @endif
-    @endif
+<div class="mb-4 max-w-[8.5in] rounded-lg border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-950">
+    <p>Students do not sign in. The answers stay as submitted. Staff can set the office status and remarks.</p>
 </div>
 @if(auth()->user()?->canAccess('enrollment.manage'))
 <form method="POST" action="{{ route('spes.status', $application) }}" class="mb-4 max-w-[8.5in] ui-panel p-4 flex flex-wrap items-end gap-3">

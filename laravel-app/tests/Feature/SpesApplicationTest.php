@@ -6,6 +6,7 @@ use App\Models\Permission;
 use App\Models\Role;
 use App\Models\SpesApplication;
 use App\Models\User;
+use Database\Seeders\SprSyntheticSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -133,6 +134,18 @@ class SpesApplicationTest extends TestCase
             ->assertForbidden();
 
         $this->assertSame('Maria', $application->fresh()->first_name);
+    }
+
+    public function test_synthetic_spr_seeder_fills_statistics_without_student_records(): void
+    {
+        $this->assertSame(0, SpesApplication::query()->count());
+
+        $this->seed(SprSyntheticSeeder::class);
+
+        $this->assertSame(72, SpesApplication::query()->count());
+        $this->assertSame(12, SpesApplication::query()->where('status', 'submitted')->count());
+        $this->assertSame(12, SpesApplication::query()->where('status', 'approved')->count());
+        $this->assertSame(12, SpesApplication::query()->where('status', 'employed')->count());
     }
 
     public function test_a_younger_student_can_still_save_the_spr(): void

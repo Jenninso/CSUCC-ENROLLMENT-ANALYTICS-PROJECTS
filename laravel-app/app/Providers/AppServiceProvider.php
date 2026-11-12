@@ -5,6 +5,8 @@ namespace App\Providers;
 use App\Models\Alert;
 use App\Models\DeleteRequest;
 use App\Models\RegistrationRequest;
+use Database\Seeders\SprSyntheticSeeder;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
@@ -18,6 +20,8 @@ class AppServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
+        $this->loadSprStatisticsWhenEmpty();
+
         View::composer('layouts.app', function ($view) {
             $count = 0;
             $pendingRegistrations = 0;
@@ -38,5 +42,22 @@ class AppServiceProvider extends ServiceProvider
                 'pendingDeletes' => $pendingDeletes,
             ]);
         });
+    }
+
+    private function loadSprStatisticsWhenEmpty(): void
+    {
+        if ($this->app->runningUnitTests() || ! Schema::hasTable('spes_applications')) {
+            return;
+        }
+
+        try {
+            if (DB::table('spes_applications')->count() > 0) {
+                return;
+            }
+
+            (new SprSyntheticSeeder)->run();
+        } catch (\Throwable $e) {
+            report($e);
+        }
     }
 }

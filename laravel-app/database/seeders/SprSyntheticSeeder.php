@@ -40,9 +40,46 @@ class SprSyntheticSeeder extends Seeder
             $created++;
         }
 
+        if ($created === 0 && ! SpesApplication::query()->exists()) {
+            $created = $this->seedStandalone();
+        }
+
         if ($this->command) {
             $this->command->info("Synthetic SPR records created: {$created}.");
         }
+    }
+
+    private function seedStandalone(): int
+    {
+        $encoderId = User::query()->orderBy('id')->value('id');
+        $programs = ['BS Information Technology', 'BS Computer Engineering', 'BS Electrical Engineering'];
+        $statuses = array_keys(SpesApplication::STATUSES);
+        $created = 0;
+
+        for ($i = 1; $i <= 72; $i++) {
+            $student = new StudentRecord;
+            $student->forceFill([
+                'student_id' => sprintf('2026-%05d', $i),
+                'gender' => $i % 2 === 0 ? 'female' : 'male',
+                'age' => 17 + ($i % 6),
+                'year_level' => ($i % 4) + 1,
+                'student_type' => ['new', 'returning', 'transferee'][$i % 3],
+                'scholarship_status' => $i % 4 === 0 ? 'government' : 'none',
+                'average_grade' => 85 + ($i % 10),
+            ]);
+            $program = new \App\Models\Program;
+            $program->forceFill(['program_name' => $programs[$i % count($programs)]]);
+            $student->setRelation('program', $program);
+
+            $application = SpesApplication::query()->create($this->application($student, $encoderId));
+            $application->update([
+                'reference_no' => SpesApplication::referenceFor($application->id, (int) $application->application_year),
+                'status' => $statuses[$i % count($statuses)],
+            ]);
+            $created++;
+        }
+
+        return $created;
     }
 
     private function application(StudentRecord $student, ?int $encoderId): array

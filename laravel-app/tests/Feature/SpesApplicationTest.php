@@ -96,7 +96,7 @@ class SpesApplicationTest extends TestCase
 
     public function test_staff_role_can_edit_a_student_spr(): void
     {
-        $staff = $this->officeUser(['spr.edit', 'enrollment.view']);
+        $staff = $this->officeUser(['spr.edit', 'spr.view', 'enrollment.view']);
 
         $this->post(route('spr.public.store'), $this->payload())->assertRedirect();
         $application = SpesApplication::query()->first();
@@ -128,7 +128,7 @@ class SpesApplicationTest extends TestCase
 
     public function test_staff_without_spr_edit_cannot_change_the_form(): void
     {
-        $staff = $this->officeUser(['enrollment.view']);
+        $staff = $this->officeUser(['spr.view', 'enrollment.view']);
 
         $this->post(route('spr.public.store'), $this->payload())->assertRedirect();
         $application = SpesApplication::query()->first();

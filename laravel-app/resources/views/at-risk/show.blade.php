@@ -25,7 +25,7 @@
                         <p class="text-sm text-gray-700 mt-1">{{ $intervention->notes }}</p>
                     @endif
                 </div>
-                @if(auth()->user()?->canAccess('enrollment.manage'))
+                @if(auth()->user()?->canAccess('at_risk.manage'))
                 <form method="POST" action="{{ route('at-risk.interventions.update', $intervention) }}" class="flex items-center gap-2">
                     @csrf @method('PUT')
                     <select name="outcome" class="ui-input text-sm">
@@ -44,7 +44,7 @@
         <p class="text-sm text-gray-500">No intervention has been recorded for this student.</p>
     @endforelse
 
-    @if(auth()->user()?->canAccess('enrollment.manage'))
+    @if(auth()->user()?->canAccess('at_risk.manage'))
     <form method="POST" action="{{ route('at-risk.interventions.store', $student) }}" class="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-5 pt-4 border-t border-gray-100">
         @csrf
         <div>

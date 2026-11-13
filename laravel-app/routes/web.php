@@ -98,7 +98,7 @@ Route::middleware(['auth', 'active', 'setup', 'student.scope'])->group(function 
         Route::post('spes/{spes}/student-access', [SpesApplicationController::class, 'allowStudentEdit'])->name('spes.student-access');
         Route::delete('spes/{spes}', [SpesApplicationController::class, 'destroy'])->name('spes.destroy');
     });
-    Route::middleware('permission:enrollment.view')->group(function () {
+    Route::middleware('permission:spr.view')->group(function () {
         Route::get('spes', [SpesApplicationController::class, 'index'])->name('spes.index');
         Route::get('spes/share-qr', [SpesApplicationController::class, 'shareQr'])->name('spes.share-qr');
         Route::get('spes/{spes}/print', [SpesApplicationController::class, 'print'])->name('spes.print');
@@ -106,12 +106,12 @@ Route::middleware(['auth', 'active', 'setup', 'student.scope'])->group(function 
         Route::get('spes/{spes}', [SpesApplicationController::class, 'show'])->name('spes.show');
     });
 
-    Route::middleware('permission:enrollment.manage')->group(function () {
+    Route::middleware('permission:at_risk.manage')->group(function () {
         Route::post('at-risk/warnings', [AtRiskController::class, 'warnings'])->name('at-risk.warnings');
         Route::post('at-risk/{student}/interventions', [AtRiskController::class, 'storeIntervention'])->name('at-risk.interventions.store');
         Route::put('at-risk/interventions/{intervention}', [AtRiskController::class, 'updateIntervention'])->name('at-risk.interventions.update');
     });
-    Route::middleware('permission:enrollment.view')->group(function () {
+    Route::middleware('permission:at_risk.view')->group(function () {
         Route::get('at-risk', [AtRiskController::class, 'index'])->name('at-risk.index');
         Route::get('at-risk/{student}/print', [AtRiskController::class, 'print'])->name('at-risk.print');
         Route::get('at-risk/{student}', [AtRiskController::class, 'show'])->name('at-risk.show');

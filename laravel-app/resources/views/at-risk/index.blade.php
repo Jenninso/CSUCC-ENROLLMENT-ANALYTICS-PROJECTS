@@ -22,7 +22,7 @@
         <h3 class="ui-page-title">Student at-risk analysis</h3>
         <p class="ui-page-sub">Risk levels come from grades, attendance, failed subjects, and enrollment standing. SPR family and income details explain possible circumstances. They do not raise a student's risk level.</p>
     </div>
-    @if(auth()->user()?->canAccess('enrollment.manage'))
+    @if(auth()->user()?->canAccess('at_risk.manage'))
     <form method="POST" action="{{ route('at-risk.warnings') }}">
         @csrf
         <button type="submit" class="ui-btn-primary">Check warning thresholds</button>

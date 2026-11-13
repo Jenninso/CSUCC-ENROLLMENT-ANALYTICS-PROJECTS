@@ -563,10 +563,14 @@
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-4.35-4.35M10.5 18a7.5 7.5 0 110-15 7.5 7.5 0 010 15z"/></svg>
                 </button>
             </label>
-            @if($navUser?->canAccess('enrollment.view'))
+            @if($navUser?->canAccess('enrollment.view') || $navUser?->canAccess('spr.view'))
             <div x-show="navQuery.trim()" x-cloak class="mt-2 space-y-1">
+                @if($navUser?->canAccess('enrollment.view'))
                 <a x-ref="recordSearch" :href="@js(route('students.index')) + '?q=' + encodeURIComponent(navQuery.trim())" class="block px-2 py-1.5 rounded-lg text-xs hover:bg-black/20">Search students</a>
+                @endif
+                @if($navUser?->canAccess('spr.view'))
                 <a :href="@js(route('spes.index')) + '?q=' + encodeURIComponent(navQuery.trim())" class="block px-2 py-1.5 rounded-lg text-xs hover:bg-black/20">Search SPR</a>
+                @endif
             </div>
             @endif
         </form>
@@ -596,14 +600,14 @@
             </div>
             @endif
 
-            @if($navUser?->canAccess('enrollment.view'))
+            @if($navUser?->canAccess('spr.view'))
             <a x-show="navMatch('spr')" href="{{ route('spes.index') }}" title="SPR" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium {{ request()->routeIs('spes.*') ? 'theme-primary-bg text-white' : 'text-emerald-100/80 hover:bg-black/20' }}">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z"/></svg>
                 SPR
             </a>
             @endif
 
-            @if($navUser?->canAccess('enrollment.view'))
+            @if($navUser?->canAccess('at_risk.view'))
             <a x-show="navMatch('at-risk') || navMatch('risk')" href="{{ route('at-risk.index') }}" title="At-risk students" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium {{ request()->routeIs('at-risk.*') ? 'theme-primary-bg text-white' : 'text-emerald-100/80 hover:bg-black/20' }}">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v3.75m0 3.75h.008v.008H12V16.5zM3.75 6.75A2.25 2.25 0 016 4.5h12a2.25 2.25 0 012.25 2.25v10.5A2.25 2.25 0 0118 19.5H6a2.25 2.25 0 01-2.25-2.25V6.75z"/></svg>
                 At-Risk

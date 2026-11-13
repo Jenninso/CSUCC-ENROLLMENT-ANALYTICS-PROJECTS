@@ -337,6 +337,8 @@ class SpesApplicationController extends Controller
             'spr_data' => $spr,
         ];
 
+        $this->rejectDuplicateDetails($row, $existing);
+
         if ($asStudent && $request->user()) {
             $studentId = $request->user()->studentNumber();
             $row['student_id'] = $studentId;
@@ -352,6 +354,35 @@ class SpesApplicationController extends Controller
         }
 
         return $row;
+    }
+
+    private function rejectDuplicateDetails(array $row, ?SpesApplication $existing): void
+    {
+        $others = SpesApplication::query()
+            ->when($existing, fn ($query) => $query->whereKeyNot($existing->getKey()));
+
+        $samePerson = (clone $others)
+            ->whereRaw('lower(trim(last_name)) = ?', [$this->detailKey($row['last_name'] ?? '')])
+            ->whereRaw('lower(trim(first_name)) = ?', [$this->detailKey($row['first_name'] ?? '')])
+            ->whereRaw("lower(trim(coalesce(middle_name, ''))) = ?", [$this->detailKey($row['middle_name'] ?? '')])
+            ->whereDate('birth_date', $row['birth_date'])
+            ->exists();
+
+        $studentId = $this->detailKey($row['student_id'] ?? '');
+        $sameId = $studentId !== '' && (clone $others)
+            ->whereRaw('lower(trim(student_id)) = ?', [$studentId])
+            ->exists();
+
+        if ($samePerson || $sameId) {
+            throw ValidationException::withMessages([
+                'spr_duplicate' => 'This SPR cannot be saved. Another form already has the same details. For more concerns, please visit the Office of OASFA.',
+            ]);
+        }
+    }
+
+    private function detailKey(mixed $value): string
+    {
+        return mb_strtolower(trim((string) $value));
     }
 
     private function isDrawnSignature(string $value): bool
@@ -391,7 +422,8 @@ class SpesApplicationController extends Controller
 
         return redirect()
             ->route('spr.public.edit', $application->public_token)
-            ->with('success', 'Your SPR was saved. You cannot change it after saving. Reference '.$application->reference_no.'.');
+            ->with('success', 'Your SPR was saved. You cannot change it after saving. Reference '.$application->reference_no.'.')
+            ->with('warning', 'For more concerns, please visit the Office of OASFA.');
     }
 
     public function publicEdit(string $token)
@@ -453,7 +485,9 @@ class SpesApplicationController extends Controller
 
         $audit->log('create', 'spes', 'Student submitted SPR application '.$application->reference_no.'.');
 
-        return redirect()->route('student.spes.show', $application)->with('success', 'Your SPR application '.$application->reference_no.' was submitted.');
+        return redirect()->route('student.spes.show', $application)
+            ->with('success', 'Your SPR application '.$application->reference_no.' was submitted.')
+            ->with('warning', 'For more concerns, please visit the Office of OASFA.');
     }
 
     public function studentShow(Request $request, SpesApplication $spes)
@@ -498,7 +532,9 @@ class SpesApplicationController extends Controller
 
         $message = 'Your changes were saved. The record is locked again until the office allows another edit.';
 
-        return redirect()->route('student.spes.show', $spes)->with('success', $message);
+        return redirect()->route('student.spes.show', $spes)
+            ->with('success', $message)
+            ->with('warning', 'For more concerns, please visit the Office of OASFA.');
     }
 
     public function studentDestroy(Request $request, SpesApplication $spes, AuditLogger $audit)

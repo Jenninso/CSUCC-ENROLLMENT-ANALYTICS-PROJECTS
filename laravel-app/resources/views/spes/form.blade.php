@@ -30,10 +30,23 @@
 </div>
 @endif
 
-@if($errors->any())
+@if($studentMode)
+<p class="mb-4 max-w-[8.5in] rounded-lg border border-amber-300 bg-amber-50 px-4 py-3 text-sm font-semibold text-amber-950">For more concerns, please visit the Office of OASFA.</p>
+@endif
+
+@if(session('warning'))
+<p class="mb-4 max-w-[8.5in] rounded-lg border border-amber-300 bg-amber-50 px-4 py-3 text-sm font-semibold text-amber-950">{{ session('warning') }}</p>
+@endif
+
+@if($errors->has('spr_duplicate'))
+<p class="mb-4 max-w-[8.5in] rounded-lg border border-amber-300 bg-amber-50 px-4 py-3 text-sm font-semibold text-amber-950">{{ $errors->first('spr_duplicate') }}</p>
+@endif
+
+@php($fieldErrors = collect($errors->getMessages())->except('spr_duplicate')->flatten())
+@if($fieldErrors->isNotEmpty())
 <div class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-4 text-sm max-w-[8.5in]">
     <ul class="list-disc list-inside space-y-1">
-        @foreach($errors->all() as $error)
+        @foreach($fieldErrors as $error)
             <li>{{ $error }}</li>
         @endforeach
     </ul>

@@ -522,6 +522,13 @@
         {{ session('error') }}
     </div>
     @endif
+    @if(session('warning'))
+    <div x-data="{ show: true }" x-show="show"
+         class="fixed top-4 right-4 z-50 max-w-sm bg-amber-500 text-white px-6 py-3 rounded-lg shadow-lg flex items-start gap-2 {{ session('success') || session('error') ? 'mt-16' : '' }}">
+        <svg class="w-5 h-5 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/></svg>
+        <span>{{ session('warning') }}</span>
+    </div>
+    @endif
 
     {{-- Sidebar Overlay --}}
     <div x-show="sidebarOpen" x-cloak @click="sidebarOpen = false" class="fixed inset-0 bg-black/50 z-40 lg:hidden"></div>

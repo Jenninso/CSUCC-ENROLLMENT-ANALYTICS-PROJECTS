@@ -126,6 +126,7 @@
     .spr-center { text-align: center; font-weight: 700; margin-top: 3px; }
     .spr-sign { margin-left: auto; width: 2.4in; text-align: center; font-weight: 700; border-top: 1px solid #111; padding-top: 1px; }
     .spr-sign-img { display: block; width: 2.2in; height: 0.42in; object-fit: contain; margin: 0 0 1px auto; }
+    .spr-sign-warn { margin-top: 6px; background: #fffbeb; border: 1px solid #f59e0b; color: #78350f; border-radius: 4px; padding: 4px 6px; font-size: 8pt; font-weight: 700; line-height: 1.3; }
     .spr-pad { margin-left: auto; width: 2.6in; margin-top: 4px; }
     .spr-pad canvas { width: 100%; height: 58px; border: 1px dashed #111; background: #fff; touch-action: none; display: block; cursor: crosshair; }
     .spr-pad button { margin-top: 3px; font: inherit; font-size: 8pt; background: #fff; border: 1px solid #111; padding: 1px 6px; cursor: pointer; }
@@ -331,11 +332,12 @@
                 <input type="checkbox" name="certified" value="1" required {{ old('certified', isset($application) ? '1' : '') ? 'checked' : '' }}>
                 I affirm the admission pledge and the data privacy notice. Sign in the box, then type your name below.
             </label>
+            <p class="spr-sign-warn">Keep your signature inside the box. Do not overlap the frame, or part of your signature will be cut off.</p>
             <div class="spr-pad">
                 <canvas id="spr-signature" aria-label="Student signature"></canvas>
                 <button type="button" id="spr-signature-clear">Clear signature</button>
                 <input type="hidden" name="signature_image" id="spr-signature-input" value="{{ $signImg }}">
-                <span class="spr-small">Sign with your finger or mouse. Your typed name stays under the signature.</span>
+                <span class="spr-small">Sign with your finger or mouse, staying clear of the border. Your typed name stays under the signature.</span>
             </div>
             <div class="spr-row"><span class="grow">{!! $line('signature_name', ['required' => 'required']) !!}</span></div>
             <script>

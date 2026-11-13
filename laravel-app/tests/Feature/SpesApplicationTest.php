@@ -165,6 +165,61 @@ class SpesApplicationTest extends TestCase
         $this->assertDatabaseCount('spes_applications', 0);
     }
 
+    public function test_a_second_spr_with_the_same_details_cannot_be_saved(): void
+    {
+        $this->post(route('spr.public.store'), $this->payload())
+            ->assertRedirect()
+            ->assertSessionHas('warning', 'For more concerns, please visit the Office of OASFA.');
+
+        $this->from(route('spr.public'))
+            ->post(route('spr.public.store'), $this->payload([
+                'last_name' => ' santos ',
+                'first_name' => 'MARIA',
+                'home_city' => 'Butuan City',
+            ]))
+            ->assertRedirect(route('spr.public'))
+            ->assertSessionHasErrors('spr_duplicate');
+
+        $this->assertDatabaseCount('spes_applications', 1);
+
+        $this->get(route('spr.public'))
+            ->assertOk()
+            ->assertSee('For more concerns, please visit the Office of OASFA.');
+
+        $this->post(route('spr.public.store'), $this->payload([
+            'last_name' => 'Cruz',
+            'first_name' => 'Juan',
+            'id_no' => '2022-04001',
+        ]))->assertRedirect();
+
+        $this->from(route('spr.public'))
+            ->post(route('spr.public.store'), $this->payload([
+                'last_name' => 'Dela Cruz',
+                'first_name' => 'Ana',
+                'middle_name' => 'Lopez',
+                'birth_date' => '2008-01-02',
+                'id_no' => '2022-04001',
+            ]))
+            ->assertRedirect(route('spr.public'))
+            ->assertSessionHasErrors('spr_duplicate');
+
+        $this->assertDatabaseCount('spes_applications', 2);
+    }
+
+    public function test_saving_the_same_spr_record_is_not_treated_as_a_duplicate(): void
+    {
+        $staff = $this->staff();
+        $this->post(route('spr.public.store'), $this->payload())->assertRedirect();
+        $application = SpesApplication::query()->first();
+
+        $this->actingAs($staff)
+            ->put(route('spes.update', $application), $this->payload())
+            ->assertRedirect(route('spes.show', $application))
+            ->assertSessionHas('success', 'SPR updated.');
+
+        $this->assertSame('Santos', $application->fresh()->last_name);
+    }
+
     public function test_a_younger_student_can_still_save_the_spr(): void
     {
         $this->post(route('spr.public.store'), $this->payload(['birth_date' => '2014-01-01']))

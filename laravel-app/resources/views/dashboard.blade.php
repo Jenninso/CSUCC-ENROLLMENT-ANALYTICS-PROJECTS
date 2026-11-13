@@ -4,7 +4,7 @@
 @section('content')
 <div class="mb-6">
     <h3 class="ui-page-title">Enrollment overview</h3>
-    <p class="ui-page-sub">Monitor CEIT and BSIT enrollment, retention, and planning signals for the selected term.</p>
+    <p class="ui-page-sub">Monitor CEIT Program enrollment, retention, and planning signals for the selected term.</p>
 </div>
 
 <form method="GET" class="ui-panel p-4 mb-6 grid grid-cols-2 lg:grid-cols-6 gap-3">

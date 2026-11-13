@@ -5,7 +5,7 @@
 <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-6">
     <div>
         <h3 class="ui-page-title">Student Records</h3>
-        <p class="ui-page-sub">One record per student per term, identified by Student ID only. CEIT groups: Information Technology (BSIT) and Engineering (BSCpE, BSEE).</p>
+        <p class="ui-page-sub">One record per student per term, identified by Student ID only. CEIT Program courses include Information Technology, Computer Engineering, and Electrical Engineering.</p>
     </div>
     <div class="flex flex-wrap gap-2 shrink-0">
         <a href="{{ route('students.export', request()->query()) }}" class="ui-btn-secondary">

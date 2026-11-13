@@ -24,7 +24,7 @@
         <div class="bg-slate-50 border border-slate-200 rounded-lg p-4 mb-6 text-sm text-slate-600">
             <p class="font-medium text-slate-700 mb-2">Required columns:</p>
             <ul class="list-disc list-inside space-y-1">
-                <li>student_id, gender, age, course (e.g. BSIT), year_level (1–4), section</li>
+                <li>student_id, gender, age, course (program code), year_level (1–4), section</li>
                 <li>academic_year, semester</li>
                 <li>gpa (1.00–5.00), average_grade, attendance_percent, number_of_subjects, failed_subjects, units_enrolled</li>
                 <li>enrolled_status, student_type (New / Returning / Transferee / Withdraw Acad / Stop), scholarship_status, tuition_status</li>

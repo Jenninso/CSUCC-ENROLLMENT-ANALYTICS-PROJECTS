@@ -13,7 +13,7 @@
                 <h1 class="text-3xl sm:text-4xl font-bold text-white mt-2 leading-tight">Enrollment Analytics &amp; Decision Support</h1>
                 <p class="text-emerald-100/90 mt-3 max-w-3xl leading-relaxed">
                     A secure workspace for enrollment records, analytics, forecasting, alerts, and reports —
-                    intended only for the College of Engineering and Information Technology (CEIT) and the BS Information Technology (BSIT) program.
+                    intended only for the College of Engineering and Information Technology (CEIT) Program.
                     Review how the system works, who may use it, and the terms of use before you sign in.
                 </p>
                 <div class="mt-6 flex flex-wrap items-center justify-center sm:justify-start gap-3">
@@ -27,12 +27,12 @@
     <section class="bg-white/95 backdrop-blur rounded-2xl shadow-xl border border-white/20 overflow-hidden">
         <div class="px-6 sm:px-10 py-8 sm:py-10 border-b border-gray-100">
             <h2 class="text-2xl font-bold text-gray-900">What this system provides</h2>
-            <p class="text-gray-600 mt-2 max-w-3xl">Authorized CEIT personnel working with BSIT enrollment can use one platform instead of scattered spreadsheets. Access to each module depends on the role assigned after your account is approved.</p>
+            <p class="text-gray-600 mt-2 max-w-3xl">Authorized CEIT Program personnel can use one platform instead of scattered spreadsheets. Access to each module depends on the role assigned after your account is approved.</p>
         </div>
         <div class="px-6 sm:px-10 py-8 grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
             <div class="rounded-xl border border-gray-100 bg-gray-50 p-5">
                 <h3 class="font-semibold text-[#0b5d3b]">Dashboard</h3>
-                <p class="text-sm text-gray-600 mt-2">CEIT / BSIT enrollment snapshot with filters by academic year, semester, and year level.</p>
+                <p class="text-sm text-gray-600 mt-2">CEIT Program enrollment snapshot with filters by academic year, semester, and year level.</p>
             </div>
             <div class="rounded-xl border border-gray-100 bg-gray-50 p-5">
                 <h3 class="font-semibold text-[#0b5d3b]">Enrollment records</h3>
@@ -40,7 +40,7 @@
             </div>
             <div class="rounded-xl border border-gray-100 bg-gray-50 p-5">
                 <h3 class="font-semibold text-[#0b5d3b]">Analytics</h3>
-                <p class="text-sm text-gray-600 mt-2">BSIT trends, year-level comparisons, retention, and summary views for CEIT planning discussions.</p>
+                <p class="text-sm text-gray-600 mt-2">Enrollment trends, year-level comparisons, retention, and summary views for CEIT Program planning.</p>
             </div>
             <div class="rounded-xl border border-gray-100 bg-gray-50 p-5">
                 <h3 class="font-semibold text-[#0b5d3b]">Forecasting</h3>
@@ -56,7 +56,7 @@
             </div>
             <div class="rounded-xl border border-gray-100 bg-gray-50 p-5">
                 <h3 class="font-semibold text-[#0b5d3b]">Data management</h3>
-                <p class="text-sm text-gray-600 mt-2">Maintain academic years, semesters, and CEIT / BSIT structure that organize the records.</p>
+                <p class="text-sm text-gray-600 mt-2">Maintain academic years, semesters, and the CEIT Program structure that organize the records.</p>
             </div>
             <div class="rounded-xl border border-gray-100 bg-gray-50 p-5">
                 <h3 class="font-semibold text-[#0b5d3b]">Accounts and oversight</h3>
@@ -96,7 +96,7 @@
         <section class="bg-white/95 backdrop-blur rounded-2xl shadow-xl border border-white/20 px-6 sm:px-8 py-8">
             <h2 class="text-xl font-bold text-gray-900">Who may use it</h2>
             <p class="text-gray-600 mt-3 leading-relaxed">
-                This system is intended only for CEIT and the BSIT program at Caraga State University Cabadbaran Campus.
+                This system is intended only for the CEIT Program at Caraga State University Cabadbaran Campus.
                 It is limited to authorized personnel; students and the public cannot browse enrollment data here. After approval, what you can see and change follows your assigned role and permissions.
             </p>
             <p class="text-gray-600 mt-3 leading-relaxed">

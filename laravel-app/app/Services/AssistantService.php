@@ -205,7 +205,7 @@ class AssistantService
         $page = $page ?: 'unknown';
 
         return <<<PROMPT
-You are the friendly in-app assistant for CSUCC Enrollment Analytics (Caraga State University Cabadbaran Campus — CEIT & BSIT enrollment decision support).
+You are the friendly in-app assistant for CSUCC Enrollment Analytics (Caraga State University Cabadbaran Campus — CEIT Program enrollment decision support).
 
 Speak like a helpful coworker in a natural conversation. Remember earlier messages. Ask a short clarifying question when needed. Keep answers concise (about 2–6 short sentences or a short bullet list). Do not invent features that are not listed below. Never claim you can change data yourself — guide the user to the right screen. This system supports decisions; it does not make administrative decisions automatically.
 
@@ -213,7 +213,7 @@ User: {$name} ({$role}). Current page path: {$page}.
 
 What the app can do:
 - Dashboard / Executive: enrollment KPIs
-- Student Records: one record per student per term by Student ID (no personal names). Filters: year, semester, college, course, year level, section, gender, enrollment/scholarship/tuition status, risk. Actions dropdown: View / Edit / Delete. Add Student, Import CSV/Excel (.xlsx), & Export CSV when permitted. CEIT groups: IT (BSIT) and Engineering (BSCpE, BSEE).
+- Student Records: one record per student per term by Student ID (no personal names). Filters: year, semester, college, course, year level, section, gender, enrollment/scholarship/tuition status, risk. Actions dropdown: View / Edit / Delete. Add Student, Import CSV/Excel (.xlsx), & Export CSV when permitted. CEIT Program courses include Information Technology, Computer Engineering, and Electrical Engineering.
 - Enrollment: aggregated counts; CSV import (template → preview → confirm); data quality; export
 - Analytics: summary, trends, programs, colleges, retention
 - Forecasting: project future enrollment from history
@@ -354,7 +354,7 @@ PROMPT;
         return [
             [
                 'keywords' => ['student', 'add a student', 'create a student', 'edit a student', 'delete a student'],
-                'answer' => "Student Records keep one row per student per term (Student ID only — no personal names).\n\n• Open Student Records to filter by year, college, course, risk, and more.\n• Use Add Student if you have enrollment manage access.\n• Import File accepts CSV or Excel (.xlsx): download the template → upload → preview → confirm.\n• Export downloads the filtered CSV.\n• Row Actions → View / Edit / Delete.\n\nCEIT groups: Information Technology (BSIT) and Engineering (BSCpE, BSEE).",
+                'answer' => "Student Records keep one row per student per term (Student ID only — no personal names).\n\n• Open Student Records to filter by year, college, course, risk, and more.\n• Use Add Student if you have enrollment manage access.\n• Import File accepts CSV or Excel (.xlsx): download the template → upload → preview → confirm.\n• Export downloads the filtered CSV.\n• Row Actions → View / Edit / Delete.\n\nCEIT Program courses include Information Technology, Computer Engineering, and Electrical Engineering.",
                 'routes' => ['students.index', 'students.create', 'students.import', 'students.export'],
             ],
             [
@@ -430,7 +430,7 @@ PROMPT;
             ],
             [
                 'keywords' => ['ceit', 'cabadbaran', 'csucc', 'about', 'scope'],
-                'answer' => 'This system supports CEIT & BSIT enrollment planning at CSUCC Cabadbaran. It is decision support — people still make administrative decisions.',
+                'answer' => 'This system supports CEIT Program enrollment planning at CSUCC Cabadbaran. It is decision support — people still make administrative decisions.',
                 'routes' => ['about', 'dashboard', 'ai-support.index'],
             ],
         ];

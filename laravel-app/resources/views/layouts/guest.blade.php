@@ -246,7 +246,7 @@
                         </div>
                     </div>
                     <p class="text-sm text-emerald-100/75 mt-4 leading-relaxed">
-                        Decision support for CEIT and BSIT enrollment planning at Caraga State University Cabadbaran Campus.
+                        Decision support for the CEIT Program at Caraga State University Cabadbaran Campus.
                     </p>
                 </div>
 

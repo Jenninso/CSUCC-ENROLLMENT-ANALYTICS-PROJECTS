@@ -20,7 +20,7 @@
             <p>
                 These Terms and Conditions govern access to and use of the Enrollment Analytics &amp; Decision Support system
                 operated for Caraga State University Cabadbaran Campus (CSUCC). The system is intended only for the
-                College of Engineering and Information Technology (CEIT) and the BS Information Technology (BSIT) program.
+                College of Engineering and Information Technology (CEIT) Program.
                 If you do not agree, do not register or sign in.
             </p>
         </section>
@@ -28,7 +28,7 @@
         <section>
             <h2 class="text-lg font-semibold text-gray-900 mb-2">2. Authorized users</h2>
             <p>
-                The system is for authorized CSUCC personnel involved with CEIT and BSIT enrollment only.
+                The system is for authorized CSUCC personnel involved with the CEIT Program only.
                 You must provide accurate identity details (including employee ID, name, and email).
                 Accounts are subject to email verification and administrator approval. Access may be limited by assigned roles and permissions.
             </p>
@@ -46,7 +46,7 @@
 
         <section>
             <h2 class="text-lg font-semibold text-gray-900 mb-2">4. Acceptable use</h2>
-            <p>You agree to use the system only for official CEIT / BSIT academic planning, enrollment analysis, reporting, and related duties. You must not:</p>
+            <p>You agree to use the system only for official CEIT Program academic planning, enrollment analysis, reporting, and related duties. You must not:</p>
             <ul class="list-disc pl-5 space-y-1.5 mt-2">
                 <li>Attempt to access data, modules, or accounts you are not authorized to use.</li>
                 <li>Upload or enter false, misleading, or unauthorized enrollment data.</li>

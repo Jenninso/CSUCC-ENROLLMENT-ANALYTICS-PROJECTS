@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Alert;
+use App\Models\StudentRecord;
 use App\Services\AlertService;
 use App\Services\AuditLogger;
 use Illuminate\Http\Request;
@@ -32,8 +33,15 @@ class AlertController extends Controller
     public function show(Alert $alert)
     {
         $alert->load('program');
+        $student = null;
+        if (preg_match('/At-risk warning:\s*(.+)$/i', (string) $alert->title, $match)) {
+            $student = StudentRecord::query()
+                ->where('student_id', trim($match[1]))
+                ->latest('id')
+                ->first();
+        }
 
-        return view('alerts.show', compact('alert'));
+        return view('alerts.show', compact('alert', 'student'));
     }
 
     public function markAsRead(Alert $alert)

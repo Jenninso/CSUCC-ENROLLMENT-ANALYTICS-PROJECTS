@@ -737,12 +737,29 @@
                 </div>
                 <div class="flex items-center gap-2 sm:gap-3">
                     @if($navUser?->canAccess('alerts.view'))
-                    <a href="{{ route('alerts.index') }}" class="relative p-2 rounded-lg text-gray-500 hover:text-gray-800 hover:bg-black/5" title="Alerts">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75v-.7V9A6 6 0 006 9v.75a8.967 8.967 0 01-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 01-5.714 0m5.714 0a3 3 0 11-5.714 0"/></svg>
-                        @if(isset($unreadAlerts) && $unreadAlerts > 0)
-                        <span class="absolute top-1 right-1 min-w-[1rem] h-4 px-1 bg-red-500 rounded-full text-[10px] font-bold text-white flex items-center justify-center">{{ $unreadAlerts }}</span>
-                        @endif
-                    </a>
+                    <div x-data="{ open: false }" class="relative">
+                        <button type="button" @click="open = !open" class="relative p-2 rounded-lg text-gray-500 hover:text-gray-800 hover:bg-black/5" title="Alerts" aria-label="Alerts">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75v-.7V9A6 6 0 006 9v.75a8.967 8.967 0 01-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 01-5.714 0m5.714 0a3 3 0 11-5.714 0"/></svg>
+                            @if(isset($unreadAlerts) && $unreadAlerts > 0)
+                            <span class="absolute top-1 right-1 min-w-[1rem] h-4 px-1 bg-red-500 rounded-full text-[10px] font-bold text-white flex items-center justify-center">{{ $unreadAlerts }}</span>
+                            @endif
+                        </button>
+                        <div x-show="open" x-cloak @click.away="open = false" class="absolute right-0 mt-2 w-80 max-w-[calc(100vw-2rem)] ui-panel z-50 overflow-hidden">
+                            <div class="px-4 py-2.5 border-b border-gray-100 flex items-center justify-between">
+                                <p class="text-sm font-semibold text-gray-800">Notifications</p>
+                                <a href="{{ route('alerts.index') }}" class="text-xs font-medium text-indigo-600">View all</a>
+                            </div>
+                            @forelse($recentAlerts ?? [] as $notice)
+                            <a href="{{ route('alerts.show', $notice) }}" class="block px-4 py-3 hover:bg-gray-50 border-b border-gray-50">
+                                <p class="text-[10px] font-semibold uppercase tracking-wide text-gray-400">{{ $notice->severity }}</p>
+                                <p class="text-sm font-medium text-gray-800">{{ $notice->title }}</p>
+                                <p class="text-xs text-gray-400 mt-0.5">{{ $notice->created_at?->diffForHumans() }}</p>
+                            </a>
+                            @empty
+                            <p class="px-4 py-6 text-sm text-gray-400 text-center">No unread alerts.</p>
+                            @endforelse
+                        </div>
+                    </div>
                     @endif
                     {{-- User Dropdown --}}
                     <div x-data="{ open: false }" class="relative">

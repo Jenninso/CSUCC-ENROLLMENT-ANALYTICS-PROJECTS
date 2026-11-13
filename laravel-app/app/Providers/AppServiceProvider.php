@@ -32,10 +32,16 @@ class AppServiceProvider extends ServiceProvider
 
         View::composer('layouts.app', function ($view) {
             $count = 0;
+            $recentAlerts = collect();
             $pendingRegistrations = 0;
             $pendingDeletes = 0;
             if (Schema::hasTable('alerts')) {
                 $count = Alert::query()->where('is_read', false)->count();
+                $recentAlerts = Alert::query()
+                    ->where('is_read', false)
+                    ->latest()
+                    ->limit(6)
+                    ->get(['id', 'title', 'severity', 'created_at']);
             }
             $user = auth()->user();
             if ($user?->canAccess('users.approve') && Schema::hasTable('registration_requests')) {
@@ -46,6 +52,7 @@ class AppServiceProvider extends ServiceProvider
             }
             $view->with([
                 'unreadAlerts' => $count,
+                'recentAlerts' => $recentAlerts,
                 'pendingRegistrations' => $pendingRegistrations,
                 'pendingDeletes' => $pendingDeletes,
             ]);

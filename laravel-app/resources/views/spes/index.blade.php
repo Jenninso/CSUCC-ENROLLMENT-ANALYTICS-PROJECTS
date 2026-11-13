@@ -9,12 +9,16 @@
     </div>
 </div>
 
-<div class="ui-panel p-4 mb-4 flex flex-col sm:flex-row sm:items-center gap-3">
-    <div class="grow">
+<div class="ui-panel p-4 mb-4 flex flex-col lg:flex-row lg:items-center gap-4">
+    <div class="grow min-w-0">
         <p class="text-sm font-semibold text-gray-900">Share link for students</p>
-        <p class="text-xs text-gray-500 mt-1">Students do not sign in. They only see the SPR form, fill it, and save it.</p>
+        <p class="text-xs text-gray-500 mt-1">Students do not sign in. They only see the SPR form, fill it, and save it. Print the QR code and post it where students can scan it.</p>
+        <input type="text" readonly value="{{ $shareUrl }}" class="ui-input mt-3" onclick="this.select()">
     </div>
-    <input type="text" readonly value="{{ route('spr.public') }}" class="ui-input sm:max-w-md" onclick="this.select()">
+    <div class="flex items-center gap-3 shrink-0">
+        <img src="{{ $shareQr }}" alt="QR code for the student SPR form" width="132" height="132" class="bg-white border border-gray-200 rounded-md">
+        <a href="{{ route('spes.share-qr') }}" target="_blank" class="ui-btn-secondary">Print QR</a>
+    </div>
 </div>
 
 <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-4">

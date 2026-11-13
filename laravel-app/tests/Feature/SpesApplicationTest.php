@@ -104,6 +104,8 @@ class SpesApplicationTest extends TestCase
         $this->actingAs($staff)
             ->get(route('spes.index'))
             ->assertOk()
+            ->assertSee('Print QR')
+            ->assertSee('data:image/svg+xml;base64,', false)
             ->assertSee('Actions')
             ->assertSee(route('spes.show', $application), false)
             ->assertSee(route('spes.edit', $application), false)
@@ -116,6 +118,12 @@ class SpesApplicationTest extends TestCase
 
         $this->assertSame('Ana', $application->fresh()->first_name);
         $this->assertSame('Santos', $application->fresh()->last_name);
+
+        $poster = $this->actingAs($staff)->get(route('spes.share-qr'));
+        $poster->assertOk()
+            ->assertSee('Scan this code to open the blank SPR form')
+            ->assertSee(route('spr.public'), false)
+            ->assertSee('data:image/svg+xml;base64,', false);
     }
 
     public function test_staff_without_spr_edit_cannot_change_the_form(): void

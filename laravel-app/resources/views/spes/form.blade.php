@@ -32,6 +32,7 @@
 
 @if($studentMode)
 <p class="mb-4 max-w-[8.5in] rounded-lg border border-amber-300 bg-amber-50 px-4 py-3 text-sm font-semibold text-amber-950">For more concerns, please visit the Office of OASFA.</p>
+<p class="mb-4 max-w-[8.5in] rounded-lg border border-amber-300 bg-amber-50 px-4 py-3 text-sm font-semibold text-amber-950">Keep your signature inside the box. Do not overlap the frame, or part of your signature will be cut off.</p>
 @endif
 
 @if(session('warning'))

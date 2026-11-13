@@ -100,6 +100,7 @@ Route::middleware(['auth', 'active', 'setup', 'student.scope'])->group(function 
     });
     Route::middleware('permission:enrollment.view')->group(function () {
         Route::get('spes', [SpesApplicationController::class, 'index'])->name('spes.index');
+        Route::get('spes/share-qr', [SpesApplicationController::class, 'shareQr'])->name('spes.share-qr');
         Route::get('spes/{spes}/print', [SpesApplicationController::class, 'print'])->name('spes.print');
         Route::get('spes/{spes}/pdf', [SpesApplicationController::class, 'pdf'])->name('spes.pdf');
         Route::get('spes/{spes}', [SpesApplicationController::class, 'show'])->name('spes.show');

@@ -6,6 +6,7 @@ use App\Models\SpesApplication;
 use App\Models\StudentRecord;
 use App\Services\AuditLogger;
 use App\Services\SprPdf;
+use App\Support\SprQr;
 use Illuminate\Support\Str;
 use Throwable;
 use Illuminate\Http\Request;
@@ -51,10 +52,24 @@ class SpesApplicationController extends Controller
             ->paginate(20)
             ->withQueryString();
 
+        $shareUrl = route('spr.public');
+
         return view('spes.index', [
             'applications' => $applications,
             'summary' => $summary,
             'years' => SpesApplication::query()->select('application_year')->distinct()->orderByDesc('application_year')->pluck('application_year'),
+            'shareUrl' => $shareUrl,
+            'shareQr' => SprQr::dataUri($shareUrl),
+        ]);
+    }
+
+    public function shareQr()
+    {
+        $shareUrl = route('spr.public');
+
+        return view('spes.share-qr', [
+            'shareUrl' => $shareUrl,
+            'shareQr' => SprQr::dataUri($shareUrl),
         ]);
     }
 

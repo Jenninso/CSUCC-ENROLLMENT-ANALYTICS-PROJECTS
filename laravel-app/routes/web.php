@@ -74,6 +74,7 @@ Route::middleware(['auth', 'active', 'setup', 'student.scope'])->group(function 
 
     Route::get('profile', [SettingsController::class, 'profile'])->name('profile.edit');
     Route::post('profile', [SettingsController::class, 'updateProfile'])->name('profile.update');
+    Route::get('profile/avatar/{user}', [SettingsController::class, 'avatar'])->name('profile.avatar');
 
     Route::middleware('permission:enrollment.manage')->group(function () {
         Route::get('students/create', [StudentRecordController::class, 'create'])->name('students.create');

@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\AuditLog;
 use App\Models\SystemSetting;
 use App\Models\User;
+use App\Models\UserAvatar;
 use App\Services\AuditLogger;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -45,16 +46,22 @@ class SettingsController extends Controller
             $user->password = $validated['password'];
         }
 
-        if ($request->boolean('remove_avatar') && $user->avatar_path) {
-            Storage::disk('public')->delete($user->avatar_path);
-            $user->avatar_path = null;
+        if ($request->boolean('remove_avatar') && ($user->has_avatar || $user->avatar_path)) {
+            $this->clearAvatar($user);
         }
 
         if ($request->hasFile('avatar')) {
-            if ($user->avatar_path) {
-                Storage::disk('public')->delete($user->avatar_path);
-            }
-            $user->avatar_path = $request->file('avatar')->store('avatars', 'public');
+            $this->clearAvatar($user);
+            $file = $request->file('avatar');
+            $mime = $file->getMimeType() ?: 'image/jpeg';
+            UserAvatar::query()->updateOrCreate(
+                ['user_id' => $user->id],
+                [
+                    'mime' => $mime,
+                    'data' => base64_encode((string) file_get_contents($file->getRealPath())),
+                ]
+            );
+            $user->has_avatar = true;
         }
 
         $user->save();
@@ -62,6 +69,41 @@ class SettingsController extends Controller
         $audit->log('update', 'profile', 'Updated profile appearance and account details.');
 
         return back()->with('success', 'Profile settings saved.');
+    }
+
+    public function avatar(User $user)
+    {
+        $stored = $user->avatar()->first();
+        if ($stored && $stored->data) {
+            $binary = base64_decode($stored->data, true);
+            $mime = in_array($stored->mime, ['image/jpeg', 'image/png', 'image/webp'], true)
+                ? $stored->mime
+                : 'image/jpeg';
+
+            if ($binary !== false) {
+                return response($binary, 200, [
+                    'Content-Type' => $mime,
+                    'Cache-Control' => 'private, max-age=86400',
+                ]);
+            }
+        }
+
+        if ($user->avatar_path && Storage::disk('public')->exists($user->avatar_path)) {
+            return Storage::disk('public')->response($user->avatar_path);
+        }
+
+        abort(404);
+    }
+
+    private function clearAvatar(User $user): void
+    {
+        if ($user->avatar_path) {
+            Storage::disk('public')->delete($user->avatar_path);
+        }
+
+        $user->avatar()->delete();
+        $user->avatar_path = null;
+        $user->has_avatar = false;
     }
 
     public function index()

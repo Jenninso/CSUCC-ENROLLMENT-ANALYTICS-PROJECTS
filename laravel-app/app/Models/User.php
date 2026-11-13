@@ -10,6 +10,8 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Database\Factories\UserFactory;
@@ -33,6 +35,7 @@ use Database\Factories\UserFactory;
     'email',
     'username',
     'avatar_path',
+    'has_avatar',
     'theme_mode',
     'theme_color',
     'theme_background',
@@ -109,6 +112,7 @@ class User extends Authenticatable
         'theme_mode' => 'light',
         'theme_color' => self::DEFAULT_THEME_COLOR,
         'theme_background' => 'sand',
+        'has_avatar' => false,
     ];
 
     private ?array $permissionCache = null;
@@ -127,6 +131,7 @@ class User extends Authenticatable
             'password' => 'hashed',
             'blocked_at' => 'datetime',
             'must_change_password' => 'boolean',
+            'has_avatar' => 'boolean',
             'credentials_completed_at' => 'datetime',
             'birthdate' => 'date',
         ];
@@ -135,6 +140,11 @@ class User extends Authenticatable
     public function role(): BelongsTo
     {
         return $this->belongsTo(Role::class);
+    }
+
+    public function avatar(): HasOne
+    {
+        return $this->hasOne(UserAvatar::class);
     }
 
     public function auditLogs(): HasMany
@@ -342,11 +352,15 @@ class User extends Authenticatable
 
     public function avatarUrl(): ?string
     {
-        if (! $this->avatar_path) {
-            return null;
+        if ($this->has_avatar) {
+            return route('profile.avatar', $this, false);
         }
 
-        return asset('storage/'.$this->avatar_path);
+        if ($this->avatar_path && Storage::disk('public')->exists($this->avatar_path)) {
+            return route('profile.avatar', $this, false);
+        }
+
+        return null;
     }
 
     public function initials(): string

@@ -30,19 +30,17 @@
         </div>
 
         <div class="flex flex-col sm:flex-row sm:items-center gap-4">
-            <div class="w-20 h-20 rounded-full overflow-hidden border-2 border-white shadow ring-2 ring-[var(--theme-primary)] shrink-0 bg-[var(--theme-primary)] flex items-center justify-center text-2xl font-bold" style="color: var(--theme-on-primary, #ffffff);">
-                <template x-if="previewUrl && !removeAvatar">
-                    <img :src="previewUrl" alt="Profile preview" class="w-full h-full object-cover">
-                </template>
-                <template x-if="!previewUrl || removeAvatar">
-                    <span>{{ $user->initials() }}</span>
-                </template>
+            <div class="relative w-20 h-20 rounded-full overflow-hidden border-2 border-white shadow ring-2 ring-[var(--theme-primary)] shrink-0 bg-[var(--theme-primary)] flex items-center justify-center" style="color: var(--theme-on-primary, #ffffff);">
+                <img x-show="previewUrl && !removeAvatar" x-cloak :src="previewUrl" alt=""
+                     class="absolute inset-0 w-full h-full object-cover"
+                     x-on:error="previewUrl = null">
+                <span x-show="!previewUrl || removeAvatar" class="text-2xl font-bold">{{ $user->initials() }}</span>
             </div>
             <div class="space-y-2">
                 <input type="file" name="avatar" accept=".jpg,.jpeg,.png,.webp,image/*"
                        @change="previewAvatar($event)"
                        class="block w-full text-sm text-gray-600 file:mr-3 file:py-2 file:px-3 file:rounded-lg file:border-0 file:bg-[var(--theme-primary)] file:text-[color:var(--theme-on-primary,#ffffff)] file:text-sm file:font-medium file:border file:border-gray-300">
-                @if($user->avatar_path)
+                @if($user->has_avatar || $user->avatar_path)
                 <label class="inline-flex items-center gap-2 text-sm text-red-600">
                     <input type="checkbox" name="remove_avatar" value="1" x-model="removeAvatar" class="rounded border-gray-300">
                     Remove current photo

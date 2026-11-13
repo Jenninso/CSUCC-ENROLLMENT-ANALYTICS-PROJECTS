@@ -86,12 +86,62 @@
                     </td>
                     <td class="px-4 py-3 text-right font-medium">{{ number_format($record->enrollment_count) }}</td>
                     <td class="px-4 py-3 text-center">
-                        <div class="flex items-center justify-center gap-2">
-                            <a href="{{ route('enrollment.edit', $record) }}" class="text-indigo-600 hover:text-indigo-800 text-xs font-medium">Edit</a>
-                            <form method="POST" action="{{ route('enrollment.destroy', $record) }}" onsubmit="return confirm('Delete this record?')">
-                                @csrf @method('DELETE')
-                                <button type="submit" class="text-red-600 hover:text-red-800 text-xs font-medium">Delete</button>
-                            </form>
+                        <div
+                            class="relative inline-block text-left"
+                            x-data="{
+                                open: false,
+                                panelStyle: '',
+                                toggle(event) {
+                                    event.preventDefault();
+                                    event.stopPropagation();
+                                    if (this.open) {
+                                        this.open = false;
+                                        return;
+                                    }
+                                    window.dispatchEvent(new CustomEvent('close-actions'));
+                                    const r = event.currentTarget.getBoundingClientRect();
+                                    const spaceBelow = window.innerHeight - r.bottom;
+                                    const openUp = spaceBelow < 160 && r.top > spaceBelow;
+                                    const left = Math.max(8, Math.min(r.right - 176, window.innerWidth - 184));
+                                    this.panelStyle = openUp
+                                        ? `position:fixed;left:${left}px;bottom:${window.innerHeight - r.top + 4}px;z-index:9999;`
+                                        : `position:fixed;left:${left}px;top:${r.bottom + 4}px;z-index:9999;`;
+                                    this.open = true;
+                                }
+                            }"
+                            @close-actions.window="open = false"
+                            @keydown.escape.window="open = false"
+                        >
+                            <button
+                                type="button"
+                                @click="toggle($event)"
+                                class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-gray-700 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500/30"
+                                :aria-expanded="open"
+                                aria-haspopup="true"
+                            >
+                                Actions
+                                <svg class="w-3.5 h-3.5 text-gray-500 transition-transform" :class="open && 'rotate-180'" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.5 8.25l-7.5 7.5-7.5-7.5"/></svg>
+                            </button>
+                            <template x-teleport="body">
+                                <div
+                                    x-show="open"
+                                    x-cloak
+                                    x-transition
+                                    @click.outside="open = false"
+                                    :style="panelStyle"
+                                    class="w-44 rounded-lg border border-gray-200 dark-panel py-1 shadow-2xl text-left"
+                                    style="background: var(--theme-panel); color: var(--theme-text); z-index: 9999;"
+                                >
+                                    <div class="px-3 py-2 border-b border-gray-100">
+                                        <p class="text-[10px] text-gray-500 truncate">{{ $record->program->program_name ?? 'Enrollment' }} · Year {{ $record->year_level }}</p>
+                                    </div>
+                                    <a href="{{ route('enrollment.edit', $record) }}" class="block px-3 py-2 text-xs font-medium text-indigo-700 hover:bg-indigo-50" @click="open = false">Edit</a>
+                                    <form method="POST" action="{{ route('enrollment.destroy', $record) }}" onsubmit="return confirm('Delete this record?')">
+                                        @csrf @method('DELETE')
+                                        <button type="submit" class="w-full text-left px-3 py-2 text-xs font-medium text-red-600 hover:bg-red-50">Delete</button>
+                                    </form>
+                                </div>
+                            </template>
                         </div>
                     </td>
                 </tr>

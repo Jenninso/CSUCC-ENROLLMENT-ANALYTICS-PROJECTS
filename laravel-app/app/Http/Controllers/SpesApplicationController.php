@@ -10,6 +10,7 @@ use Illuminate\Support\Str;
 use Throwable;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 class SpesApplicationController extends Controller
 {
     public function index(Request $request)
@@ -241,6 +242,14 @@ class SpesApplicationController extends Controller
             'priority_2' => ['nullable', 'string', 'max:150'],
             'priority_3' => ['nullable', 'string', 'max:150'],
             'signature_name' => ['required', 'string', 'max:150'],
+            'signature_image' => ['nullable', 'string', 'max:300000', function (string $attribute, mixed $value, \Closure $fail): void {
+                if ($value === null || $value === '') {
+                    return;
+                }
+                if (! $this->isDrawnSignature((string) $value)) {
+                    $fail('Sign in the signature box with your finger or mouse.');
+                }
+            }],
             'certified' => ['accepted'],
             'status' => ['required', Rule::in(array_keys(SpesApplication::STATUSES))],
             'remarks' => ['nullable', 'string', 'max:2000'],
@@ -268,6 +277,21 @@ class SpesApplicationController extends Controller
                     $spr[$key] = $existing->spr_data[$key];
                 }
             }
+        }
+
+        $drawn = $data['signature_image'] ?? '';
+        $keptImage = $existing?->spr_data['signature_image'] ?? null;
+        $kept = is_string($keptImage) ? $keptImage : '';
+        if (is_string($drawn) && $this->isDrawnSignature($drawn)) {
+            $spr['signature_image'] = $drawn;
+        } elseif ($this->isDrawnSignature($kept)) {
+            $spr['signature_image'] = $kept;
+        } elseif ($asStudent) {
+            throw ValidationException::withMessages([
+                'signature_image' => 'Sign in the signature box with your finger or mouse.',
+            ]);
+        } else {
+            unset($spr['signature_image']);
         }
 
         $blank = fn ($value) => ($value === null || $value === '') ? 'N/A' : $value;
@@ -328,6 +352,20 @@ class SpesApplicationController extends Controller
         }
 
         return $row;
+    }
+
+    private function isDrawnSignature(string $value): bool
+    {
+        if (! str_starts_with($value, 'data:image/png;base64,')) {
+            return false;
+        }
+
+        $binary = base64_decode(substr($value, strlen('data:image/png;base64,')), true);
+        if ($binary === false || strlen($binary) < 40 || strlen($binary) > 200000) {
+            return false;
+        }
+
+        return str_starts_with($binary, "\x89PNG");
     }
 
     public function publicCreate()

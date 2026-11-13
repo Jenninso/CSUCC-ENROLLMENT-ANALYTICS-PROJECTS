@@ -125,6 +125,10 @@
     .spr-small { font-size: 7pt; line-height: 1.2; text-align: justify; }
     .spr-center { text-align: center; font-weight: 700; margin-top: 3px; }
     .spr-sign { margin-left: auto; width: 2.4in; text-align: center; font-weight: 700; border-top: 1px solid #111; padding-top: 1px; }
+    .spr-sign-img { display: block; width: 2.2in; height: 0.42in; object-fit: contain; margin: 0 0 1px auto; }
+    .spr-pad { margin-left: auto; width: 2.6in; margin-top: 4px; }
+    .spr-pad canvas { width: 100%; height: 58px; border: 1px dashed #111; background: #fff; touch-action: none; display: block; cursor: crosshair; }
+    .spr-pad button { margin-top: 3px; font: inherit; font-size: 8pt; background: #fff; border: 1px solid #111; padding: 1px 6px; cursor: pointer; }
     .spr-footer { display: flex; justify-content: space-between; align-items: flex-end; gap: 8px; margin-top: 0; font-size: 7pt; }
     .office-note { text-align: center; font-weight: 700; letter-spacing: 0.04em; margin: 3px 0 1px; }
     @media print {
@@ -318,13 +322,110 @@
         <p class="spr-small">In consideration of my admission in CSU and of privileges of my admission as a student, I hereby promise and pledge to abide by and comply with all the rules and regulations laid down by competent authority(ies) in the University and in the college in which I am enrolled. Refusal to take this pledge or violation of its terms shall be sufficient cause for summary dismissal or denial of admission.</p>
         <p class="spr-center">DATA PRIVACY NOTICE</p>
         <p class="spr-small">This application for admission, in line with the Data Privacy Act of 2012, is committed to protecting and securing personal information obtained in the process of performance of its mandate. The personal and other information you provided (herein) will be processed and utilized solely for verification and identification purposes only. Collected personal information will be kept/stored and accessed only by the university and will not be shared with any outside parties unless written consent is secured. By affirming this, I agree to answer the following needed information with utmost willingness to take part in this application for admission.</p>
+        @php
+            $signImg = (string) old('signature_image', $raw('signature_image'));
+            $signImg = str_starts_with($signImg, 'data:image/png;base64,') ? $signImg : '';
+        @endphp
         @if($editing)
             <label class="choice" style="display: flex; margin-top: 6px; white-space: normal;">
                 <input type="checkbox" name="certified" value="1" required {{ old('certified', isset($application) ? '1' : '') ? 'checked' : '' }}>
-                I affirm the admission pledge and the data privacy notice. Signature over printed name:
+                I affirm the admission pledge and the data privacy notice. Sign in the box, then type your name below.
             </label>
+            <div class="spr-pad">
+                <canvas id="spr-signature" aria-label="Student signature"></canvas>
+                <button type="button" id="spr-signature-clear">Clear signature</button>
+                <input type="hidden" name="signature_image" id="spr-signature-input" value="{{ $signImg }}">
+                <span class="spr-small">Sign with your finger or mouse. Your typed name stays under the signature.</span>
+            </div>
             <div class="spr-row"><span class="grow">{!! $line('signature_name', ['required' => 'required']) !!}</span></div>
+            <script>
+                (function () {
+                    var canvas = document.getElementById('spr-signature');
+                    var input = document.getElementById('spr-signature-input');
+                    var clearBtn = document.getElementById('spr-signature-clear');
+                    var form = document.getElementById('spr-form');
+                    if (!canvas || !input) return;
+                    var required = {{ $studentMode ? 'true' : 'false' }};
+                    var ctx = canvas.getContext('2d');
+                    var drawing = false;
+                    var signed = input.value !== '';
+                    var stored = input.value;
+
+                    function fit() {
+                        var rect = canvas.getBoundingClientRect();
+                        var ratio = Math.max(window.devicePixelRatio || 1, 1);
+                        var snapshot = stored || (canvas.width > 0 && signed ? canvas.toDataURL('image/png') : '');
+                        stored = '';
+                        canvas.width = Math.max(1, Math.round(rect.width * ratio));
+                        canvas.height = Math.max(1, Math.round(rect.height * ratio));
+                        ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
+                        ctx.lineWidth = 1.6;
+                        ctx.lineCap = 'round';
+                        ctx.lineJoin = 'round';
+                        ctx.strokeStyle = '#111';
+                        if (snapshot) {
+                            var img = new Image();
+                            img.onload = function () { ctx.drawImage(img, 0, 0, rect.width, rect.height); };
+                            img.src = snapshot;
+                        }
+                    }
+
+                    function point(event) {
+                        var rect = canvas.getBoundingClientRect();
+                        var src = event.touches ? event.touches[0] : event;
+                        return { x: src.clientX - rect.left, y: src.clientY - rect.top };
+                    }
+
+                    function start(event) {
+                        drawing = true;
+                        var p = point(event);
+                        ctx.beginPath();
+                        ctx.moveTo(p.x, p.y);
+                        event.preventDefault();
+                    }
+
+                    function move(event) {
+                        if (!drawing) return;
+                        var p = point(event);
+                        ctx.lineTo(p.x, p.y);
+                        ctx.stroke();
+                        signed = true;
+                        event.preventDefault();
+                    }
+
+                    function end() {
+                        if (!drawing) return;
+                        drawing = false;
+                        if (signed) input.value = canvas.toDataURL('image/png');
+                    }
+
+                    canvas.addEventListener('pointerdown', start);
+                    canvas.addEventListener('pointermove', move);
+                    canvas.addEventListener('pointerup', end);
+                    canvas.addEventListener('pointerleave', end);
+                    canvas.addEventListener('pointercancel', end);
+                    clearBtn.addEventListener('click', function () {
+                        signed = false;
+                        stored = '';
+                        input.value = '';
+                        ctx.clearRect(0, 0, canvas.width, canvas.height);
+                    });
+                    if (form && required) {
+                        form.addEventListener('submit', function (event) {
+                            if (signed && input.value) return;
+                            event.preventDefault();
+                            event.stopImmediatePropagation();
+                            alert('Sign in the signature box before you save.');
+                        }, true);
+                    }
+                    fit();
+                    window.addEventListener('resize', fit);
+                })();
+            </script>
         @else
+            @if($signImg)
+                <img src="{{ $signImg }}" alt="Student signature" class="spr-sign-img">
+            @endif
             <div class="spr-sign">{{ $raw('signature_name') }}<br>SIGNATURE OVER PRINTED NAME</div>
         @endif
         <p class="office-note">DO NOT WRITE ANYTHING BELOW THIS LINE</p>

@@ -152,6 +152,19 @@ class SpesApplicationTest extends TestCase
         $this->assertFalse($sprIds->contains('2026-00001'));
     }
 
+    public function test_a_student_must_draw_a_signature_before_saving(): void
+    {
+        $payload = $this->payload();
+        unset($payload['signature_image']);
+
+        $this->from(route('spr.public'))
+            ->post(route('spr.public.store'), $payload)
+            ->assertRedirect(route('spr.public'))
+            ->assertSessionHasErrors('signature_image');
+
+        $this->assertDatabaseCount('spes_applications', 0);
+    }
+
     public function test_a_younger_student_can_still_save_the_spr(): void
     {
         $this->post(route('spr.public.store'), $this->payload(['birth_date' => '2014-01-01']))
@@ -188,6 +201,7 @@ class SpesApplicationTest extends TestCase
             ->assertRedirect(route('spr.public.edit', $application->public_token));
 
         $this->assertSame('Maria', $application->fresh()->first_name);
+        $this->assertStringStartsWith('data:image/png;base64,', (string) $application->spr_data['signature_image']);
         $this->get(route('spr.public.edit', 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'))->assertNotFound();
     }
 
@@ -247,6 +261,7 @@ class SpesApplicationTest extends TestCase
             'priority_1' => 'BS Information Technology',
             'preferred_campus' => 'cabadbaran',
             'signature_name' => 'Maria Reyes Santos',
+            'signature_image' => 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==',
             'certified' => '1',
             'status' => 'submitted',
         ], $overrides);

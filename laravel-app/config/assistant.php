@@ -23,6 +23,7 @@ return [
         'base_url' => env('ASSISTANT_OPENAI_BASE_URL', env('OPENAI_BASE_URL', 'https://api.openai.com/v1')),
     ],
 
-    'max_history' => 16,
-    'timeout' => 45,
+    'max_history' => (int) env('ASSISTANT_MAX_HISTORY', 6),
+    'timeout' => (int) env('ASSISTANT_TIMEOUT', 12),
+    'max_tokens' => (int) env('ASSISTANT_MAX_TOKENS', 280),
 ];

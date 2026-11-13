@@ -28,6 +28,13 @@ class AssistantService
         }
 
         $history = $this->normalizeHistory($history);
+
+        if ($this->canAnswerLocally($message, $history)) {
+            $local = $this->localConversation($message, $user, $page, $history);
+
+            return $this->pack($local['reply'], $local['links'], 'local');
+        }
+
         $provider = $this->resolvedProvider();
 
         if ($provider === 'gemini') {
@@ -106,8 +113,8 @@ class AssistantService
                 ],
                 'contents' => $contents,
                 'generationConfig' => [
-                    'temperature' => 0.7,
-                    'maxOutputTokens' => 700,
+                    'temperature' => 0.4,
+                    'maxOutputTokens' => (int) config('assistant.max_tokens', 280),
                 ],
             ];
 
@@ -156,8 +163,8 @@ class AssistantService
                 ->withToken($key)
                 ->post($base.'/chat/completions', [
                     'model' => $model,
-                    'temperature' => 0.7,
-                    'max_tokens' => 700,
+                    'temperature' => 0.4,
+                    'max_tokens' => (int) config('assistant.max_tokens', 280),
                     'messages' => $messages,
                 ]);
 
@@ -179,7 +186,8 @@ class AssistantService
 
     private function httpClient(): \Illuminate\Http\Client\PendingRequest
     {
-        $client = Http::timeout((int) config('assistant.timeout', 45))
+        $client = Http::connectTimeout(4)
+            ->timeout((int) config('assistant.timeout', 12))
             ->acceptJson();
 
         // Local XAMPP often lacks a CA bundle; skip verify in local only.
@@ -322,6 +330,24 @@ PROMPT;
         return null;
     }
 
+    /**
+     * @param  list<array{role: string, content: string}>  $history
+     */
+    private function canAnswerLocally(string $message, array $history): bool
+    {
+        $text = Str::lower(trim($message));
+        if (preg_match('/^(hi|hello|hey|good\s+(morning|afternoon|evening))\b/i', $text)) {
+            return true;
+        }
+        if ($this->matchTopic($text) !== null) {
+            return true;
+        }
+
+        $followUp = (bool) preg_match('/^(yes|yeah|yep|ok|okay|sure|how\??|then what|and then|continue|tell me more|show me|please|go on)\b/i', trim($message));
+
+        return $followUp && $this->lastAssistantTopic($history) !== null;
+    }
+
     /** @return list<array{keywords: list<string>, answer: string, routes?: list<string>}> */
     private function topics(): array
     {
@@ -446,7 +472,7 @@ PROMPT;
             if ($content === '') {
                 continue;
             }
-            $out[] = ['role' => $role, 'content' => Str::limit($content, 1500, '…')];
+            $out[] = ['role' => $role, 'content' => Str::limit($content, 500, '…')];
         }
 
         return array_slice($out, -((int) config('assistant.max_history', 16)));

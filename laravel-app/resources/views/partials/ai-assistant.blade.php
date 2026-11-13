@@ -3,7 +3,7 @@
     $assistantLlm = app(\App\Services\AssistantService::class)->isLlmConfigured();
 @endphp
 <div
-    x-data="aiAssistant(@js(route('assistant.chat')), @js($assistantLlm), @js(auth()->id()))"
+    x-data="aiAssistant(@js(route('assistant.chat', [], false)), @js($assistantLlm), @js(auth()->id()))"
     x-init="init()"
     x-cloak
     class="fixed bottom-5 right-5 z-[60] flex flex-col items-end gap-3 pointer-events-none"
@@ -303,8 +303,8 @@ function aiAssistant(endpoint, llmEnabled, userId) {
             return this.messages
                 .filter((m) => m.role === 'user' || m.role === 'assistant')
                 .slice(1) // skip welcome bubble
-                .slice(-16)
-                .map((m) => ({ role: m.role, text: m.text }));
+                .slice(-6)
+                .map((m) => ({ role: m.role, text: String(m.text || '').slice(0, 500) }));
         },
 
         scrollBottom() {
@@ -324,9 +324,13 @@ function aiAssistant(endpoint, llmEnabled, userId) {
             this.busy = true;
             this.persist();
             this.scrollBottom();
+            const controller = new AbortController();
+            const timer = setTimeout(() => controller.abort(), 14000);
             try {
                 const res = await fetch(this.endpoint, {
                     method: 'POST',
+                    credentials: 'same-origin',
+                    signal: controller.signal,
                     headers: {
                         'Content-Type': 'application/json',
                         'Accept': 'application/json',
@@ -358,6 +362,7 @@ function aiAssistant(endpoint, llmEnabled, userId) {
                     links: [],
                 });
             } finally {
+                clearTimeout(timer);
                 this.busy = false;
                 this.persist();
                 this.scrollBottom();

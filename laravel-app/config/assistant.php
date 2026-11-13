@@ -24,6 +24,6 @@ return [
     ],
 
     'max_history' => (int) env('ASSISTANT_MAX_HISTORY', 6),
-    'timeout' => (int) env('ASSISTANT_TIMEOUT', 12),
-    'max_tokens' => (int) env('ASSISTANT_MAX_TOKENS', 280),
+    'timeout' => (int) env('ASSISTANT_TIMEOUT', 25),
+    'max_tokens' => (int) env('ASSISTANT_MAX_TOKENS', 900),
 ];

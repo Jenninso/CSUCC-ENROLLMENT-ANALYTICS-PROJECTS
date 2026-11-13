@@ -304,7 +304,7 @@ function aiAssistant(endpoint, llmEnabled, userId) {
                 .filter((m) => m.role === 'user' || m.role === 'assistant')
                 .slice(1) // skip welcome bubble
                 .slice(-6)
-                .map((m) => ({ role: m.role, text: String(m.text || '').slice(0, 500) }));
+                .map((m) => ({ role: m.role, text: String(m.text || '').slice(0, 1800) }));
         },
 
         scrollBottom() {
@@ -325,7 +325,7 @@ function aiAssistant(endpoint, llmEnabled, userId) {
             this.persist();
             this.scrollBottom();
             const controller = new AbortController();
-            const timer = setTimeout(() => controller.abort(), 14000);
+            const timer = setTimeout(() => controller.abort(), 28000);
             try {
                 const res = await fetch(this.endpoint, {
                     method: 'POST',

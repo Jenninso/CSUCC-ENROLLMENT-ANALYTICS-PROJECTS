@@ -188,6 +188,13 @@ class User extends Authenticatable
         return (string) $this->name;
     }
 
+    public function displayName(): string
+    {
+        $display = trim((string) $this->name);
+
+        return $display !== '' ? $display : $this->fullName();
+    }
+
     public function hasRole(string ...$roles): bool
     {
         $name = $this->roleName();
@@ -365,7 +372,7 @@ class User extends Authenticatable
 
     public function initials(): string
     {
-        $name = trim($this->fullName() ?: (string) $this->name);
+        $name = trim($this->displayName());
 
         return $name !== '' ? mb_strtoupper(mb_substr($name, 0, 1)) : 'U';
     }

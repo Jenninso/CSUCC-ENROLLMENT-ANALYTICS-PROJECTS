@@ -797,7 +797,7 @@
                     </div>
                 @endif
                 <div class="sidebar-user-meta flex-1 min-w-0">
-                    <p class="text-sm font-semibold truncate">{{ $navUser->fullName() }}</p>
+                    <p class="text-sm font-semibold truncate">{{ $navUser->displayName() }}</p>
                     <p class="text-xs text-emerald-200/60 truncate">{{ $navUser->role->role_name ?? 'User' }}</p>
                 </div>
             </div>
@@ -854,12 +854,12 @@
                                     {{ $navUser?->initials() ?? 'U' }}
                                 </div>
                             @endif
-                            <span class="hidden md:block text-sm font-medium max-w-[9rem] truncate">{{ $navUser?->fullName() }}</span>
+                            <span class="hidden md:block text-sm font-medium max-w-[9rem] truncate">{{ $navUser?->displayName() }}</span>
                             <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.5 8.25l-7.5 7.5-7.5-7.5"/></svg>
                         </button>
                         <div x-show="open" x-cloak @click.away="open = false" class="absolute right-0 mt-2 w-56 ui-panel py-1.5 z-50 overflow-hidden">
                             <div class="px-4 py-2 border-b border-gray-100">
-                                <p class="text-sm font-semibold text-gray-800 truncate">{{ $navUser?->fullName() }}</p>
+                                <p class="text-sm font-semibold text-gray-800 truncate">{{ $navUser?->displayName() }}</p>
                                 <p class="text-xs text-gray-500 truncate">{{ $navUser?->role->role_name ?? 'User' }}</p>
                             </div>
                             <a href="{{ route('profile.edit') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">Profile & Appearance</a>

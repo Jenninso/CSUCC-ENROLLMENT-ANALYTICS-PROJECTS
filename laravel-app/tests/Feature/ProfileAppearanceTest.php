@@ -49,10 +49,13 @@ class ProfileAppearanceTest extends TestCase
         $this->assertTrue($user->themeBackgroundIsImage());
         $this->assertStringContainsString('images/themes/theme1.png', (string) $user->themeBackgroundImageUrl());
         $this->assertSame('Theme User', $user->name);
+        $this->assertSame('Theme User', $user->displayName());
+        $this->assertSame('USER, Theme', $user->fullName());
 
         $this->actingAs($user)
             ->get(route('profile.edit'))
             ->assertOk()
+            ->assertSee('Theme User')
             ->assertSee('Appearance')
             ->assertSee('Campus theme 1')
             ->assertSee('images/themes/theme1.png');

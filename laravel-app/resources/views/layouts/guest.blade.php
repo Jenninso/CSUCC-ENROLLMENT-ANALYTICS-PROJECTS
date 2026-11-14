@@ -190,7 +190,7 @@
                 <a href="{{ route('home') }}" class="flex items-center gap-3 min-w-0 shrink">
                     <img src="{{ asset('images/branding/logo.png') }}" alt="CSUCC" class="w-10 h-10 rounded-full object-contain bg-black/30 shrink-0 ring-1 ring-white/15">
                     <div class="min-w-0 hidden xs:block sm:block">
-                        <p class="text-[10px] font-semibold tracking-[0.18em] text-amber-300/90">CSUCC</p>
+                        <p class="text-[10px] font-semibold tracking-[0.18em] text-amber-300/90">CSUCC · CEIT</p>
                         <p class="font-brand text-sm font-semibold text-white leading-tight truncate">Enrollment Analytics</p>
                     </div>
                 </a>

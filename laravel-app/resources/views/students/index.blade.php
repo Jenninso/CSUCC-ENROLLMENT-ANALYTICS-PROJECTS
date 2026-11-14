@@ -1,9 +1,11 @@
 @extends('layouts.app')
 @section('title', 'Student Records')
+@section('hidePageHead', '1')
 
 @section('content')
-<div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-6">
+<div class="page-head">
     <div>
+        <p class="page-kicker">CSUCC · CEIT</p>
         <h3 class="ui-page-title">Student Records</h3>
         <p class="ui-page-sub">One record per student per term, identified by Student ID only. CEIT Program courses include Information Technology, Computer Engineering, and Electrical Engineering.</p>
     </div>

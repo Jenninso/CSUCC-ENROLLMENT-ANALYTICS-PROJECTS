@@ -1,8 +1,8 @@
 @extends('layouts.app')
 @section('title', 'Forecasting')
+@section('subtitle', 'The system compares naive, moving-average, linear regression, and exponential-smoothing models and selects the lowest MAE. Complex models are not used when simpler ones perform better.')
 
 @section('content')
-<p class="text-sm text-gray-500 mb-4">The system compares naive, moving-average, linear regression, and exponential-smoothing models and selects the lowest MAE. Complex models are not used when simpler ones perform better.</p>
 
 <form method="POST" action="{{ route('forecasting.store') }}" class="bg-white rounded-lg shadow-sm p-4 mb-6 grid grid-cols-1 md:grid-cols-4 gap-3">
     @csrf

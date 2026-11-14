@@ -1,5 +1,6 @@
 @extends('layouts.app')
 @section('title', 'Program Analytics')
+@section('subtitle', 'Compare CEIT programs by enrollment.')
 
 @section('content')
 <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">

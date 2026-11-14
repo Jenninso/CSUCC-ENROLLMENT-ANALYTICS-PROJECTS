@@ -1,8 +1,8 @@
 @extends('layouts.app')
 @section('title', 'Executive Dashboard')
+@section('subtitle', 'Simplified view for decision makers. Color is not the only indicator; each card also includes status text.')
 
 @section('content')
-<p class="text-sm text-gray-500 mb-6">Simplified view for decision makers. Color is not the only indicator; each card also includes status text.</p>
 <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 mb-6">
     @php
         $growthStatus = ($growthRate ?? 0) >= 0 ? ['Positive', 'bg-emerald-50 border-emerald-200 text-emerald-800'] : ['Needs attention', 'bg-amber-50 border-amber-200 text-amber-800'];

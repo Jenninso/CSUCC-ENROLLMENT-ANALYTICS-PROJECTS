@@ -1,5 +1,6 @@
 @extends('layouts.app')
 @section('title', 'Settings')
+@section('subtitle', 'Institution name and the thresholds that raise alerts.')
 
 @section('content')
 <div class="max-w-xl mb-4">

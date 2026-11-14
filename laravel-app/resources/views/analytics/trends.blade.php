@@ -1,5 +1,6 @@
 @extends('layouts.app')
 @section('title', 'Enrollment Trends')
+@section('subtitle', 'How enrollment changes across terms for the CEIT Program.')
 
 @section('content')
 <div class="bg-white rounded-lg shadow-sm p-4 mb-6">

@@ -1,5 +1,6 @@
 @extends('layouts.app')
 @section('title', 'College Analytics')
+@section('subtitle', 'Compare colleges and the departments under them.')
 
 @section('content')
 <div class="bg-white rounded-lg shadow-sm p-5 mb-6">

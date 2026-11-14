@@ -1,9 +1,10 @@
 @extends('layouts.app')
 @section('title', $application->reference_no)
+@section('hidePageHead', '1')
 
 @section('content')
 @php $studentMode = ! empty($studentMode); @endphp
-<div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-6">
+<div class="page-head">
     <div>
         <a href="{{ $studentMode ? route('student.spes.index') : route('spes.index') }}" class="ui-link text-sm">← Back to SPR</a>
         <h3 class="ui-page-title mt-2 font-mono">{{ $application->student_id ?: $application->reference_no }}</h3>

@@ -1,5 +1,6 @@
 @extends('layouts.app')
 @section('title', 'Retention Analytics')
+@section('subtitle', 'Returning students and the students who did not continue.')
 
 @section('content')
 <form method="GET" class="ui-panel p-4 mb-6 grid grid-cols-2 lg:grid-cols-6 gap-3">

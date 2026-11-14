@@ -1,5 +1,6 @@
 @extends('layouts.app')
 @section('title', isset($application) ? 'Edit SPR' : 'New SPR')
+@section('hidePageHead', '1')
 
 @php
     $studentMode = ! empty($studentMode);
@@ -12,7 +13,7 @@
 @endphp
 
 @section('content')
-<div class="mb-4 flex items-center justify-between gap-3">
+<div class="page-head">
     <div>
         <a href="{{ $cancelUrl }}" class="ui-link text-sm">← Back</a>
         <h3 class="ui-page-title mt-2">Student Personal Record (SPR)</h3>

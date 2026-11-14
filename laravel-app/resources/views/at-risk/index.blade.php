@@ -1,5 +1,6 @@
 @extends('layouts.app')
 @section('title', 'At-risk students')
+@section('hidePageHead', '1')
 
 @section('content')
 @php
@@ -17,8 +18,9 @@
     $levelColors = ['#0b5d3b', '#d97706', '#ea580c', '#b91c1c'];
 @endphp
 
-<div class="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4 mb-6">
+<div class="page-head">
     <div>
+        <p class="page-kicker">CSUCC · CEIT</p>
         <h3 class="ui-page-title">Student at-risk analysis</h3>
         <p class="ui-page-sub">Risk levels come from grades, attendance, failed subjects, and enrollment standing. SPR family and income details explain possible circumstances. They do not raise a student's risk level.</p>
     </div>

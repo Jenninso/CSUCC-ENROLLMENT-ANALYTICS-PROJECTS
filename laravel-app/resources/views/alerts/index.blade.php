@@ -1,9 +1,9 @@
 @extends('layouts.app')
 @section('title', 'Alerts')
+@section('subtitle', 'Enrollment alerts and notifications.')
 
 @section('content')
-<div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
-    <p class="text-sm text-gray-500">Enrollment alerts and notifications.</p>
+<div class="flex flex-wrap justify-end gap-2 mb-6">
     <div class="flex flex-wrap gap-2">
     <form method="POST" action="{{ route('alerts.generate') }}">
         @csrf

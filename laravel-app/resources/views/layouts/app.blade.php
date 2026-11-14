@@ -196,6 +196,31 @@
             max-width: 42rem;
             line-height: 1.45;
         }
+        .page-kicker {
+            margin: 0 0 0.2rem;
+            font-size: 0.6875rem;
+            font-weight: 700;
+            letter-spacing: 0.16em;
+            text-transform: uppercase;
+            color: var(--theme-primary);
+        }
+        .page-head {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+            padding: 1.15rem 1.25rem;
+            background: linear-gradient(180deg, color-mix(in srgb, var(--theme-primary) 9%, var(--theme-panel)), var(--theme-panel));
+            border: 1px solid var(--theme-border);
+            border-left: 3px solid var(--theme-primary);
+            border-radius: var(--theme-radius);
+            box-shadow: var(--theme-shadow);
+        }
+        @media (min-width: 640px) {
+            .page-head { flex-direction: row; align-items: center; }
+        }
         .ui-input {
             width: 100%;
             padding: 0.55rem 0.75rem;
@@ -788,12 +813,12 @@
                     <button type="button" @click="toggleSidebar()" class="lg:hidden p-1.5 rounded-lg text-gray-500 hover:text-gray-800 hover:bg-black/5" aria-label="Open sidebar">
                         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5"/></svg>
                     </button>
-                    <div class="min-w-0">
-                        <p class="text-[10px] font-semibold uppercase tracking-[0.14em] text-gray-400 hidden sm:block">CSUCC · CEIT</p>
-                        <h2 class="text-lg font-semibold text-gray-800 truncate leading-tight">@yield('title', 'Dashboard')</h2>
+                    <div class="min-w-0 pl-3 border-l-[3px]" style="border-color: var(--theme-primary);">
+                        <p class="text-[10px] font-semibold uppercase tracking-[0.16em] hidden sm:block" style="color: var(--theme-primary);">CSUCC · CEIT</p>
+                        <h2 class="text-lg font-semibold truncate leading-tight" style="color: var(--theme-text);">@yield('title', 'Dashboard')</h2>
                     </div>
                 </div>
-                <div class="flex items-center gap-2 sm:gap-3">
+                <div class="flex items-center gap-1 rounded-full border px-1.5 py-1" style="border-color: var(--theme-border); background: color-mix(in srgb, var(--theme-panel) 88%, transparent);">
                     @if($navUser?->canAccess('alerts.view'))
                     <div x-data="{ open: false }" class="relative">
                         <button type="button" @click="open = !open" class="relative p-2 rounded-lg text-gray-500 hover:text-gray-800 hover:bg-black/5" title="Alerts" aria-label="Alerts">
@@ -854,6 +879,17 @@
 
         {{-- Page Content --}}
         <main class="flex-1 p-4 sm:p-6 lg:p-8">
+            @unless(View::hasSection('hidePageHead'))
+            <div class="page-head">
+                <div class="min-w-0">
+                    <p class="page-kicker">CSUCC · CEIT</p>
+                    <h3 class="ui-page-title">@yield('title', 'Dashboard')</h3>
+                    @hasSection('subtitle')
+                    <p class="ui-page-sub">@yield('subtitle')</p>
+                    @endif
+                </div>
+            </div>
+            @endunless
             @yield('content')
         </main>
     </div>

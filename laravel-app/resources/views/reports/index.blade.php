@@ -1,5 +1,6 @@
 @extends('layouts.app')
 @section('title', 'Reports')
+@section('subtitle', 'Choose a report, a date range, and an export format.')
 
 @section('content')
 <div class="max-w-3xl">

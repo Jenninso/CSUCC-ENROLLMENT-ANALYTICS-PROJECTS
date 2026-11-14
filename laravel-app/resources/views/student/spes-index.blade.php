@@ -1,9 +1,11 @@
 @extends('layouts.app')
 @section('title', 'My SPR forms')
+@section('hidePageHead', '1')
 
 @section('content')
-<div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-6">
+<div class="page-head">
     <div>
+        <p class="page-kicker">CSUCC · CEIT</p>
         <h3 class="ui-page-title">My SPR forms</h3>
         <p class="ui-page-sub">Student ID {{ $studentId }}. Submit your Student Personal Record. Staff review it after you send it.</p>
     </div>

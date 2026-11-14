@@ -1,8 +1,9 @@
 @extends('layouts.app')
 @section('title', 'At-risk report '.$student->student_id)
+@section('hidePageHead', '1')
 
 @section('content')
-<div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-6">
+<div class="page-head">
     <div>
         <a href="{{ route('at-risk.index') }}" class="ui-link text-sm">← Back to at-risk students</a>
         <h3 class="ui-page-title mt-2 font-mono">{{ $student->student_id }}</h3>

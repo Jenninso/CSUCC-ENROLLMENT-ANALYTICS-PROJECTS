@@ -1,5 +1,6 @@
 @extends('layouts.app')
 @section('title', 'Profile & Appearance')
+@section('subtitle', 'Your account photo, theme color, and dark mode.')
 
 @section('content')
 @php

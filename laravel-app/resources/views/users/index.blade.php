@@ -1,5 +1,6 @@
 @extends('layouts.app')
 @section('title', 'User Management')
+@section('subtitle', 'Staff accounts, roles, and access for this campus system.')
 
 @section('content')
 @php $me = auth()->user(); @endphp

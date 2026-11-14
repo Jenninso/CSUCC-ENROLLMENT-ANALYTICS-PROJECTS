@@ -1,13 +1,15 @@
 @extends('layouts.app')
 @section('title', 'Dashboard')
+@section('hidePageHead', '1')
 
 @section('content')
-<div class="mb-6">
-    <h3 class="ui-page-title">Enrollment overview</h3>
-    <p class="ui-page-sub">Monitor CEIT Program enrollment, retention, and planning signals for the selected term.</p>
-</div>
-
-<form method="GET" class="ui-panel p-4 mb-6 grid grid-cols-2 lg:grid-cols-6 gap-3">
+<div class="ui-panel mb-6 overflow-hidden">
+    <div class="px-5 pt-5 pb-4 sm:px-6 border-b border-gray-100" style="background: linear-gradient(180deg, color-mix(in srgb, var(--theme-primary) 9%, var(--theme-panel)), var(--theme-panel));">
+        <p class="text-[11px] font-semibold uppercase tracking-[0.16em]" style="color: var(--theme-primary);">CEIT Program</p>
+        <h3 class="ui-page-title mt-1">Enrollment overview</h3>
+        <p class="ui-page-sub">Monitor CEIT Program enrollment, retention, and planning signals for the selected term.</p>
+    </div>
+<form method="GET" class="p-4 sm:p-5 grid grid-cols-2 lg:grid-cols-6 gap-3 items-end">
     <select name="academic_year_id" class="ui-input">
         <option value="">Latest academic year</option>
         @foreach($academicYears ?? [] as $ay)
@@ -38,8 +40,9 @@
             <option value="{{ $i }}" @selected(($filters['year_level'] ?? '') == $i)>{{ \App\Models\EnrollmentRecord::yearLevelLabel($i) }}</option>
         @endfor
     </select>
-    <button class="ui-btn-primary">Apply filters</button>
+    <button class="ui-btn-primary h-[2.45rem]">Apply filters</button>
 </form>
+</div>
 
 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
     @php

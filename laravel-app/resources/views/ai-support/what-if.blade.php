@@ -1,5 +1,6 @@
 @extends('layouts.app')
 @section('title', 'What-if analysis')
+@section('subtitle', 'Try recruitment, retention, and capacity assumptions before a planning decision.')
 
 @section('content')
 <div class="bg-sky-50 border border-sky-200 text-sky-900 rounded-lg p-4 mb-6 text-sm">

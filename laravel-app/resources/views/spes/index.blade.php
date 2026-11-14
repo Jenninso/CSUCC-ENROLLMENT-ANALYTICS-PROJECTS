@@ -1,9 +1,11 @@
 @extends('layouts.app')
 @section('title', 'SPR')
+@section('hidePageHead', '1')
 
 @section('content')
-<div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-6">
+<div class="page-head">
     <div>
+        <p class="page-kicker">CSUCC · CEIT</p>
         <h3 class="ui-page-title">SPR</h3>
         <p class="ui-page-sub">Student Personal Record. The printed form is one long bond page, 8.5 × 13 inches, with the CSU Cabadbaran header.</p>
     </div>

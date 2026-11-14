@@ -286,9 +286,9 @@
     </footer>
     @else
     <footer class="relative z-10 mt-auto shrink-0 border-t border-white/10 bg-[#03140e]/80">
-        <div class="mx-auto flex max-w-3xl items-center justify-between gap-6 px-4 py-3">
-            <p class="shrink-0 text-[11px] tracking-wide text-white/60">&copy; {{ date('Y') }} CSUCC Cabadbaran Campus</p>
-            <p class="shrink-0 text-[11px] tracking-wide text-white/45">Enrollment Analytics</p>
+        <div class="mx-auto max-w-3xl px-4 py-3 text-center">
+            <p class="text-sm tracking-wide text-white/90">Enrollment Analytics &amp; Decision Support for CEIT.</p>
+            <p class="mt-1 text-[11px] tracking-wide text-white/60">&copy; {{ date('Y') }} CSUCC Cabadbaran Campus</p>
         </div>
     </footer>
     @endunless

@@ -20,7 +20,6 @@
         <h1 class="font-brand mt-2 text-3xl font-semibold leading-tight text-white sm:text-4xl">
             Caraga State University Cabadbaran Campus
         </h1>
-        <p class="mt-3 text-base text-white/90">Enrollment Analytics &amp; Decision Support for CEIT.</p>
     </section>
 
     <div class="login-glow w-full max-w-sm">

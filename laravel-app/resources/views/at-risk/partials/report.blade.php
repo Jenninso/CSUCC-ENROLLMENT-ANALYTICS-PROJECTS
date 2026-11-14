@@ -101,8 +101,8 @@
             <div><dt class="ui-kpi-label mb-1">4Ps</dt><dd class="font-semibold text-gray-900">{{ $analysis['spr']['four_ps'] }}</dd></div>
             <div><dt class="ui-kpi-label mb-1">Estimated monthly income</dt><dd class="font-semibold text-gray-900">{{ $analysis['spr']['income'] }}</dd></div>
             <div><dt class="ui-kpi-label mb-1">Estimated annual income</dt><dd class="font-semibold text-gray-900">₱{{ $analysis['spr']['annual_income'] }}</dd></div>
-            <div class="sm:col-span-2"><dt class="ui-kpi-label mb-1">Father</dt><dd class="font-semibold text-gray-900">{{ $analysis['spr']['father'] }}</dd></div>
-            <div class="sm:col-span-2"><dt class="ui-kpi-label mb-1">Mother</dt><dd class="font-semibold text-gray-900">{{ $analysis['spr']['mother'] }}</dd></div>
+            <div class="sm:col-span-2"><dt class="ui-kpi-label mb-1">Father's occupation</dt><dd class="font-semibold text-gray-900">{{ $analysis['spr']['father'] }}</dd></div>
+            <div class="sm:col-span-2"><dt class="ui-kpi-label mb-1">Mother's occupation</dt><dd class="font-semibold text-gray-900">{{ $analysis['spr']['mother'] }}</dd></div>
             <div class="sm:col-span-2"><dt class="ui-kpi-label mb-1">Home address</dt><dd class="font-semibold text-gray-900">{{ $analysis['spr']['address'] ?: '—' }}</dd></div>
         </dl>
     @else

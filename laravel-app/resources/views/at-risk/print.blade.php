@@ -18,7 +18,7 @@
     <button class="no-print" onclick="window.print()">Print</button>
     <p class="muted">Caraga State University Cabadbaran Campus · Student At-Risk Analysis Report</p>
     <h1>{{ $student->student_id }}</h1>
-    <p>{{ $analysis['name'] ?: 'No SPR name' }} · {{ $analysis['program_name'] }} · {{ $analysis['year_label'] }} {{ $analysis['section'] }} · {{ $analysis['term'] }}</p>
+    <p>{{ $analysis['program_name'] }} · {{ $analysis['year_label'] }} {{ $analysis['section'] }} · {{ $analysis['term'] }}</p>
     <p><strong>Risk classification:</strong> {{ $analysis['level_label'] }}</p>
 
     <h2>System analysis</h2>
@@ -47,8 +47,8 @@
     @if($analysis['spr'])
         <p>Household: {{ $analysis['spr']['household'] }}. Solo parent: {{ $analysis['spr']['solo_parent'] }}. Working student: {{ $analysis['spr']['working'] }}. 4Ps: {{ $analysis['spr']['four_ps'] }}.</p>
         <p>Income: {{ $analysis['spr']['income'] }} monthly, ₱{{ $analysis['spr']['annual_income'] }} estimated annual.</p>
-        <p>Father: {{ $analysis['spr']['father'] }}</p>
-        <p>Mother: {{ $analysis['spr']['mother'] }}</p>
+        <p>Father's occupation: {{ $analysis['spr']['father'] }}</p>
+        <p>Mother's occupation: {{ $analysis['spr']['mother'] }}</p>
     @else
         <p>No SPR is linked to this student ID.</p>
     @endif

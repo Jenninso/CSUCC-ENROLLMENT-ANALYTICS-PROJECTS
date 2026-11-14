@@ -18,8 +18,7 @@ class AtRiskController extends Controller
 
         if ($search = trim((string) $request->query('q', ''))) {
             $students = $students->filter(function (array $row) use ($search) {
-                return str_contains(strtolower($row['student_id']), strtolower($search))
-                    || str_contains(strtolower((string) $row['name']), strtolower($search));
+                return str_contains(strtolower($row['student_id']), strtolower($search));
             });
         }
         if ($request->filled('level')) {

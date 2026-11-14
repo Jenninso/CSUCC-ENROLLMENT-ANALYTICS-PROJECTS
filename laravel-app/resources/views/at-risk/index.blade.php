@@ -120,7 +120,7 @@
 
 <div class="ui-panel p-4 mb-4">
     <form method="GET" action="{{ route('at-risk.index') }}" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
-        <input type="text" name="q" value="{{ request('q') }}" placeholder="Student ID or SPR name" class="ui-input lg:col-span-2">
+        <input type="text" name="q" value="{{ request('q') }}" placeholder="Student ID" class="ui-input lg:col-span-2">
         <select name="level" class="ui-input">
             <option value="">All risk levels</option>
             @foreach(\App\Models\StudentRecord::RISK_LEVELS as $value => $label)
@@ -163,8 +163,7 @@
             @forelse($students as $row)
             <tr>
                 <td>
-                    <p class="font-mono text-xs">{{ $row['student_id'] }}</p>
-                    <p class="text-xs text-gray-500 mt-0.5">{{ $row['name'] ?: 'No SPR name on file' }}</p>
+                    <p class="font-mono text-sm font-semibold">{{ $row['student_id'] }}</p>
                 </td>
                 <td>{{ $row['program'] }} · {{ $row['year_label'] }} {{ $row['section'] }}</td>
                 <td class="tabular-nums">{{ number_format($row['gpa'], 2) }}</td>

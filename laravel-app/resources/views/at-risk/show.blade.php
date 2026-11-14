@@ -6,7 +6,7 @@
     <div>
         <a href="{{ route('at-risk.index') }}" class="ui-link text-sm">← Back to at-risk students</a>
         <h3 class="ui-page-title mt-2 font-mono">{{ $student->student_id }}</h3>
-        <p class="ui-page-sub">{{ $analysis['name'] ?: 'No name on the SPR' }} · {{ $analysis['program'] }} · {{ $analysis['year_label'] }} {{ $analysis['section'] }} · {{ $analysis['term'] }}</p>
+        <p class="ui-page-sub">{{ $analysis['program'] }} · {{ $analysis['year_label'] }} {{ $analysis['section'] }} · {{ $analysis['term'] }}</p>
     </div>
     <a href="{{ route('at-risk.print', $student) }}" target="_blank" class="ui-btn-secondary shrink-0">Print report</a>
 </div>

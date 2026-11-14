@@ -31,8 +31,11 @@
 @endif
 
 @if($studentMode)
-<p class="mb-4 max-w-[8.5in] rounded-lg border border-amber-300 bg-amber-50 px-4 py-3 text-sm font-semibold text-amber-950">For more concerns, please visit the Office of OASFA.</p>
-<p class="mb-4 max-w-[8.5in] rounded-lg border border-amber-300 bg-amber-50 px-4 py-3 text-sm font-semibold text-amber-950">Keep your signature inside the box. Do not overlap the frame, or part of your signature will be cut off.</p>
+<ul class="mb-4 max-w-[8.5in] list-none rounded-xl border border-gray-200 bg-white px-4 py-1 text-sm text-gray-700">
+    <li class="flex gap-3 border-b border-gray-100 py-2"><span class="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-emerald-800"></span><span>Double-check every answer. After you save, you cannot edit this form.</span></li>
+    <li class="flex gap-3 border-b border-gray-100 py-2"><span class="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-emerald-800"></span><span>Keep your signature inside the box so it is not cut off.</span></li>
+    <li class="flex gap-3 py-2"><span class="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-emerald-800"></span><span>For more concerns, visit the Office of OASFA.</span></li>
+</ul>
 @endif
 
 @if(session('warning'))

@@ -6,7 +6,7 @@
 <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-6">
     <div>
         <a href="{{ $studentMode ? route('student.spes.index') : route('spes.index') }}" class="ui-link text-sm">← Back to SPR</a>
-        <h3 class="ui-page-title mt-2">{{ $application->fullName() }}</h3>
+        <h3 class="ui-page-title mt-2 font-mono">{{ $application->student_id ?: $application->reference_no }}</h3>
         <p class="ui-page-sub font-mono">{{ $application->reference_no }} · Student Personal Record</p>
     </div>
     <div class="flex flex-wrap gap-2 shrink-0">

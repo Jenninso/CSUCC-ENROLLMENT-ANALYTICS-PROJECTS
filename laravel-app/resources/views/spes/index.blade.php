@@ -42,7 +42,7 @@
 
 <div class="ui-panel p-4 mb-6">
     <form method="GET" action="{{ route('spes.index') }}" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
-        <input type="text" name="q" value="{{ request('q') }}" placeholder="Name, Student ID, or reference" class="ui-input lg:col-span-2">
+        <input type="text" name="q" value="{{ request('q') }}" placeholder="Student ID or reference" class="ui-input lg:col-span-2">
         <select name="status" class="ui-input">
             <option value="">All statuses</option>
             @foreach(\App\Models\SpesApplication::STATUSES as $value => $label)
@@ -67,7 +67,6 @@
         <thead>
             <tr>
                 <th class="text-left">Reference</th>
-                <th class="text-left">Applicant</th>
                 <th class="text-left">Student ID</th>
                 <th class="text-left">Filed</th>
                 <th class="text-left">Documents</th>
@@ -80,10 +79,9 @@
             <tr>
                 <td class="font-mono text-xs">{{ $application->reference_no }}</td>
                 <td>
-                    <a href="{{ route('spes.show', $application) }}" class="ui-link">{{ $application->fullName() }}</a>
+                    <a href="{{ route('spes.show', $application) }}" class="ui-link font-mono">{{ $application->student_id ?: '—' }}</a>
                     <p class="text-xs text-gray-500 mt-0.5">{{ $application->course ?: \App\Models\SpesApplication::EDUCATION_LEVELS[$application->education_level] }} · {{ $application->year_level }}</p>
                 </td>
-                <td class="font-mono text-xs">{{ $application->student_id ?: '—' }}</td>
                 <td>{{ $application->application_date?->format('M j, Y') }}</td>
                 <td>{{ $application->documentsAttached() }}/{{ count(\App\Models\SpesApplication::DOCUMENTS) }}</td>
                 <td><span class="px-2 py-0.5 rounded-full text-xs font-medium {{ $application->statusBadgeClass() }}">{{ $application->statusLabel() }}</span></td>
@@ -150,7 +148,7 @@
             </tr>
             @empty
             <tr>
-                <td colspan="7" class="text-center text-gray-500 py-10">No SPR forms yet.</td>
+                <td colspan="6" class="text-center text-gray-500 py-10">No SPR forms yet.</td>
             </tr>
             @endforelse
         </tbody>

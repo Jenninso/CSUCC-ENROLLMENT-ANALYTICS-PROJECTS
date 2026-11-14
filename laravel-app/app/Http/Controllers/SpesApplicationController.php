@@ -21,9 +21,7 @@ class SpesApplicationController extends Controller
         if ($search = trim((string) $request->query('q', ''))) {
             $query->where(function ($inner) use ($search) {
                 $inner->where('reference_no', 'like', "%{$search}%")
-                    ->orWhere('student_id', 'like', "%{$search}%")
-                    ->orWhere('last_name', 'like', "%{$search}%")
-                    ->orWhere('first_name', 'like', "%{$search}%");
+                    ->orWhere('student_id', 'like', "%{$search}%");
             });
         }
 

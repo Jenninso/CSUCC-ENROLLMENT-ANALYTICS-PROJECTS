@@ -117,7 +117,7 @@ class StudentRiskAnalysis
         return [
             'student_record_id' => $current->id,
             'student_id' => $current->student_id,
-            'name' => $spr?->fullName() ?: null,
+            'name' => null,
             'program' => $current->program?->program_code,
             'program_name' => $current->program?->program_name,
             'program_id' => $current->program_id,
@@ -323,8 +323,8 @@ class StudentRiskAnalysis
             'factors' => $factors,
             'spr' => [
                 'household' => $household,
-                'father' => trim(($spr->father_name ?: 'Not given').' · '.($spr->father_occupation ?: 'occupation not given').' · '.ucfirst((string) ($data['father_status'] ?? 'status not given'))),
-                'mother' => trim(($spr->mother_name ?: 'Not given').' · '.($spr->mother_occupation ?: 'occupation not given').' · '.ucfirst((string) ($data['mother_status'] ?? 'status not given'))),
+                'father' => trim(($spr->father_occupation ?: 'Occupation not given').' · '.ucfirst((string) ($data['father_status'] ?? 'status not given'))),
+                'mother' => trim(($spr->mother_occupation ?: 'Occupation not given').' · '.ucfirst((string) ($data['mother_status'] ?? 'status not given'))),
                 'income' => ($data['estimated_income'] ?? '') !== '' ? (string) $data['estimated_income'] : 'Not given',
                 'annual_income' => number_format((float) $spr->parents_annual_income, 2),
                 'working' => $working ? 'Yes' : 'No',

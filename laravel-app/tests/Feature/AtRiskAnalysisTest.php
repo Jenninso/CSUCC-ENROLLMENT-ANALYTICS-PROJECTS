@@ -45,6 +45,10 @@ class AtRiskAnalysisTest extends TestCase
         $this->assertContains('grandparent', $analysis['factor_keys']);
         $this->assertContains('working_student', $analysis['factor_keys']);
         $this->assertStringContainsString('were not used to raise this classification', $analysis['narrative']);
+        $this->assertNull($analysis['name']);
+        $this->assertStringNotContainsString('Pedro', $analysis['spr']['father']);
+        $this->assertStringNotContainsString('Ana', $analysis['spr']['mother']);
+        $this->assertStringContainsString('Farmer', $analysis['spr']['father']);
     }
 
     public function test_a_sharp_grade_decline_raises_the_academic_level_by_one_step(): void

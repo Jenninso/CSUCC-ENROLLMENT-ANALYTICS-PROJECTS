@@ -3,7 +3,7 @@
 
 @section('content')
 <div class="max-w-4xl">
-    <h3 class="ui-page-title">Hello, {{ auth()->user()->first_name }}</h3>
+    <h3 class="ui-page-title">Student portal</h3>
     <p class="ui-page-sub">Student ID <span class="font-mono font-semibold">{{ $studentId }}</span>
         @if($record)
             · {{ $record->program?->program_name ?? 'Program on file' }}, year {{ $record->year_level }}

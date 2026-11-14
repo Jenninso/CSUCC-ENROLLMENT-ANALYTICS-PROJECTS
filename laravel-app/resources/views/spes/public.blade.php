@@ -7,29 +7,33 @@
 
 @section('content')
 <div class="bar">
-    <h1 style="font-size: 1.25rem; margin: 0;">Student Personal Record</h1>
-    <p style="margin: 6px 0 0; color: #444; font-size: 0.9rem;">This link opens only the form. Fill the blank lines. The office section stays blank.</p>
-    @unless($locked)
-        <p style="margin-top: 12px; background: #fffbeb; border: 1px solid #f59e0b; color: #78350f; border-radius: 8px; padding: 12px 14px; font-size: 0.95rem; font-weight: 600;">Double-check every answer before you save. After you click Save SPR, you cannot edit this form.</p>
-        <p style="margin-top: 12px; background: #fffbeb; border: 1px solid #f59e0b; color: #78350f; border-radius: 8px; padding: 12px 14px; font-size: 0.95rem; font-weight: 600;">For more concerns, please visit the Office of OASFA.</p>
-        <p style="margin-top: 12px; background: #fffbeb; border: 1px solid #f59e0b; color: #78350f; border-radius: 8px; padding: 12px 14px; font-size: 0.95rem; font-weight: 600;">Keep your signature inside the box. Do not overlap the frame, or part of your signature will be cut off.</p>
-    @endunless
+    <div class="spr-top">
+        <h1>Student Personal Record</h1>
+        <p class="lead">Fill the blank lines. The office section stays blank.</p>
+        @unless($locked)
+            <ul class="spr-notes">
+                <li>Double-check every answer. After you click Save SPR, you cannot edit this form.</li>
+                <li>Keep your signature inside the box so it is not cut off.</li>
+                <li>For more concerns, visit the Office of OASFA.</li>
+            </ul>
+        @endunless
+    </div>
     @if(session('success'))
-        <p style="margin-top: 12px; background: #ecfdf5; border: 1px solid #6ee7b7; color: #064e3b; border-radius: 8px; padding: 10px 12px; font-size: 0.9rem;">{{ session('success') }} @if($application) Reference <strong>{{ $application->reference_no }}</strong>.@endif</p>
+        <p class="spr-flash ok">{{ session('success') }} @if($application) Reference <strong>{{ $application->reference_no }}</strong>.@endif</p>
     @endif
     @if(session('warning'))
-        <p style="margin-top: 12px; background: #fffbeb; border: 1px solid #f59e0b; color: #78350f; border-radius: 8px; padding: 12px 14px; font-size: 0.95rem; font-weight: 600;">{{ session('warning') }}</p>
+        <p class="spr-flash warn">{{ session('warning') }}</p>
     @endif
     @if(session('error'))
-        <p style="margin-top: 12px; background: #fef2f2; border: 1px solid #fecaca; color: #991b1b; border-radius: 8px; padding: 10px 12px; font-size: 0.9rem;">{{ session('error') }}</p>
+        <p class="spr-flash bad">{{ session('error') }}</p>
     @endif
     @if($errors->has('spr_duplicate'))
-        <p style="margin-top: 12px; background: #fffbeb; border: 1px solid #f59e0b; color: #78350f; border-radius: 8px; padding: 12px 14px; font-size: 0.95rem; font-weight: 600;">{{ $errors->first('spr_duplicate') }}</p>
+        <p class="spr-flash warn">{{ $errors->first('spr_duplicate') }}</p>
     @endif
     @if($errors->any())
         @php($fieldErrors = collect($errors->getMessages())->except('spr_duplicate')->flatten())
         @if($fieldErrors->isNotEmpty())
-        <div style="margin-top: 12px; background: #fef2f2; border: 1px solid #fecaca; color: #991b1b; border-radius: 8px; padding: 10px 12px; font-size: 0.9rem;">
+        <div class="spr-flash bad">
             <ul style="margin: 0; padding-left: 1.1rem;">
                 @foreach($fieldErrors as $error)<li>{{ $error }}</li>@endforeach
             </ul>

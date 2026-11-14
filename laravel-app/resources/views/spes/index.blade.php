@@ -12,7 +12,7 @@
 <div class="ui-panel p-4 mb-4 flex flex-col lg:flex-row lg:items-center gap-4">
     <div class="grow min-w-0">
         <p class="text-sm font-semibold text-gray-900">Share link for students</p>
-        <p class="text-xs text-gray-500 mt-1">Students do not sign in. They only see the SPR form, fill it, and save it. Print the QR code and post it where students can scan it.</p>
+        <p class="text-xs text-gray-500 mt-1">Students do not sign in. They only see the SPR form, fill it, and save it. Print the QR code and post it where students can scan it. This QR code is for the College of CEIT only.</p>
         <input type="text" readonly value="{{ $shareUrl }}" class="ui-input mt-3" onclick="this.select()">
     </div>
     <div class="flex items-center gap-3 shrink-0">

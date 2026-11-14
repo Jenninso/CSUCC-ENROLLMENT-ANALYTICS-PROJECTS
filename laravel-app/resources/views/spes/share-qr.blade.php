@@ -17,7 +17,8 @@
             text-align: center;
         }
         h1 { font-size: 22px; margin: 0 0 6px; }
-        h2 { font-size: 16px; font-weight: 600; margin: 0 0 18px; }
+        h2 { font-size: 16px; font-weight: 600; margin: 0 0 8px; }
+        .audience { margin: 0 0 18px; font-size: 15px; font-weight: 700; }
         .qr { width: 2.8in; height: 2.8in; }
         .url { margin-top: 14px; font-size: 13px; word-break: break-all; }
         .note { margin-top: 16px; font-size: 14px; line-height: 1.4; }
@@ -37,6 +38,7 @@
     <section class="sheet">
         <h1>Caraga State University Cabadbaran City</h1>
         <h2>Student Personal Record (SPR)</h2>
+        <p class="audience">This QR code is for the College of CEIT only.</p>
         <img src="{{ $shareQr }}" alt="QR code for the student SPR form" class="qr" width="280" height="280">
         <p class="url">{{ $shareUrl }}</p>
         <p class="note">Scan this code to open the blank SPR form. Students do not sign in. They fill the form and save it.</p>

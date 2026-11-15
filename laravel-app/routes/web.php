@@ -112,6 +112,9 @@ Route::middleware(['auth', 'active', 'setup', 'student.scope'])->group(function 
         Route::put('at-risk/interventions/{intervention}', [AtRiskController::class, 'updateIntervention'])->name('at-risk.interventions.update');
     });
     Route::middleware('permission:at_risk.view')->group(function () {
+        Route::get('at-risk/attrition/{studentId}', [AtRiskController::class, 'attritionStudent'])->name('at-risk.attrition.student');
+        Route::get('at-risk/attrition', [AtRiskController::class, 'attritionPage'])->name('at-risk.attrition.show');
+        Route::post('at-risk/attrition', [AtRiskController::class, 'attrition'])->name('at-risk.attrition');
         Route::get('at-risk', [AtRiskController::class, 'index'])->name('at-risk.index');
         Route::get('at-risk/{student}/print', [AtRiskController::class, 'print'])->name('at-risk.print');
         Route::get('at-risk/{student}', [AtRiskController::class, 'show'])->name('at-risk.show');

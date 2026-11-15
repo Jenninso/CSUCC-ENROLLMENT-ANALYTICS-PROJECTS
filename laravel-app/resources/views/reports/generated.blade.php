@@ -27,7 +27,7 @@
         @endforeach
     </ul>
     <h2 class="font-semibold mt-4">Methodology</h2>
-    <p class="text-sm">Descriptive totals are sums of aggregated enrollment records. Growth uses (current − previous) / previous × 100. Forecasts compare naive, moving-average, linear, and exponential-smoothing models and keep the lowest MAE. AI text is generated from these metrics and is advisory only.</p>
+    <p class="text-sm">Descriptive totals are sums of aggregated enrollment records. Growth uses (current − previous) / previous × 100. Forecasts use Random Forest as the main model, trained on statistical samples that extend the real enrollment history by the typical year-to-year change. AI text is generated from these metrics and is advisory only.</p>
     <h2 class="font-semibold mt-4">Data quality</h2>
     <p class="text-sm">Score {{ $quality['score'] }}% with {{ $quality['issue_count'] }} flagged issues across {{ $quality['total_records'] }} records.</p>
 </div>

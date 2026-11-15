@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\StudentIntervention;
 use App\Models\StudentRecord;
 use App\Services\AuditLogger;
+use App\Services\StudentAttritionService;
 use App\Services\StudentRiskAnalysis;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -13,33 +14,48 @@ class AtRiskController extends Controller
 {
     public function index(Request $request, StudentRiskAnalysis $analysis)
     {
-        $cohort = $analysis->cohort();
-        $students = collect($cohort['students']);
-
-        if ($search = trim((string) $request->query('q', ''))) {
-            $students = $students->filter(function (array $row) use ($search) {
-                return str_contains(strtolower($row['student_id']), strtolower($search));
-            });
-        }
-        if ($request->filled('level')) {
-            $students = $students->where('level', $request->query('level'));
-        }
-        if ($request->filled('year_level')) {
-            $students = $students->where('year_level', $request->integer('year_level'));
-        }
-        if ($request->filled('program_id')) {
-            $students = $students->where('program_id', $request->integer('program_id'));
-        }
-
-        $programs = $students->isEmpty()
-            ? collect($cohort['students'])->pluck('program', 'program_id')->filter()
-            : collect($cohort['students'])->pluck('program', 'program_id')->filter();
+        $listing = $analysis->browse($request);
 
         return view('at-risk.index', [
-            'summary' => $cohort['summary'],
-            'students' => $students->values(),
-            'programs' => $programs,
+            'summary' => $listing['summary'],
+            'students' => $listing['students'],
+            'programs' => $listing['programs'],
         ]);
+    }
+
+    public function attritionPage()
+    {
+        return view('at-risk.attrition', [
+            'attrition' => session('attrition'),
+        ]);
+    }
+
+    public function attritionStudent(string $studentId)
+    {
+        $result = session('attrition');
+        $row = collect($result['students'] ?? [])->firstWhere('student_id', $studentId);
+        if (! is_array($row)) {
+            return redirect()
+                ->route('at-risk.attrition.show')
+                ->with('error', 'That student is not in the latest attrition list. Run the student model again.');
+        }
+
+        $record = StudentRecord::query()
+            ->where('student_id', $studentId)
+            ->latest('id')
+            ->first();
+
+        return view('at-risk.attrition-student', [
+            'row' => $row,
+            'record' => $record,
+        ]);
+    }
+
+    public function attrition(StudentAttritionService $attrition)
+    {
+        session(['attrition' => $attrition->predict()]);
+
+        return redirect()->route('at-risk.attrition.show');
     }
 
     public function show(StudentRecord $student, StudentRiskAnalysis $analysis)

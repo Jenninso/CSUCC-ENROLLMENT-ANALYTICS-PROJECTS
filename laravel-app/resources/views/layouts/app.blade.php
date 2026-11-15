@@ -533,25 +533,20 @@
 <body class="app-shell min-h-screen">
 
     {{-- Flash Messages --}}
-    @if(session('success'))
-    <div x-data="{ show: true }" x-show="show" x-init="setTimeout(() => show = false, 4000)"
-         class="fixed top-4 right-4 z-50 bg-emerald-500 text-white px-6 py-3 rounded-lg shadow-lg flex items-center gap-2">
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
-        {{ session('success') }}
-    </div>
-    @endif
-    @if(session('error'))
-    <div x-data="{ show: true }" x-show="show" x-init="setTimeout(() => show = false, 4000)"
-         class="fixed top-4 right-4 z-50 bg-red-500 text-white px-6 py-3 rounded-lg shadow-lg flex items-center gap-2">
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
-        {{ session('error') }}
-    </div>
-    @endif
-    @if(session('warning'))
-    <div x-data="{ show: true }" x-show="show"
-         class="fixed top-4 right-4 z-50 max-w-sm bg-amber-500 text-white px-6 py-3 rounded-lg shadow-lg flex items-start gap-2 {{ session('success') || session('error') ? 'mt-16' : '' }}">
-        <svg class="w-5 h-5 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/></svg>
-        <span>{{ session('warning') }}</span>
+    @php
+        $flashKind = session('error') ? 'error' : (session('warning') ? 'warning' : (session('success') ? 'success' : null));
+        $flashText = $flashKind ? session($flashKind) : null;
+    @endphp
+    @if($flashText)
+    <div x-data="{ show: true }" x-show="show" x-cloak @keydown.escape.window="show = false"
+         class="fixed inset-0 z-[80] flex items-center justify-center p-4">
+        <div class="absolute inset-0 bg-black/45" @click="show = false"></div>
+        <div role="dialog" aria-modal="true" class="relative w-full max-w-md ui-panel p-5 shadow-2xl">
+            <p class="text-sm leading-relaxed {{ $flashKind === 'error' ? 'text-red-700' : ($flashKind === 'warning' ? 'text-amber-800' : 'text-emerald-800') }}">{{ $flashText }}</p>
+            <div class="mt-4 flex justify-end">
+                <button type="button" class="ui-btn-primary" @click="show = false">Close</button>
+            </div>
+        </div>
     </div>
     @endif
 

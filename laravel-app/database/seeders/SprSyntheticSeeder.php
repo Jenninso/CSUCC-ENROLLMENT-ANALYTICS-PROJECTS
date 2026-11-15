@@ -7,6 +7,7 @@ use App\Models\StudentRecord;
 use App\Models\User;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
 class SprSyntheticSeeder extends Seeder
@@ -27,20 +28,39 @@ class SprSyntheticSeeder extends Seeder
         $this->deleteUnmatchedDummyForms();
 
         $encoderId = User::query()->orderBy('id')->value('id');
+        $existing = SpesApplication::query()->whereNotNull('student_id')->pluck('student_id')->flip();
         $created = 0;
+        $pending = [];
+        $now = now();
 
         foreach ($students as $student) {
-            if (SpesApplication::query()->where('student_id', $student->student_id)->exists()) {
+            if ($existing->has($student->student_id)) {
                 continue;
             }
 
             $row = $this->application($student, $encoderId);
-            $application = SpesApplication::query()->create($row);
-            $application->update([
-                'reference_no' => SpesApplication::referenceFor($application->id, (int) $application->application_year),
-            ]);
+            $row['spr_data'] = json_encode($row['spr_data']);
+            $row['created_at'] = $now;
+            $row['updated_at'] = $now;
+            $pending[] = $row;
             $created++;
+
+            if (count($pending) >= 400) {
+                DB::table('spes_applications')->insert($pending);
+                $pending = [];
+            }
         }
+
+        if ($pending !== []) {
+            DB::table('spes_applications')->insert($pending);
+        }
+
+        DB::statement("
+            UPDATE spes_applications
+            SET reference_no = 'SPR-' || application_year || '-' ||
+                CASE WHEN id < 1000 THEN LPAD(id::text, 4, '0') ELSE id::text END
+            WHERE reference_no LIKE 'SPR-PENDING-%'
+        ");
 
         if ($this->command) {
             $this->command->info("Synthetic SPR records created: {$created}.");

@@ -20,6 +20,7 @@ class ForecastController extends Controller
             'programs' => Program::orderBy('program_name')->get(),
             'colleges' => College::orderBy('college_name')->get(),
             'trends' => $analytics->enrollmentTrends(),
+            'filters' => ['program_id' => '', 'college_id' => '', 'horizon' => 1],
         ]);
     }
 
@@ -45,6 +46,11 @@ class ForecastController extends Controller
             'programs' => Program::orderBy('program_name')->get(),
             'colleges' => College::orderBy('college_name')->get(),
             'trends' => collect(),
+            'filters' => [
+                'program_id' => $validated['program_id'] ?? '',
+                'college_id' => $validated['college_id'] ?? '',
+                'horizon' => (int) $validated['horizon'],
+            ],
         ]);
     }
 }

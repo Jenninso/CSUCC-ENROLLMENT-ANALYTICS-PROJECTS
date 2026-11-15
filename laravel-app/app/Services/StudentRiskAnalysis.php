@@ -7,7 +7,11 @@ use App\Models\EnrollmentRecord;
 use App\Models\SpesApplication;
 use App\Models\StudentIntervention;
 use App\Models\StudentRecord;
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Http\Request;
+use Illuminate\Pagination\LengthAwarePaginator as Paginator;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
 
 class StudentRiskAnalysis
 {
@@ -53,6 +57,112 @@ class StudentRiskAnalysis
         return [
             'students' => $students,
             'summary' => $this->summarize($students),
+        ];
+    }
+
+    /**
+     * Summary plus one page of students. Avoids building a full report and a huge HTML table for every record.
+     *
+     * @return array{students: LengthAwarePaginator, summary: array<string, mixed>, programs: Collection<int|string, string>}
+     */
+    public function browse(Request $request): array
+    {
+        $records = DB::table('student_records as students')
+            ->join('programs', 'programs.id', '=', 'students.program_id')
+            ->orderByDesc('students.id')
+            ->get([
+                'students.id',
+                'students.student_id',
+                'students.program_id',
+                'students.year_level',
+                'students.section',
+                'students.gpa',
+                'students.attendance_percent',
+                'students.failed_subjects',
+                'students.enrolled_status',
+                'students.student_type',
+                'programs.program_code',
+            ]);
+
+        $latest = [];
+        foreach ($records as $record) {
+            $key = strtoupper((string) $record->student_id);
+            if (! isset($latest[$key])) {
+                $latest[$key] = $this->lightRow($record);
+            }
+        }
+
+        $students = array_values($latest);
+        usort($students, function (array $a, array $b): int {
+            $rank = $this->rank($b['level']) <=> $this->rank($a['level']);
+
+            return $rank !== 0 ? $rank : strcmp($a['student_id'], $b['student_id']);
+        });
+
+        $programs = collect($students)->pluck('program', 'program_id')->filter();
+        $filtered = array_values(array_filter($students, function (array $row) use ($request): bool {
+            $search = trim((string) $request->query('q', ''));
+            if ($search !== '' && ! str_contains(strtolower($row['student_id']), strtolower($search))) {
+                return false;
+            }
+            if ($request->filled('level') && $row['level'] !== $request->query('level')) {
+                return false;
+            }
+            if ($request->filled('year_level') && $row['year_level'] !== $request->integer('year_level')) {
+                return false;
+            }
+            if ($request->filled('program_id') && $row['program_id'] !== $request->integer('program_id')) {
+                return false;
+            }
+
+            return true;
+        }));
+
+        $perPage = 25;
+        $page = max(1, $request->integer('page', 1));
+        $pageItems = array_slice($filtered, ($page - 1) * $perPage, $perPage);
+
+        return [
+            'students' => new Paginator($pageItems, count($filtered), $perPage, $page, [
+                'path' => $request->url(),
+                'query' => $request->query(),
+            ]),
+            'summary' => $this->summarize($students),
+            'programs' => $programs,
+        ];
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function lightRow(object $record): array
+    {
+        $level = StudentRecord::assessRisk([
+            'gpa' => $record->gpa,
+            'attendance_percent' => $record->attendance_percent,
+            'failed_subjects' => $record->failed_subjects,
+            'enrolled_status' => $record->enrolled_status,
+            'student_type' => $record->student_type,
+        ]);
+
+        return [
+            'student_record_id' => (int) $record->id,
+            'student_id' => (string) $record->student_id,
+            'program' => (string) $record->program_code,
+            'program_id' => (int) $record->program_id,
+            'year_level' => (int) $record->year_level,
+            'year_label' => EnrollmentRecord::yearLevelLabel((int) $record->year_level),
+            'section' => (string) $record->section,
+            'gpa' => (float) $record->gpa,
+            'attendance' => (float) $record->attendance_percent,
+            'failed_subjects' => (int) $record->failed_subjects,
+            'level' => $level,
+            'level_label' => StudentRecord::RISK_LEVELS[$level] ?? ucfirst($level),
+            'enrolled' => StudentRecord::ENROLLED_STATUSES[$record->enrolled_status] ?? ucfirst((string) $record->enrolled_status),
+            'declining_grades' => false,
+            'frequent_absences' => (float) $record->attendance_percent < 85,
+            'improved' => false,
+            'factor_keys' => [],
         ];
     }
 
@@ -165,36 +275,122 @@ class StudentRiskAnalysis
 
     public function raiseWarnings(): int
     {
-        $created = 0;
-        foreach ($this->cohort()['students'] as $student) {
-            if ($student['warnings'] === []) {
-                continue;
-            }
+        $latestIds = DB::table('student_records')
+            ->selectRaw('MAX(id) as id')
+            ->groupByRaw('UPPER(student_id)');
 
-            $title = 'At-risk warning: '.$student['student_id'];
-            $recent = Alert::query()
-                ->where('title', $title)
-                ->where('created_at', '>=', now()->subDays(14))
-                ->exists();
-            if ($recent) {
-                continue;
-            }
-
-            Alert::query()->create([
-                'title' => $title,
-                'program_id' => $student['program_id'],
-                'metric' => 'student_risk',
-                'current_value' => $student['gpa'],
-                'expected_value' => 2.75,
-                'severity' => in_array($student['level'], ['critical', 'high'], true) ? $student['level'] : 'medium',
-                'explanation' => $student['student_id'].' crossed a warning threshold. '.implode(' ', $student['warnings']),
-                'recommended_action' => $student['recommendations'][0]['title'] ?? 'Review the student at-risk report and record a follow-up.',
-                'is_read' => false,
+        $rows = DB::table('student_records')
+            ->joinSub($latestIds, 'latest', 'latest.id', '=', 'student_records.id')
+            ->where(function ($query): void {
+                $query->where('gpa', '>=', 2.75)
+                    ->orWhere('attendance_percent', '<', 75)
+                    ->orWhere('failed_subjects', '>=', 2)
+                    ->orWhereIn('enrolled_status', ['dropped', 'withdrawn'])
+                    ->orWhere('student_type', 'withdraw_stop');
+            })
+            ->get([
+                'student_records.student_id',
+                'student_records.program_id',
+                'student_records.gpa',
+                'student_records.attendance_percent',
+                'student_records.failed_subjects',
+                'student_records.enrolled_status',
+                'student_records.student_type',
             ]);
+
+        $recent = array_fill_keys(
+            Alert::query()
+                ->where('metric', 'student_risk')
+                ->where('created_at', '>=', now()->subDays(14))
+                ->pluck('title')
+                ->all(),
+            true
+        );
+
+        $now = now();
+        $batch = [];
+        $created = 0;
+        foreach ($rows as $row) {
+            $title = 'At-risk warning: '.$row->student_id;
+            if (isset($recent[$title])) {
+                continue;
+            }
+
+            $level = StudentRecord::assessRisk([
+                'gpa' => $row->gpa,
+                'attendance_percent' => $row->attendance_percent,
+                'failed_subjects' => $row->failed_subjects,
+                'enrolled_status' => $row->enrolled_status,
+                'student_type' => $row->student_type,
+            ]);
+            $batch[] = [
+                'title' => $title,
+                'program_id' => $row->program_id,
+                'metric' => 'student_risk',
+                'current_value' => $row->gpa,
+                'expected_value' => 2.75,
+                'severity' => in_array($level, ['critical', 'high'], true) ? $level : 'medium',
+                'explanation' => $row->student_id.' crossed a warning threshold. '.implode(' ', $this->warningLines($row)),
+                'recommended_action' => $this->warningAction(
+                    (float) $row->gpa,
+                    (float) $row->attendance_percent,
+                    (int) $row->failed_subjects,
+                    $level
+                ),
+                'is_read' => false,
+                'created_at' => $now,
+                'updated_at' => $now,
+            ];
             $created++;
+            if (count($batch) === 400) {
+                Alert::query()->insert($batch);
+                $batch = [];
+            }
+        }
+
+        if ($batch !== []) {
+            Alert::query()->insert($batch);
         }
 
         return $created;
+    }
+
+    /**
+     * @return list<string>
+     */
+    private function warningLines(object $row): array
+    {
+        $items = [];
+        if ((float) $row->gpa >= 2.75) {
+            $items[] = 'GPA '.$this->num($row->gpa).' reached the 2.75 warning threshold.';
+        }
+        if ((float) $row->attendance_percent < 75) {
+            $items[] = 'Attendance '.$this->num($row->attendance_percent).'% is below the 75% warning threshold.';
+        }
+        if ((int) $row->failed_subjects >= 2) {
+            $items[] = (int) $row->failed_subjects.' failed subjects reached the warning threshold of 2.';
+        }
+        if (in_array($row->enrolled_status, ['dropped', 'withdrawn'], true) || $row->student_type === 'withdraw_stop') {
+            $label = StudentRecord::ENROLLED_STATUSES[$row->enrolled_status] ?? ucfirst((string) $row->enrolled_status);
+            $items[] = 'The student is '.$label.'.';
+        }
+
+        return $items;
+    }
+
+    private function warningAction(float $gpa, float $attendance, int $failed, string $level): string
+    {
+        if ($gpa >= 2.25 || $failed > 0) {
+            return 'Academic tutoring and remedial classes';
+        }
+        if ($attendance < 85) {
+            return 'Attendance monitoring and follow-up';
+        }
+        if (in_array($level, ['high', 'critical'], true)) {
+            return 'Guidance counseling and student consultation';
+        }
+
+        return 'Review the student at-risk report and record a follow-up.';
     }
 
     /**

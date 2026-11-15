@@ -2,17 +2,19 @@
 
 namespace App\Services;
 
-use App\Models\AcademicYear;
 use App\Models\College;
 use App\Models\Forecast;
 use App\Models\Program;
 
 class ForecastService
 {
-    public function __construct(private AnalyticsService $analytics) {}
+    public function __construct(
+        private AnalyticsService $analytics,
+        private StatisticalTrainingData $training,
+    ) {}
 
     /**
-     * Compare baseline and statistical models, persist the best overall forecast.
+     * Train Random Forest on statistical samples drawn from the observed series and persist the forecast.
      */
     public function generate(?int $programId = null, ?int $collegeId = null, int $horizon = 1): array
     {
@@ -29,28 +31,21 @@ class ForecastService
             ];
         }
 
-        $models = $this->compareModels($values);
-        usort($models, fn ($a, $b) => $a['mae'] <=> $b['mae']);
-        $best = $models[0];
-
+        $result = $this->forecastValues($values, $horizon);
         $forecasts = [];
         $lastLabel = (string) end($labels);
         $next = $this->nextPeriodLabel($lastLabel);
+        $std = max($result['band'], 1);
 
-        $level = $best['point'];
-        $std = max($best['residual_std'], 1);
-        for ($i = 0; $i < $horizon; $i++) {
+        foreach ($result['points'] as $index => $level) {
             $predicted = (int) max(round($level), 0);
-            $lower = (int) max(round($predicted - 1.96 * $std), 0);
-            $upper = (int) round($predicted + 1.96 * $std);
-            $period = $i === 0 ? $next : $this->nextPeriodLabel($period ?? $next);
+            $period = $index === 0 ? $next : $this->nextPeriodLabel($period ?? $next);
             $forecasts[] = [
                 'period' => $period,
                 'predicted' => $predicted,
-                'lower' => $lower,
-                'upper' => $upper,
+                'lower' => (int) max(round($predicted - 1.96 * $std), 0),
+                'upper' => (int) round($predicted + 1.96 * $std),
             ];
-            $level = $predicted;
         }
 
         $saved = Forecast::create([
@@ -60,134 +55,118 @@ class ForecastService
             'predicted_enrollment' => $forecasts[0]['predicted'],
             'lower_bound' => $forecasts[0]['lower'],
             'upper_bound' => $forecasts[0]['upper'],
-            'model_used' => $best['name'],
-            'accuracy_metric' => $best['mae'],
+            'model_used' => 'Random Forest',
+            'accuracy_metric' => $result['best']['mae'],
         ]);
 
         return [
             'ok' => true,
             'series' => $series,
-            'models' => $models,
-            'best' => $best,
+            'models' => $result['models'],
+            'best' => $result['best'],
+            'training' => $result['training'],
             'forecasts' => $forecasts,
             'saved' => $saved,
             'scope' => $this->scopeLabel($programId, $collegeId),
         ];
     }
 
-    public function compareModels(array $values): array
+    /**
+     * @param  list<int|float>  $values
+     * @return array{
+     *     models: list<array{name: string, point: float, mae: float, rmse: float, mape: float, residual_std: float}>,
+     *     best: array{name: string, point: float, mae: float, rmse: float, mape: float, residual_std: float},
+     *     points: list<float>,
+     *     training: array<string, int|float>,
+     *     band: float
+     * }
+     */
+    public function forecastValues(array $values, int $horizon = 1): array
     {
-        $n = count($values);
-        $holdout = $n >= 4 ? 1 : 0;
-        $train = $holdout ? array_slice($values, 0, -$holdout) : $values;
-        $test = $holdout ? array_slice($values, -$holdout) : [];
+        $holdout = count($values) >= 3;
+        $evaluationValues = $holdout ? array_slice($values, 0, -1) : $values;
+        $evaluation = $this->fit($evaluationValues, 20261115);
+        $evaluationPoint = $this->project($evaluation['forest'], $evaluationValues, 1)[0];
 
-        $candidates = [
-            $this->evaluate('Naive', $train, $test, $values, fn ($hist) => $this->naive($hist)),
-            $this->evaluate('Moving Average (3)', $train, $test, $values, fn ($hist) => $this->movingAverage($hist, 3)),
-            $this->evaluate('Linear Regression', $train, $test, $values, fn ($hist) => $this->linear($hist)),
-            $this->evaluate('Exponential Smoothing', $train, $test, $values, fn ($hist) => $this->exponentialSmoothing($hist, 0.4)),
-        ];
-
-        return $candidates;
-    }
-
-    private function evaluate(string $name, array $train, array $test, array $full, callable $fn): array
-    {
-        $point = $fn($full);
-        $residualStd = $this->residualStd($full, $fn);
-
-        $mae = $rmse = $mape = 0.0;
-        if ($test) {
-            $pred = $fn($train);
-            $actual = $test[0];
-            $err = abs($pred - $actual);
-            $mae = round($err, 2);
-            $rmse = round($err, 2);
-            $mape = $actual != 0 ? round(($err / abs($actual)) * 100, 2) : 0;
+        if ($holdout) {
+            $actual = (float) $values[array_key_last($values)];
+            $error = abs($evaluationPoint - $actual);
+            $mae = round($error, 2);
+            $rmse = $mae;
+            $mape = $actual != 0.0 ? round(($error / abs($actual)) * 100, 2) : 0.0;
         } else {
-            $errors = [];
-            for ($i = 1; $i < count($full); $i++) {
-                $pred = $fn(array_slice($full, 0, $i));
-                $errors[] = abs($pred - $full[$i]);
-            }
-            $mae = $errors ? round(array_sum($errors) / count($errors), 2) : 0;
-            $rmse = $errors ? round(sqrt(array_sum(array_map(fn ($e) => $e ** 2, $errors)) / count($errors)), 2) : 0;
-            $mape = 0;
+            $mae = 0.0;
+            $rmse = 0.0;
+            $mape = 0.0;
+            $error = 0.0;
         }
 
-        return [
-            'name' => $name,
-            'point' => $point,
+        $fitted = $this->fit($values, 20261116);
+        $points = $this->project($fitted['forest'], $values, $horizon);
+        $observedResidual = (float) $fitted['training']['observed_residual'];
+        $last = (float) $values[array_key_last($values)];
+        $band = max($observedResidual, $error, $last * 0.02, 1);
+
+        $model = [
+            'name' => 'Random Forest',
+            'point' => $points[0],
             'mae' => $mae,
             'rmse' => $rmse,
             'mape' => $mape,
-            'residual_std' => $residualStd,
+            'residual_std' => round($band, 2),
+        ];
+
+        return [
+            'models' => [$model],
+            'best' => $model,
+            'points' => $points,
+            'training' => [
+                'rows' => $fitted['training']['rows'],
+                'series' => $fitted['training']['series'],
+                'real_rows' => $fitted['training']['real_rows'],
+                'real_periods' => $fitted['training']['real_periods'],
+                'goal' => $fitted['training']['goal'],
+                'observed_residual' => $observedResidual,
+            ],
+            'band' => $band,
         ];
     }
 
-    private function naive(array $hist): float
+    /**
+     * @param  list<int|float>  $values
+     * @return array{forest: RandomForestRegressor, training: array<string, int|float|list<mixed>>}
+     */
+    private function fit(array $values, int $seed): array
     {
-        return (float) ($hist[array_key_last($hist)] ?? 0);
+        $data = $this->training->build($values, $seed);
+        $forest = new RandomForestRegressor(seed: $seed);
+        $forest->fit($data['samples'], $data['targets']);
+
+        return ['forest' => $forest, 'training' => $data];
     }
 
-    private function movingAverage(array $hist, int $window): float
+    /**
+     * @param  list<int|float>  $history
+     * @return list<float>
+     */
+    private function project(RandomForestRegressor $forest, array $history, int $horizon): array
     {
-        $slice = array_slice($hist, -$window);
+        $extended = array_map('floatval', $history);
+        $points = [];
 
-        return $slice ? array_sum($slice) / count($slice) : 0.0;
-    }
-
-    private function linear(array $hist): float
-    {
-        $n = count($hist);
-        if ($n < 2) {
-            return $this->naive($hist);
-        }
-        $sumX = $sumY = $sumXY = $sumX2 = 0.0;
-        foreach ($hist as $i => $y) {
-            $sumX += $i;
-            $sumY += $y;
-            $sumXY += $i * $y;
-            $sumX2 += $i * $i;
-        }
-        $den = ($n * $sumX2) - ($sumX ** 2);
-        $slope = $den != 0 ? (($n * $sumXY) - ($sumX * $sumY)) / $den : 0;
-        $intercept = ($sumY - $slope * $sumX) / $n;
-
-        return $intercept + $slope * $n;
-    }
-
-    private function exponentialSmoothing(array $hist, float $alpha): float
-    {
-        $s = (float) $hist[0];
-        foreach ($hist as $y) {
-            $s = $alpha * $y + (1 - $alpha) * $s;
+        for ($step = 0; $step < $horizon; $step++) {
+            $predicted = max(0.0, $forest->predict($this->training->nextFeatures($extended)));
+            $extended[] = $predicted;
+            $points[] = $predicted;
         }
 
-        return $s;
-    }
-
-    private function residualStd(array $hist, callable $fn): float
-    {
-        if (count($hist) < 3) {
-            return 0.0;
-        }
-        $residuals = [];
-        for ($i = 2; $i < count($hist); $i++) {
-            $pred = $fn(array_slice($hist, 0, $i));
-            $residuals[] = $hist[$i] - $pred;
-        }
-        $mean = array_sum($residuals) / count($residuals);
-        $var = array_sum(array_map(fn ($r) => ($r - $mean) ** 2, $residuals)) / count($residuals);
-
-        return sqrt($var);
+        return $points;
     }
 
     private function nextPeriodLabel(string $label): string
     {
-        if (preg_match('/(\d{4})\s*-\s*(\d{4})/', $label, $m)) {
-            return ((int) $m[1] + 1).'-'.((int) $m[2] + 1);
+        if (preg_match('/(\d{4})\s*-\s*(\d{4})/', $label, $matches)) {
+            return ((int) $matches[1] + 1).'-'.((int) $matches[2] + 1);
         }
 
         return 'Next period';

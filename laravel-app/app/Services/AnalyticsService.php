@@ -188,6 +188,7 @@ class AnalyticsService
             'newVsReturning' => $newVsReturning,
             'trends' => $this->enrollmentTrends(),
             'heatmap' => $this->programYearHeatmap(),
+            'subjectDifficulty' => $this->subjectDifficultyHeatmap(),
             'programShare' => $programRows->map(fn ($p) => [
                 'label' => $p['program_code'],
                 'value' => $p['current'],
@@ -338,6 +339,47 @@ class AnalyticsService
         return [
             'years' => $years->pluck('academic_year')->all(),
             'rows' => $matrix,
+        ];
+    }
+
+    /**
+     * Average failed subjects by course and year level. Higher means the group is struggling with more subjects.
+     *
+     * @return array{levels: list<int>, max: float, rows: list<array{program: string, cells: array<int, array{failed: float, students: int}>}>}
+     */
+    public function subjectDifficultyHeatmap(): array
+    {
+        $levels = [1, 2, 3, 4];
+        $grouped = DB::table('student_records as students')
+            ->join('programs', 'programs.id', '=', 'students.program_id')
+            ->groupBy('programs.program_code', 'students.year_level')
+            ->orderBy('programs.program_code')
+            ->orderBy('students.year_level')
+            ->get([
+                'programs.program_code',
+                'students.year_level',
+                DB::raw('AVG(students.failed_subjects) as failed_avg'),
+                DB::raw('COUNT(*) as students'),
+            ]);
+
+        $rows = [];
+        $max = 0.0;
+        foreach ($grouped as $cell) {
+            $program = (string) $cell->program_code;
+            $level = (int) $cell->year_level;
+            $failed = round((float) $cell->failed_avg, 2);
+            $max = max($max, $failed);
+            $rows[$program]['program'] = $program;
+            $rows[$program]['cells'][$level] = [
+                'failed' => $failed,
+                'students' => (int) $cell->students,
+            ];
+        }
+
+        return [
+            'levels' => $levels,
+            'max' => $max,
+            'rows' => array_values($rows),
         ];
     }
 

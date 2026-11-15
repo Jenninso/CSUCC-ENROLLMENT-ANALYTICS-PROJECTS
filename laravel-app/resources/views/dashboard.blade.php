@@ -216,6 +216,43 @@
     </div>
 </div>
 
+<div class="ui-panel p-5 mb-6 overflow-x-auto">
+    <h3 class="text-base font-semibold mb-1">Subject difficulty</h3>
+    <p class="dash-note mb-4">Each cell is the average number of failed subjects for that course and year. A darker cell means that group is struggling with more subjects. Read it across one row to compare year levels at a glance.</p>
+    <table class="w-full text-sm">
+        <thead>
+            <tr class="text-left text-gray-500">
+                <th class="py-2 pr-3">Course</th>
+                @foreach(($subjectDifficulty['levels'] ?? []) as $level)
+                    <th class="py-2 px-2">Year {{ $level }}</th>
+                @endforeach
+            </tr>
+        </thead>
+        <tbody>
+            @forelse($subjectDifficulty['rows'] ?? [] as $row)
+                <tr>
+                    <td class="py-2 pr-3 font-semibold">{{ $row['program'] }}</td>
+                    @foreach($subjectDifficulty['levels'] as $level)
+                        @php
+                            $cell = $row['cells'][$level] ?? null;
+                            $failed = $cell['failed'] ?? 0;
+                            $max = max(0.01, (float) ($subjectDifficulty['max'] ?? 1));
+                            $mix = (int) round(($failed / $max) * 70);
+                        @endphp
+                        <td class="py-2 px-2">
+                            <span class="inline-flex min-w-16 justify-center rounded-md px-2 py-1 text-xs font-semibold" style="background: color-mix(in srgb, #b91c1c {{ $mix }}%, #ecfdf5);" title="{{ $cell['students'] ?? 0 }} students">
+                                {{ $cell ? number_format($failed, 2) : '—' }}
+                            </span>
+                        </td>
+                    @endforeach
+                </tr>
+            @empty
+                <tr><td class="py-3 text-gray-500" colspan="5">No student records yet.</td></tr>
+            @endforelse
+        </tbody>
+    </table>
+</div>
+
 <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
     <div class="ui-panel p-5">
         <h3 class="text-base font-semibold mb-1">Recent AI insights</h3>

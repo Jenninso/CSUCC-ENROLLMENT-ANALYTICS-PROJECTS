@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Alert;
 use App\Models\StudentIntervention;
 use App\Models\StudentRecord;
 use App\Services\AuditLogger;
@@ -53,9 +54,56 @@ class AtRiskController extends Controller
 
     public function attrition(StudentAttritionService $attrition)
     {
-        session(['attrition' => $attrition->predict()]);
+        $result = $attrition->predict();
+        session(['attrition' => $result]);
+        $created = ($result['ok'] ?? false) ? $this->storeAttritionAlerts($result['students'] ?? []) : 0;
 
-        return redirect()->route('at-risk.attrition.show');
+        return redirect()
+            ->route('at-risk.attrition.show')
+            ->with('success', $created === 0
+                ? 'Student model finished. No new attrition alerts were added.'
+                : $created.' attrition alert'.($created === 1 ? '' : 's').' sent to AI Alerts.');
+    }
+
+    /**
+     * @param  list<array<string, mixed>>  $students
+     */
+    private function storeAttritionAlerts(array $students): int
+    {
+        $recent = array_fill_keys(
+            Alert::query()
+                ->where('metric', 'student_attrition')
+                ->where('created_at', '>=', now()->subDays(14))
+                ->pluck('title')
+                ->all(),
+            true
+        );
+        $now = now();
+        $batch = [];
+        foreach ($students as $row) {
+            $title = 'Attrition estimate: '.$row['student_id'];
+            if (isset($recent[$title])) {
+                continue;
+            }
+            $batch[] = [
+                'title' => $title,
+                'program_id' => null,
+                'metric' => 'student_attrition',
+                'current_value' => $row['chance'],
+                'expected_value' => 50,
+                'severity' => ($row['chance'] ?? 0) >= 75 ? 'high' : 'medium',
+                'explanation' => $row['student_id'].' has a '.$row['chance'].'% attrition estimate. '.($row['suggestion'] ?? ''),
+                'recommended_action' => $row['suggestion'] ?? 'Open the attrition page and review this student.',
+                'is_read' => false,
+                'created_at' => $now,
+                'updated_at' => $now,
+            ];
+        }
+        if ($batch !== []) {
+            Alert::query()->insert($batch);
+        }
+
+        return count($batch);
     }
 
     public function show(StudentRecord $student, StudentRiskAnalysis $analysis)

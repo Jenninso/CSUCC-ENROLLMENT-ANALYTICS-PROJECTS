@@ -33,8 +33,16 @@ class StatisticalHistorySeeder extends Seeder
             }
         }
 
-        $terms = $this->academicTerms();
+        // Skip if statistical data already exists (idempotent guard for Render container restarts).
         $programIds = $programs->pluck('id')->all();
+        $existingCount = DB::table('student_records')->whereIn('program_id', $programIds)->count();
+        if ($existingCount >= 100) {
+            $this->command?->info("StatisticalHistorySeeder: {$existingCount} records already exist — skipping re-seed.");
+
+            return;
+        }
+
+        $terms = $this->academicTerms();
 
         DB::table('spes_applications')->whereIn('student_record_id', function ($query) use ($programIds) {
             $query->select('id')->from('student_records')->whereIn('program_id', $programIds);

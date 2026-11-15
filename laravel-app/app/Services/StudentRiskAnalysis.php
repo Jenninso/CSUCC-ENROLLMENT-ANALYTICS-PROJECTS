@@ -151,12 +151,6 @@ class StudentRiskAnalysis
             'student_type' => $record->student_type,
         ]);
 
-        $struggling = '';
-        if ((int) $record->failed_subjects > 0) {
-            $subData = $this->curriculum->forStudentRecord($record);
-            $struggling = $subData['summary']['struggling_subjects_text'] ?? '';
-        }
-
         return [
             'student_record_id' => (int) $record->id,
             'student_id' => (string) $record->student_id,
@@ -168,7 +162,7 @@ class StudentRiskAnalysis
             'gpa' => (float) $record->gpa,
             'attendance' => (float) $record->attendance_percent,
             'failed_subjects' => (int) $record->failed_subjects,
-            'struggling_subjects' => $struggling,
+            'struggling_subjects' => '',
             'level' => $level,
             'level_label' => StudentRecord::RISK_LEVELS[$level] ?? ucfirst($level),
             'enrolled' => StudentRecord::ENROLLED_STATUSES[$record->enrolled_status] ?? ucfirst((string) $record->enrolled_status),

@@ -15,20 +15,24 @@ class DatabaseSeeder extends Seeder
 
     public function run(): void
     {
-        $super = Role::create([
+        $super = Role::query()->firstOrCreate([
             'role_name' => 'Super Administrator',
+        ], [
             'description' => 'Full control: accounts, privileges, deletions, and all modules.',
         ]);
-        $admin = Role::create([
+        $admin = Role::query()->firstOrCreate([
             'role_name' => 'Administrator',
+        ], [
             'description' => 'Approves registrations, updates accounts, and requests deletions.',
         ]);
-        $userRole = Role::create([
+        $userRole = Role::query()->firstOrCreate([
             'role_name' => 'User',
+        ], [
             'description' => 'Standard staff access based on assigned privileges.',
         ]);
-        Role::create([
+        Role::query()->firstOrCreate([
             'role_name' => 'Student',
+        ], [
             'description' => 'Student portal for the SPR form.',
         ]);
 
@@ -91,6 +95,9 @@ class DatabaseSeeder extends Seeder
         ];
 
         foreach ($seedUsers as $row) {
+            if (\App\Models\User::query()->where('email', $row['email'])->orWhere('employee_id', $row['employee_id'])->exists()) {
+                continue;
+            }
             $accounts->createUser($row + [
                 'password' => 'password',
                 'status' => 'active',
@@ -106,6 +113,6 @@ class DatabaseSeeder extends Seeder
         $this->call(EnrollmentDemoSeeder::class);
         $this->call(CeitBsitScopeSeeder::class);
         $this->call(StudentRecordSeeder::class);
-        $this->call(SprSyntheticSeeder::class);
+        $this->call(StatisticalHistorySeeder::class);
     }
 }

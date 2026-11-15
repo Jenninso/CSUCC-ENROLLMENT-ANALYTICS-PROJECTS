@@ -62,21 +62,24 @@ class EnrollmentDemoSeeder extends Seeder
         }
 
         // System scope: CEIT college and BSIT program only.
-        $ceit = College::create([
-            'college_name' => 'College of Engineering and Information Technology',
+        $ceit = College::query()->firstOrCreate([
             'college_code' => 'CEIT',
+        ], [
+            'college_name' => 'College of Engineering and Information Technology',
         ]);
 
-        $it = Department::create([
-            'department_name' => 'Information Technology',
+        $it = Department::query()->firstOrCreate([
             'department_code' => 'IT',
+        ], [
+            'department_name' => 'Information Technology',
             'college_id' => $ceit->id,
         ]);
 
         $programs = [
-            Program::create([
-                'program_name' => 'BS Information Technology',
+            Program::query()->firstOrCreate([
                 'program_code' => 'BSIT',
+            ], [
+                'program_name' => 'BS Information Technology',
                 'department_id' => $it->id,
                 'degree_level' => 'Bachelor',
                 'status' => 'active',
@@ -90,14 +93,21 @@ class EnrollmentDemoSeeder extends Seeder
         $years = [];
         for ($i = 0; $i < 7; $i++) {
             $start = 2021 + $i;
-            $year = AcademicYear::create([
+            $year = AcademicYear::query()->firstOrCreate([
                 'academic_year' => $start.'-'.($start + 1),
+            ], [
                 'start_date' => "{$start}-08-01",
                 'end_date' => ($start + 1).'-07-31',
                 'status' => $i === 4 ? 'active' : 'inactive',
             ]);
-            $first = Semester::create(['semester_name' => 'First Semester', 'academic_year_id' => $year->id]);
-            $second = Semester::create(['semester_name' => 'Second Semester', 'academic_year_id' => $year->id]);
+            $first = Semester::query()->firstOrCreate([
+                'academic_year_id' => $year->id,
+                'semester_name' => 'First Semester',
+            ]);
+            $second = Semester::query()->firstOrCreate([
+                'academic_year_id' => $year->id,
+                'semester_name' => 'Second Semester',
+            ]);
             $years[] = [$year, $first, $second, $i];
         }
 
@@ -113,6 +123,10 @@ class EnrollmentDemoSeeder extends Seeder
 
     private function writeProgramTerm(Program $program, AcademicYear $year, Semester $semester, int $total, int $yearIndex): void
     {
+        if (EnrollmentRecord::query()->where('program_id', $program->id)->where('academic_year_id', $year->id)->where('semester_id', $semester->id)->exists()) {
+            return;
+        }
+
         $collegeId = $program->department->college_id;
         $departmentId = $program->department_id;
         $newShare = 0.28 + ($yearIndex * 0.01);

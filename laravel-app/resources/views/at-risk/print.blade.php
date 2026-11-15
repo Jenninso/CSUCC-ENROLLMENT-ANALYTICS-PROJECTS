@@ -43,10 +43,13 @@
         </tbody>
     </table>
 
-    @if(!empty($analysis['subject_analysis']['subjects']))
-    <h2>Subject Difficulties & Course Standing (Term Diagnostics)</h2>
+    @php
+        $printAtRiskSubs = $analysis['subject_analysis']['at_risk_subjects'] ?? array_values(array_filter($analysis['subject_analysis']['subjects'] ?? [], fn($s) => $s['is_at_risk']));
+    @endphp
+    @if(!empty($printAtRiskSubs))
+    <h2>At-Risk & Critical Subject Difficulties (Term Diagnostics)</h2>
     @if(($analysis['subject_analysis']['summary']['failed_count'] ?? 0) > 0)
-        <p style="color: #b91c1c; font-weight: bold;">Failing in: {{ $analysis['subject_analysis']['summary']['struggling_subjects_text'] }}</p>
+        <p style="color: #b91c1c; font-weight: bold;">Critical / Failing Subjects: {{ $analysis['subject_analysis']['summary']['struggling_subjects_text'] }}</p>
     @endif
     <table>
         <thead>
@@ -56,24 +59,28 @@
                 <th>Units</th>
                 <th>Difficulty Level</th>
                 <th>Grade</th>
-                <th>Status</th>
+                <th>Risk Status</th>
                 <th>Advising Recommendation</th>
             </tr>
         </thead>
         <tbody>
-            @foreach($analysis['subject_analysis']['subjects'] as $sub)
-            <tr style="{{ $sub['is_failed'] ? 'background-color: #fee2e2; font-weight: bold;' : ($sub['is_warning'] ? 'background-color: #fef3c7;' : '') }}">
+            @foreach($printAtRiskSubs as $sub)
+            <tr style="{{ $sub['is_failed'] ? 'background-color: #fee2e2; font-weight: bold;' : 'background-color: #fef3c7;' }}">
                 <td>{{ $sub['code'] }} - {{ $sub['title'] }}</td>
                 <td>{{ $sub['category'] }}</td>
                 <td>{{ number_format($sub['units'], 1) }}</td>
                 <td>{{ $sub['difficulty_label'] }} ({{ $sub['difficulty_pct'] }}%)</td>
                 <td>{{ $sub['grade'] }}</td>
-                <td>{{ $sub['status_label'] }}</td>
+                <td>{{ $sub['is_failed'] ? 'CRITICAL / FAILED' : 'HIGH RISK' }}</td>
                 <td>{{ $sub['recommendation'] }}</td>
             </tr>
             @endforeach
         </tbody>
     </table>
+    <p class="muted" style="font-size: 11px; margin-top: 4px;">* Note: {{ count($analysis['subject_analysis']['good_subjects'] ?? []) }} subject(s) in good academic standing are omitted from this at-risk referral list.</p>
+    @else
+    <h2>Subject Diagnostics</h2>
+    <p>All enrolled subjects for this term are in good academic standing (0 subjects at risk).</p>
     @endif
 
     <h2>SPR background</h2>

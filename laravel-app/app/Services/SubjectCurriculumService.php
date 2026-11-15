@@ -2,7 +2,6 @@
 
 namespace App\Services;
 
-use App\Models\StudentRecord;
 use Illuminate\Support\Facades\DB;
 
 class SubjectCurriculumService
@@ -225,7 +224,7 @@ class SubjectCurriculumService
      *     cohort_heatmap: array<string, mixed>
      * }
      */
-    public function forStudentRecord(object|StudentRecord $student): array
+    public function forStudentRecord(object $student): array
     {
         $programCode = strtoupper((string) ($student->program?->program_code ?? ($student->program_code ?? 'BSIT')));
         if (! isset(self::CURRICULUM[$programCode])) {
@@ -277,7 +276,9 @@ class SubjectCurriculumService
                 $isFailed = true;
                 $failedAssigned++;
                 $status = 'failed';
-                $statusLabel = 'Failed';
+                $statusLabel = 'Critical / Failed';
+                $subjectRisk = 'Critical';
+                $isAtRisk = true;
                 $grade = 5.00;
                 $color = '#dc2626'; // Red
                 $bgColor = '#fef2f2';
@@ -288,16 +289,20 @@ class SubjectCurriculumService
                 $isWarning = true;
                 $warningAssigned++;
                 $status = 'warning';
-                $statusLabel = 'At-Risk / Warning';
+                $statusLabel = 'High Risk / Warning';
+                $subjectRisk = 'High Risk';
+                $isAtRisk = true;
                 $grade = $gpa >= 3.0 ? 3.00 : 2.75;
-                $color = '#d97706'; // Amber/Orange
-                $bgColor = '#fffbeb';
-                $borderColor = '#fcd34d';
+                $color = '#ea580c'; // Orange
+                $bgColor = '#fff7ed';
+                $borderColor = '#fdba74';
                 $strugglingNames[] = $subject['code'];
-                $recommendation = 'Near-failing standing. Assign peer adviser and follow up on laboratory/class activities.';
+                $recommendation = 'High academic risk. Near-failing grade standing; requires peer coaching and close lab monitoring.';
             } else {
                 $status = 'passed';
                 $statusLabel = 'Good Standing';
+                $subjectRisk = 'Good';
+                $isAtRisk = false;
                 $grade = max(1.25, round($gpa - (rand(0, 4) * 0.15), 2));
                 if ($grade > 2.50) {
                     $grade = 2.25;
@@ -305,10 +310,10 @@ class SubjectCurriculumService
                 $color = '#059669'; // Emerald
                 $bgColor = '#ecfdf5';
                 $borderColor = '#a7f3d0';
-                $recommendation = 'Satisfactory performance. Continue regular monitoring.';
+                $recommendation = 'Good standing. Regular curriculum progress.';
             }
 
-            // Categorize difficulty level
+            // Categorize intrinsic difficulty level
             $diffRating = (float) $subject['difficulty'];
             $diffLabel = match (true) {
                 $diffRating >= 0.80 => 'Critical',
@@ -335,6 +340,8 @@ class SubjectCurriculumService
                 'difficulty_color' => $diffColor,
                 'status' => $status,
                 'status_label' => $statusLabel,
+                'subject_risk' => $subjectRisk,
+                'is_at_risk' => $isAtRisk,
                 'grade' => number_format($grade, 2),
                 'is_failed' => $isFailed,
                 'is_warning' => $isWarning,
@@ -345,17 +352,23 @@ class SubjectCurriculumService
             ];
         }
 
+        $atRiskSubjects = array_values(array_filter($studentSubjects, fn ($s) => $s['is_at_risk']));
+        $goodSubjects = array_values(array_filter($studentSubjects, fn ($s) => ! $s['is_at_risk']));
         $totalUnits = array_sum(array_column($studentSubjects, 'units'));
-        $passedCount = count($studentSubjects) - $failedAssigned - $warningAssigned;
+        $passedCount = count($goodSubjects);
         $avgDifficulty = count($studentSubjects) > 0
             ? round(array_sum(array_column($studentSubjects, 'difficulty')) / count($studentSubjects), 2)
             : 0.0;
 
         return [
             'subjects' => $studentSubjects,
+            'at_risk_subjects' => $atRiskSubjects,
+            'good_subjects' => $goodSubjects,
             'summary' => [
                 'total_subjects' => count($studentSubjects),
                 'total_units' => $totalUnits,
+                'at_risk_count' => count($atRiskSubjects),
+                'good_count' => $passedCount,
                 'failed_count' => $failedAssigned,
                 'warning_count' => $warningAssigned,
                 'passed_count' => max(0, $passedCount),

@@ -94,29 +94,31 @@
 @php
     $subAnalysis = $analysis['subject_analysis'] ?? null;
     $subjects = $subAnalysis['subjects'] ?? [];
+    $atRiskSubjects = $subAnalysis['at_risk_subjects'] ?? array_values(array_filter($subjects, fn($s) => $s['is_at_risk']));
+    $goodSubjects = $subAnalysis['good_subjects'] ?? array_values(array_filter($subjects, fn($s) => !$s['is_at_risk']));
     $subSummary = $subAnalysis['summary'] ?? [];
     $cohortHeatmap = $subAnalysis['cohort_heatmap'] ?? [];
 @endphp
 
 @if(!empty($subjects))
-<div class="ui-panel p-5 mb-4">
+<div class="ui-panel p-5 mb-4" x-data="{ showGood: false }">
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4 pb-3 border-b border-gray-100">
         <div>
             <div class="flex items-center gap-2">
                 <span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-red-100 text-red-800">Diagnostics</span>
-                <h3 class="text-base font-semibold text-gray-900">Subject Difficulties & Performance Heatmap</h3>
+                <h3 class="text-base font-semibold text-gray-900">Subject Difficulties & At-Risk Heatmap</h3>
             </div>
-            <p class="text-xs text-gray-500 mt-1">Individual subject risk profile, historical difficulty rating, and course standing for {{ $analysis['program'] }} {{ $analysis['year_label'] }} ({{ $analysis['term'] }}).</p>
+            <p class="text-xs text-gray-500 mt-1">Showing curriculum subjects where the student is <strong class="text-red-700 font-semibold">Critical</strong>, <strong class="text-amber-700 font-semibold">High Risk</strong>, or <strong class="text-amber-600 font-semibold">At-Risk</strong>. Good standing subjects are hidden by default.</p>
         </div>
         <div class="flex items-center gap-2 self-start sm:self-auto flex-wrap">
-            <span class="inline-flex items-center gap-1.5 text-xs text-gray-600 bg-gray-50 px-2.5 py-1 rounded-md border border-gray-200">
-                <span class="w-2.5 h-2.5 rounded-full bg-red-600"></span> Failed ({{ $subSummary['failed_count'] ?? 0 }})
+            <span class="inline-flex items-center gap-1.5 text-xs text-gray-700 bg-red-50 px-2.5 py-1 rounded-md border border-red-200 font-medium">
+                <span class="w-2.5 h-2.5 rounded-full bg-red-600"></span> Critical / Failed: {{ $subSummary['failed_count'] ?? 0 }}
             </span>
-            <span class="inline-flex items-center gap-1.5 text-xs text-gray-600 bg-gray-50 px-2.5 py-1 rounded-md border border-gray-200">
-                <span class="w-2.5 h-2.5 rounded-full bg-amber-500"></span> Warning ({{ $subSummary['warning_count'] ?? 0 }})
+            <span class="inline-flex items-center gap-1.5 text-xs text-gray-700 bg-amber-50 px-2.5 py-1 rounded-md border border-amber-200 font-medium">
+                <span class="w-2.5 h-2.5 rounded-full bg-amber-500"></span> High Risk: {{ $subSummary['warning_count'] ?? 0 }}
             </span>
-            <span class="inline-flex items-center gap-1.5 text-xs text-gray-600 bg-gray-50 px-2.5 py-1 rounded-md border border-gray-200">
-                <span class="w-2.5 h-2.5 rounded-full bg-emerald-600"></span> Passed ({{ $subSummary['passed_count'] ?? 0 }})
+            <span class="inline-flex items-center gap-1.5 text-xs text-gray-500 bg-gray-50 px-2.5 py-1 rounded-md border border-gray-200">
+                <span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span> Good (Hidden): {{ count($goodSubjects) }}
             </span>
         </div>
     </div>
@@ -125,33 +127,34 @@
     <div class="mb-4 p-3.5 rounded-lg bg-red-50/90 border border-red-200 flex items-start gap-3">
         <svg class="w-5 h-5 text-red-600 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
         <div class="text-xs text-red-900 leading-relaxed">
-            <strong class="font-semibold">Critical Subject Alert:</strong> Student is struggling and currently failing in <strong>{{ $subSummary['failed_count'] }} subject{{ ($subSummary['failed_count'] > 1) ? 's' : '' }}</strong>:
+            <strong class="font-semibold">Action Required:</strong> Student is actively failing in <strong>{{ $subSummary['failed_count'] }} subject{{ ($subSummary['failed_count'] > 1) ? 's' : '' }}</strong>:
             <span class="font-medium underline">{{ $subSummary['struggling_subjects_text'] }}</span>.
-            Priority action: Schedule remedial assistance and review prerequisites.
+            Immediate advising and prerequisite realignment is advised.
         </div>
     </div>
     @endif
 
-    {{-- Subject Heatmap Table --}}
-    <div class="overflow-x-auto mb-5">
+    {{-- At-Risk & Critical Subjects Table --}}
+    @if(count($atRiskSubjects) > 0)
+    <div class="overflow-x-auto mb-4">
         <table class="ui-table">
             <thead>
                 <tr>
-                    <th class="text-left">Subject Code & Title</th>
+                    <th class="text-left">At-Risk Subject Code & Title</th>
                     <th class="text-left">Category</th>
                     <th class="text-center">Units</th>
                     <th class="text-left">Subject Difficulty Index</th>
                     <th class="text-center">Grade Standing</th>
-                    <th class="text-left">Status</th>
+                    <th class="text-left">Risk Status</th>
                     <th class="text-left">Faculty Advising Note</th>
                 </tr>
             </thead>
             <tbody>
-                @foreach($subjects as $sub)
-                <tr style="{{ $sub['is_failed'] ? 'background-color: #fef2f2;' : ($sub['is_warning'] ? 'background-color: #fffbeb;' : '') }}">
+                @foreach($atRiskSubjects as $sub)
+                <tr style="{{ $sub['is_failed'] ? 'background-color: #fef2f2;' : 'background-color: #fffbeb;' }}">
                     <td>
                         <div class="flex items-center gap-2">
-                            <span class="font-mono font-bold text-xs px-2 py-0.5 rounded {{ $sub['is_failed'] ? 'bg-red-200 text-red-900 ring-1 ring-red-300' : ($sub['is_warning'] ? 'bg-amber-200 text-amber-900' : 'bg-gray-100 text-gray-800') }}">
+                            <span class="font-mono font-bold text-xs px-2 py-0.5 rounded {{ $sub['is_failed'] ? 'bg-red-200 text-red-900 ring-1 ring-red-300' : 'bg-amber-200 text-amber-900 ring-1 ring-amber-300' }}">
                                 {{ $sub['code'] }}
                             </span>
                             <span class="font-semibold text-gray-900 text-xs">{{ $sub['title'] }}</span>
@@ -160,7 +163,7 @@
                     <td>
                         <span class="text-xs text-gray-600">{{ $sub['category'] }}</span>
                     </td>
-                    <td class="text-center font-mono text-xs">
+                    <td class="text-center font-mono text-xs font-semibold">
                         {{ number_format($sub['units'], 1) }}
                     </td>
                     <td>
@@ -175,29 +178,24 @@
                         </div>
                     </td>
                     <td class="text-center">
-                        <span class="font-mono font-bold text-xs px-2.5 py-1 rounded {{ $sub['is_failed'] ? 'bg-red-600 text-white' : ($sub['is_warning'] ? 'bg-amber-500 text-white' : 'bg-emerald-100 text-emerald-800') }}">
+                        <span class="font-mono font-bold text-xs px-2.5 py-1 rounded {{ $sub['is_failed'] ? 'bg-red-600 text-white shadow-sm' : 'bg-amber-500 text-white shadow-sm' }}">
                             {{ $sub['grade'] }}
                         </span>
                     </td>
                     <td>
                         @if($sub['is_failed'])
                             <span class="inline-flex items-center gap-1 text-xs font-bold text-red-700">
-                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
-                                FAILED
-                            </span>
-                        @elseif($sub['is_warning'])
-                            <span class="inline-flex items-center gap-1 text-xs font-bold text-amber-700">
-                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01"/></svg>
-                                AT RISK
+                                <span class="w-2 h-2 rounded-full bg-red-600 animate-pulse"></span>
+                                CRITICAL / FAILED
                             </span>
                         @else
-                            <span class="inline-flex items-center gap-1 text-xs font-semibold text-emerald-700">
-                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
-                                PASSED
+                            <span class="inline-flex items-center gap-1 text-xs font-bold text-amber-700">
+                                <span class="w-2 h-2 rounded-full bg-amber-500"></span>
+                                HIGH RISK
                             </span>
                         @endif
                     </td>
-                    <td class="text-xs text-gray-600 max-w-xs">
+                    <td class="text-xs text-gray-700 max-w-xs font-medium">
                         {{ $sub['recommendation'] }}
                     </td>
                 </tr>
@@ -205,10 +203,69 @@
             </tbody>
         </table>
     </div>
+    @else
+    <div class="mb-4 p-4 rounded-lg bg-emerald-50 border border-emerald-200 flex items-center justify-between">
+        <div class="flex items-center gap-3">
+            <span class="w-7 h-7 rounded-full bg-emerald-100 text-emerald-800 flex items-center justify-center font-bold text-sm">✓</span>
+            <div>
+                <p class="text-xs font-bold text-emerald-900 uppercase tracking-wide">No Critical or At-Risk Subjects</p>
+                <p class="text-xs text-emerald-700 mt-0.5">All {{ count($goodSubjects) }} enrolled subjects for this student are in good standing.</p>
+            </div>
+        </div>
+    </div>
+    @endif
+
+    {{-- Toggle to view passed / good standing subjects (hidden by default) --}}
+    @if(count($goodSubjects) > 0)
+    <div class="mt-3 pt-3 border-t border-gray-100">
+        <div class="flex items-center justify-between">
+            <button type="button" @click="showGood = !showGood" class="ui-link text-xs inline-flex items-center gap-1.5 font-semibold">
+                <svg :class="showGood ? 'rotate-180' : ''" class="w-3.5 h-3.5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                <span x-text="showGood ? 'Hide {{ count($goodSubjects) }} Good Standing Subjects' : 'Show {{ count($goodSubjects) }} Good Standing Subjects (Hidden by default)'"></span>
+            </button>
+            <span class="text-[11px] text-gray-400">Status: Good Standing · Passing</span>
+        </div>
+
+        <div x-show="showGood" x-cloak class="mt-3 overflow-x-auto">
+            <table class="ui-table">
+                <thead>
+                    <tr>
+                        <th class="text-left">Subject Code & Title</th>
+                        <th class="text-left">Category</th>
+                        <th class="text-center">Units</th>
+                        <th class="text-center">Grade</th>
+                        <th class="text-left">Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach($goodSubjects as $gSub)
+                    <tr class="opacity-80 hover:opacity-100">
+                        <td>
+                            <div class="flex items-center gap-2">
+                                <span class="font-mono text-xs px-2 py-0.5 rounded bg-gray-100 text-gray-700 font-semibold">{{ $gSub['code'] }}</span>
+                                <span class="text-xs text-gray-800">{{ $gSub['title'] }}</span>
+                            </div>
+                        </td>
+                        <td class="text-xs text-gray-500">{{ $gSub['category'] }}</td>
+                        <td class="text-center font-mono text-xs">{{ number_format($gSub['units'], 1) }}</td>
+                        <td class="text-center font-mono text-xs text-emerald-700 font-semibold">{{ $gSub['grade'] }}</td>
+                        <td>
+                            <span class="inline-flex items-center gap-1 text-xs text-emerald-700 font-medium">
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                                Passed
+                            </span>
+                        </td>
+                    </tr>
+                    @endforeach
+                </tbody>
+            </table>
+        </div>
+    </div>
+    @endif
 
     {{-- Benchmark Heatmap: Program x Year Level --}}
     @if(!empty($cohortHeatmap['rows']))
-    <div class="pt-4 border-t border-gray-100">
+    <div class="mt-4 pt-4 border-t border-gray-100">
         <div class="flex items-center justify-between mb-2 flex-wrap gap-2">
             <div>
                 <h4 class="text-xs font-bold uppercase tracking-wider text-gray-700">CEIT Cohort Difficulty Benchmark (Course × Year Level)</h4>

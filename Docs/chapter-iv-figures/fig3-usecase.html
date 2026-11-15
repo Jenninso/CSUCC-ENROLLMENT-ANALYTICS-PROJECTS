@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Figure 3. Use Case Diagram</title>
+<style>
+  body { margin: 0; background: #fff; font-family: "Segoe UI", Calibri, Arial, sans-serif; color: #16325c; }
+  .sheet { width: 1500px; height: 1080px; padding: 22px 24px 14px; }
+  .title-wrap { text-align: center; }
+  h1 { display: inline-block; margin: 0; background: #0d2f6b; color: #fff; font-size: 32px; font-weight: 700; border-radius: 16px; padding: 8px 32px; }
+  .sub { margin: 6px 0 12px; color: #1d4a86; font-size: 18px; font-weight: 650; }
+  .board { position: relative; height: 900px; }
+  .boundary { position: absolute; left: 210px; right: 230px; top: 0; bottom: 46px; border: 2.5px solid #0d2f6b; border-radius: 18px; background: #f7fbff; }
+  .boundary h2 { margin: 0; text-align: center; color: #0d2f6b; font-size: 18px; padding-top: 10px; }
+  .col { position: absolute; top: 48px; width: 300px; }
+  .col h3 { margin: 0 0 8px; font-size: 13px; color: #0d2f6b; text-align: center; letter-spacing: 0.3px; }
+  .uc { margin: 7px auto; width: 250px; height: 46px; border: 2px solid #1d4e89; border-radius: 40px; background: #fff; display: flex; align-items: center; justify-content: center; text-align: center; font-size: 13px; font-weight: 650; line-height: 1.15; padding: 0 12px; }
+  .uc.inc { border-style: dashed; background: #e7f1fb; }
+  .actor { position: absolute; width: 180px; text-align: center; font-size: 13px; font-weight: 700; }
+  .actor svg { display: block; margin: 0 auto 4px; }
+  .note { position: absolute; left: 230px; right: 250px; bottom: 8px; font-size: 12.5px; color: #3d628f; text-align: center; }
+  .legend { margin-top: 8px; background: #eef3f8; border-radius: 14px; height: 42px; display: flex; align-items: center; gap: 22px; padding: 0 16px; font-size: 14px; }
+  .sw { width: 14px; height: 14px; border-radius: 3px; display: inline-block; margin-right: 6px; vertical-align: -2px; }
+</style>
+</head>
+<body>
+<div class="sheet">
+  <div class="title-wrap">
+    <h1>UML Use Case Diagram</h1>
+    <p class="sub">Actors follow assigned privileges, not a single shared menu</p>
+  </div>
+  <div class="board">
+    <div class="boundary">
+      <h2>IntelliFlow</h2>
+      <div class="col" style="left: 24px;">
+        <h3>VIEW</h3>
+        <div class="uc">View dashboard</div>
+        <div class="uc">View analytics</div>
+        <div class="uc">View at-risk list</div>
+        <div class="uc">Open student risk detail</div>
+        <div class="uc">View alerts</div>
+        <div class="uc">Run enrollment forecast</div>
+        <div class="uc">Generate referral or risk summary</div>
+      </div>
+      <div class="col" style="left: 340px;">
+        <h3>RECORDS &amp; ADVISING</h3>
+        <div class="uc">Import enrollment file</div>
+        <div class="uc">Manage student records</div>
+        <div class="uc">Manage SPR applications</div>
+        <div class="uc">Record intervention</div>
+        <div class="uc">Manage academic structure</div>
+        <div class="uc inc">Sign in<br><span style="font-weight:500;font-size:11px;">&lt;&lt;include&gt;&gt; for every staff action</span></div>
+      </div>
+      <div class="col" style="left: 656px;">
+        <h3>ACCOUNTS</h3>
+        <div class="uc">Manage users</div>
+        <div class="uc">Approve registration</div>
+        <div class="uc">Assign privileges</div>
+        <div class="uc">Review audit and login logs</div>
+        <div class="uc">Approve account deletion</div>
+        <div class="uc" id="uc-spr" style="border-color:#1a7a4c;">Complete SPR form</div>
+      </div>
+      <p class="note">Viewing a risk list is separate from editing the record. A staff account receives only the use cases granted in privileges. The student actor reaches only the SPR form.</p>
+    </div>
+
+    <div class="actor" id="act-super" style="left: 8px; top: 70px; color:#0d2f6b;">
+      <svg width="54" height="70" viewBox="0 0 54 70"><circle cx="27" cy="12" r="10" fill="none" stroke="#0d2f6b" stroke-width="2"/><path d="M8 66 L27 28 L46 66" fill="none" stroke="#0d2f6b" stroke-width="2"/><path d="M6 40 H48" stroke="#0d2f6b" stroke-width="2"/></svg>
+      Super Administrator
+    </div>
+    <div class="actor" id="act-admin" style="left: 8px; top: 280px; color:#1d4e89;">
+      <svg width="54" height="70" viewBox="0 0 54 70"><circle cx="27" cy="12" r="10" fill="none" stroke="#1d4e89" stroke-width="2"/><path d="M8 66 L27 28 L46 66" fill="none" stroke="#1d4e89" stroke-width="2"/><path d="M6 40 H48" stroke="#1d4e89" stroke-width="2"/></svg>
+      Administrator
+    </div>
+    <div class="actor" id="act-staff" style="right: 8px; top: 90px; color:#2f6cb5;">
+      <svg width="54" height="70" viewBox="0 0 54 70"><circle cx="27" cy="12" r="10" fill="none" stroke="#2f6cb5" stroke-width="2"/><path d="M8 66 L27 28 L46 66" fill="none" stroke="#2f6cb5" stroke-width="2"/><path d="M6 40 H48" stroke="#2f6cb5" stroke-width="2"/></svg>
+      Staff<br><span style="font-weight:500;">Faculty adviser / instructor</span>
+    </div>
+    <div class="actor" id="act-student" style="right: 8px; top: 520px; color:#1a7a4c;">
+      <svg width="54" height="70" viewBox="0 0 54 70"><circle cx="27" cy="12" r="10" fill="none" stroke="#1a7a4c" stroke-width="2"/><path d="M8 66 L27 28 L46 66" fill="none" stroke="#1a7a4c" stroke-width="2"/><path d="M6 40 H48" stroke="#1a7a4c" stroke-width="2"/></svg>
+      Student
+    </div>
+  </div>
+  <div class="legend">
+    <strong style="color:#0d2f6b">Who reaches which group:</strong>
+    <span><i class="sw" style="background:#0d2f6b"></i>Super Administrator — all groups</span>
+    <span><i class="sw" style="background:#1d4e89"></i>Administrator — view, records, users, approvals</span>
+    <span><i class="sw" style="background:#2f6cb5"></i>Staff — view group, plus any record privilege granted</span>
+    <span><i class="sw" style="background:#1a7a4c"></i>Student — Complete SPR form only</span>
+  </div>
+  </div>
+</body>
+</html>
+

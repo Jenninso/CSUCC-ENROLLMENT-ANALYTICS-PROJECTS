@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Figure 2. Level 0 DFD</title>
+<style>
+  body { margin: 0; background: #fff; font-family: "Segoe UI", Calibri, Arial, sans-serif; color: #16325c; }
+  .sheet { width: 1500px; height: 1180px; padding: 22px 28px 16px; position: relative; }
+  .title-wrap { text-align: center; }
+  h1 { display: inline-block; margin: 0; background: #0d2f6b; color: #fff; font-size: 32px; font-weight: 700; border-radius: 16px; padding: 8px 32px; }
+  .sub { margin: 6px 0 0; color: #1d4a86; font-size: 18px; font-weight: 650; }
+  svg { position: absolute; left: 20px; top: 108px; }
+  .legend { position: absolute; left: 28px; right: 28px; bottom: 14px; background: #eef3f8; border-radius: 16px; height: 52px; display: flex; align-items: center; gap: 26px; padding: 0 20px; font-size: 15px; }
+</style>
+</head>
+<body>
+<div class="sheet">
+  <div class="title-wrap">
+    <h1>Data Flow Diagram — Level 0</h1>
+    <p class="sub">Each arrow is one data flow. Stores sit on the right; people sit on the left.</p>
+  </div>
+  <svg width="1460" height="900" viewBox="0 0 1460 900">
+    <defs>
+      <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+        <path d="M0 1.4 L10 5 L0 8.6 Z" fill="#1d4e89"/>
+      </marker>
+    </defs>
+
+    <!-- column headers -->
+    <text x="130" y="22" text-anchor="middle" font-size="13" font-weight="700" fill="#5b7ea8">EXTERNAL ENTITY</text>
+    <text x="620" y="22" text-anchor="middle" font-size="13" font-weight="700" fill="#5b7ea8">PROCESS</text>
+    <text x="1180" y="22" text-anchor="middle" font-size="13" font-weight="700" fill="#5b7ea8">DATA STORE OR OUTPUT</text>
+
+    <!-- rows: y centers 80, 200, 320, 440, 560, 680, 800 -->
+    <g font-size="14" font-weight="700" text-anchor="middle">
+      <rect x="16" y="48" width="230" height="64" rx="6" fill="#f3f8fd" stroke="#0d2f6b" stroke-width="2"/>
+      <text x="131" y="76">CEIT Administrator</text>
+      <text x="131" y="96">&amp; Faculty Adviser</text>
+
+      <circle cx="620" cy="80" r="48" fill="#e7f1fb" stroke="#0d2f6b" stroke-width="2.2"/>
+      <text x="620" y="74" font-size="12" fill="#0d2f6b">1.0</text>
+      <text x="620" y="92">Login &amp; Audit</text>
+
+      <path d="M1040 56 h300 v48 h-300 z M1040 56 v12" fill="#f7fbff" stroke="#0d2f6b" stroke-width="2"/>
+      <text x="1190" y="86">D6  Audit &amp; login log</text>
+    </g>
+    <line x1="246" y1="70" x2="570" y2="70" stroke="#1d4e89" stroke-width="1.8" marker-end="url(#a)"/>
+    <text x="400" y="62" text-anchor="middle" font-size="12" fill="#1d4e89">credentials</text>
+    <line x1="572" y1="96" x2="248" y2="96" stroke="#1d4e89" stroke-width="1.8" marker-end="url(#a)"/>
+    <text x="400" y="114" text-anchor="middle" font-size="12" fill="#1d4e89">session or denial</text>
+    <line x1="668" y1="80" x2="1040" y2="80" stroke="#1d4e89" stroke-width="1.8" marker-end="url(#a)"/>
+    <text x="850" y="72" text-anchor="middle" font-size="12" fill="#1d4e89">audit event</text>
+
+    <g font-size="14" font-weight="700" text-anchor="middle">
+      <rect x="16" y="168" width="230" height="64" rx="6" fill="#f3f8fd" stroke="#0d2f6b" stroke-width="2"/>
+      <text x="131" y="196">CEIT staff</text>
+      <text x="131" y="216">and Student</text>
+      <circle cx="620" cy="200" r="50" fill="#e7f1fb" stroke="#0d2f6b" stroke-width="2.2"/>
+      <text x="620" y="190" font-size="12" fill="#0d2f6b">2.0</text>
+      <text x="620" y="208" font-size="13">Data</text>
+      <text x="620" y="224" font-size="13">Management</text>
+      <path d="M1040 156 h300 v36 h-300 z M1040 156 v10" fill="#f7fbff" stroke="#0d2f6b" stroke-width="2"/>
+      <text x="1190" y="180">D1  Student &amp; enrollment</text>
+      <path d="M1040 204 h300 v36 h-300 z M1040 204 v10" fill="#f7fbff" stroke="#0d2f6b" stroke-width="2"/>
+      <text x="1190" y="228">D2  SPR applications</text>
+    </g>
+    <line x1="246" y1="188" x2="568" y2="188" stroke="#1d4e89" stroke-width="1.8" marker-end="url(#a)"/>
+    <text x="400" y="180" text-anchor="middle" font-size="12" fill="#1d4e89">CSV / Excel or SPR form</text>
+    <line x1="670" y1="186" x2="1040" y2="174" stroke="#1d4e89" stroke-width="1.8" marker-end="url(#a)"/>
+    <text x="850" y="168" text-anchor="middle" font-size="12" fill="#1d4e89">confirmed rows</text>
+    <line x1="670" y1="214" x2="1040" y2="222" stroke="#1d4e89" stroke-width="1.8" marker-end="url(#a)"/>
+    <text x="850" y="236" text-anchor="middle" font-size="12" fill="#1d4e89">saved SPR</text>
+
+    <g font-size="14" font-weight="700" text-anchor="middle">
+      <rect x="16" y="300" width="230" height="52" rx="6" fill="#f3f8fd" stroke="#0d2f6b" stroke-width="2"/>
+      <text x="131" y="332">CEIT adviser</text>
+      <circle cx="620" cy="326" r="48" fill="#e7f1fb" stroke="#0d2f6b" stroke-width="2.2"/>
+      <text x="620" y="320" font-size="12" fill="#0d2f6b">3.0</text>
+      <text x="620" y="338">Analytics</text>
+    </g>
+    <path d="M1040 300 h280 v40 h-280 z M1040 300 v10" fill="#f7fbff" stroke="#0d2f6b" stroke-width="2"/>
+    <text x="1180" y="326" text-anchor="middle" font-size="14" font-weight="700">D1  read for charts</text>
+    <line x1="1040" y1="320" x2="670" y2="326" stroke="#1d4e89" stroke-width="1.8" marker-end="url(#a)"/>
+    <text x="850" y="312" text-anchor="middle" font-size="12" fill="#1d4e89">term counts</text>
+    <line x1="572" y1="340" x2="246" y2="340" stroke="#1d4e89" stroke-width="1.8" marker-end="url(#a)"/>
+    <text x="400" y="332" text-anchor="middle" font-size="12" fill="#1d4e89">retention, dropout, shifting</text>
+
+    <g font-size="14" font-weight="700" text-anchor="middle">
+      <rect x="16" y="410" width="230" height="52" rx="6" fill="#f3f8fd" stroke="#0d2f6b" stroke-width="2"/>
+      <text x="131" y="442">CEIT adviser</text>
+      <circle cx="620" cy="436" r="50" fill="#e7f1fb" stroke="#0d2f6b" stroke-width="2.2"/>
+      <text x="620" y="426" font-size="12" fill="#0d2f6b">4.0</text>
+      <text x="620" y="444" font-size="13">Attrition</text>
+      <text x="620" y="460" font-size="13">Scoring</text>
+      <path d="M1040 412 h300 v48 h-300 z M1040 412 v10" fill="#f7fbff" stroke="#0d2f6b" stroke-width="2"/>
+      <text x="1190" y="442">D4  Alerts &amp; insights</text>
+    </g>
+    <line x1="1040" y1="424" x2="672" y2="424" stroke="#1d4e89" stroke-width="1.8" marker-end="url(#a)"/>
+    <text x="850" y="416" text-anchor="middle" font-size="12" fill="#1d4e89">features from D1</text>
+    <line x1="670" y1="452" x2="1040" y2="448" stroke="#1d4e89" stroke-width="1.8" marker-end="url(#a)"/>
+    <text x="850" y="470" text-anchor="middle" font-size="12" fill="#1d4e89">High / Medium / Low + reasons</text>
+
+    <g font-size="14" font-weight="700" text-anchor="middle">
+      <rect x="16" y="530" width="230" height="52" rx="6" fill="#f3f8fd" stroke="#0d2f6b" stroke-width="2"/>
+      <text x="131" y="562">CEIT planner</text>
+      <circle cx="620" cy="556" r="50" fill="#e7f1fb" stroke="#0d2f6b" stroke-width="2.2"/>
+      <text x="620" y="550" font-size="12" fill="#0d2f6b">5.0</text>
+      <text x="620" y="568">Forecast</text>
+      <path d="M1040 532 h300 v48 h-300 z M1040 532 v10" fill="#f7fbff" stroke="#0d2f6b" stroke-width="2"/>
+      <text x="1190" y="562">D3  Forecasts</text>
+    </g>
+    <line x1="1040" y1="544" x2="672" y2="544" stroke="#1d4e89" stroke-width="1.8" marker-end="url(#a)"/>
+    <text x="850" y="536" text-anchor="middle" font-size="12" fill="#1d4e89">history from D1</text>
+    <line x1="670" y1="572" x2="1040" y2="568" stroke="#1d4e89" stroke-width="1.8" marker-end="url(#a)"/>
+    <text x="850" y="590" text-anchor="middle" font-size="12" fill="#1d4e89">estimate and band</text>
+
+    <g font-size="14" font-weight="700" text-anchor="middle">
+      <rect x="16" y="650" width="230" height="64" rx="6" fill="#f3f8fd" stroke="#0d2f6b" stroke-width="2"/>
+      <text x="131" y="678">OASFA</text>
+      <text x="131" y="698">and CEIT adviser</text>
+      <circle cx="620" cy="682" r="52" fill="#e7f1fb" stroke="#0d2f6b" stroke-width="2.2"/>
+      <text x="620" y="672" font-size="12" fill="#0d2f6b">6.0</text>
+      <text x="620" y="690" font-size="13">Decision</text>
+      <text x="620" y="706" font-size="13">Support</text>
+      <path d="M1040 654 h300 v56 h-300 z M1040 654 v10" fill="#f7fbff" stroke="#0d2f6b" stroke-width="2"/>
+      <text x="1190" y="678">D5  Interventions</text>
+      <text x="1190" y="696" font-size="12" font-weight="500">referral or advising note</text>
+    </g>
+    <line x1="246" y1="670" x2="566" y2="670" stroke="#1d4e89" stroke-width="1.8" marker-end="url(#a)"/>
+    <text x="390" y="662" text-anchor="middle" font-size="12" fill="#1d4e89">scholarship context</text>
+    <line x1="568" y1="704" x2="246" y2="704" stroke="#1d4e89" stroke-width="1.8" marker-end="url(#a)"/>
+    <text x="390" y="722" text-anchor="middle" font-size="12" fill="#1d4e89">referral and summary</text>
+    <line x1="672" y1="682" x2="1040" y2="682" stroke="#1d4e89" stroke-width="1.8" marker-end="url(#a)"/>
+    <text x="850" y="674" text-anchor="middle" font-size="12" fill="#1d4e89">writes the note</text>
+
+    <g font-size="14" font-weight="700" text-anchor="middle">
+      <rect x="16" y="790" width="230" height="52" rx="6" fill="#f3f8fd" stroke="#0d2f6b" stroke-width="2"/>
+      <text x="131" y="822">Administrator</text>
+      <circle cx="620" cy="816" r="50" fill="#e7f1fb" stroke="#0d2f6b" stroke-width="2.2"/>
+      <text x="620" y="810" font-size="12" fill="#0d2f6b">7.0</text>
+      <text x="620" y="828">Administration</text>
+      <path d="M1040 792 h300 v48 h-300 z M1040 792 v10" fill="#f7fbff" stroke="#0d2f6b" stroke-width="2"/>
+      <text x="1190" y="822">D6  Users &amp; privileges</text>
+    </g>
+    <line x1="246" y1="816" x2="568" y2="816" stroke="#1d4e89" stroke-width="1.8" marker-end="url(#a)"/>
+    <text x="400" y="808" text-anchor="middle" font-size="12" fill="#1d4e89">account action</text>
+    <line x1="670" y1="816" x2="1040" y2="816" stroke="#1d4e89" stroke-width="1.8" marker-end="url(#a)"/>
+    <text x="850" y="808" text-anchor="middle" font-size="12" fill="#1d4e89">users, roles, settings</text>
+  </svg>
+  <div class="legend">
+    <strong style="color:#0d2f6b">Legend:</strong>
+    <span>Square — external entity</span>
+    <span>Circle — process</span>
+    <span>Open rectangle — data store</span>
+    <span>Arrow — direction of the data</span>
+    <span>Import Level 1: parse, list errors, preview, commit. Scoring Level 1: features, predict, band, explain.</span>
+  </div>
+</div>
+</body>
+</html>

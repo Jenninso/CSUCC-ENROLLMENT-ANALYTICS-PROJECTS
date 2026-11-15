@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Figure 1. Context Diagram</title>
+<style>
+  * { box-sizing: border-box; }
+  body { margin: 0; background: #fff; font-family: "Segoe UI", Calibri, Arial, sans-serif; color: #16325c; }
+  .sheet { width: 1440px; height: 1040px; padding: 22px 28px 16px; position: relative; }
+  .title-wrap { text-align: center; }
+  h1 { display: inline-block; margin: 0; background: #0d2f6b; color: #fff; font-size: 34px; font-weight: 700; border-radius: 16px; padding: 8px 36px; letter-spacing: 0.2px; }
+  .sub { margin: 8px 0 0; color: #1d4a86; font-size: 20px; font-weight: 650; }
+  svg.canvas { position: absolute; left: 16px; top: 148px; }
+  .legend { position: absolute; left: 32px; right: 32px; bottom: 18px; background: #eef3f8; border-radius: 18px; height: 64px; display: flex; align-items: center; gap: 28px; padding: 0 22px; font-size: 16px; }
+  .lg { display: flex; align-items: center; gap: 8px; font-weight: 600; }
+</style>
+</head>
+<body>
+<div class="sheet">
+  <div class="title-wrap">
+    <h1>Context Diagram</h1>
+    <p class="sub">CEIT Enrollment Analytics System – IntelliFlow</p>
+  </div>
+  <svg class="canvas" width="1392" height="770" viewBox="0 0 1392 770">
+    <defs>
+      <marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+        <path d="M 0 1.2 L 10 5 L 0 8.8 Z" fill="#1d4e89"/>
+      </marker>
+      <marker id="arrDashed" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+        <path d="M 0 1.2 L 10 5 L 0 8.8 Z" fill="#5b7ea8"/>
+      </marker>
+    </defs>
+
+    <!-- optional services -->
+    <rect x="430" y="8" width="520" height="118" rx="16" fill="#f7fbff" stroke="#7aa0cc" stroke-width="2" stroke-dasharray="7 6"/>
+    <text x="690" y="30" text-anchor="middle" font-size="15" font-weight="700" fill="#1d4e89">Optional External Services</text>
+    <line x1="688" y1="42" x2="688" y2="112" stroke="#c5d5e8" stroke-width="1.5"/>
+    <g transform="translate(500,58)">
+      <rect x="0" y="0" width="36" height="28" rx="4" fill="none" stroke="#1d4e89" stroke-width="1.6"/>
+      <path d="M2 4 L18 16 L34 4" fill="none" stroke="#1d4e89" stroke-width="1.6"/>
+    </g>
+    <text x="560" y="70" text-anchor="middle" font-size="15" font-weight="700">Mail Service</text>
+    <text x="560" y="90" text-anchor="middle" font-size="13" fill="#3d628f">(OTP)</text>
+    <g transform="translate(760,54)">
+      <circle cx="16" cy="16" r="14" fill="none" stroke="#1d4e89" stroke-width="1.6"/>
+      <circle cx="16" cy="14" r="4" fill="#1d4e89"/>
+      <path d="M8 26 Q16 18 24 26" fill="none" stroke="#1d4e89" stroke-width="1.6"/>
+    </g>
+    <text x="830" y="70" text-anchor="middle" font-size="15" font-weight="700">Assistant Model</text>
+    <text x="830" y="90" text-anchor="middle" font-size="13" fill="#3d628f">(Drafted replies)</text>
+
+    <!-- CEIT -->
+    <rect x="8" y="168" width="292" height="176" rx="16" fill="#f3f8fd" stroke="#1d4e89" stroke-width="2"/>
+    <text x="154" y="194" text-anchor="middle" font-size="16" font-weight="700">CEIT Administrator</text>
+    <text x="154" y="214" text-anchor="middle" font-size="16" font-weight="700">&amp; Faculty Adviser</text>
+    <g transform="translate(118,226)">
+      <circle cx="18" cy="12" r="8" fill="#1d4e89"/>
+      <path d="M6 40 Q18 24 30 40" fill="#1d4e89"/>
+      <circle cx="46" cy="12" r="8" fill="#2f6cb5"/>
+      <path d="M34 40 Q46 24 58 40" fill="#2f6cb5"/>
+      <rect x="70" y="16" width="28" height="18" rx="2" fill="none" stroke="#1d4e89" stroke-width="1.5"/>
+    </g>
+    <text x="154" y="312" text-anchor="middle" font-size="13" fill="#3d628f">(Dean, dept. chairs,</text>
+    <text x="154" y="328" text-anchor="middle" font-size="13" fill="#3d628f">faculty advisers)</text>
+
+    <!-- OASFA -->
+    <rect x="8" y="430" width="292" height="168" rx="16" fill="#f3f8fd" stroke="#1d4e89" stroke-width="2"/>
+    <text x="154" y="462" text-anchor="middle" font-size="16" font-weight="700">OASFA Personnel</text>
+    <g transform="translate(122,478)">
+      <circle cx="22" cy="12" r="9" fill="#1d4e89"/>
+      <path d="M6 42 Q22 24 38 42" fill="#1d4e89"/>
+      <path d="M34 18 l8 8 -8 3 z" fill="#2f9e6b"/>
+    </g>
+    <text x="154" y="566" text-anchor="middle" font-size="13" fill="#3d628f">(Scholarship &amp;</text>
+    <text x="154" y="582" text-anchor="middle" font-size="13" fill="#3d628f">financial assistance)</text>
+
+    <!-- center system -->
+    <rect x="430" y="168" width="520" height="430" rx="18" fill="#e7f1fb" stroke="#0d2f6b" stroke-width="3"/>
+    <rect x="454" y="182" width="472" height="78" rx="12" fill="#0d2f6b"/>
+    <text x="690" y="214" text-anchor="middle" font-size="28" font-weight="700" fill="#fff">IntelliFlow</text>
+    <text x="690" y="242" text-anchor="middle" font-size="15" fill="#d6e6f8">CEIT Enrollment Analytics System</text>
+    <g transform="translate(600,280)">
+      <rect x="20" y="18" width="150" height="100" rx="8" fill="#fff" stroke="#1d4e89" stroke-width="3"/>
+      <rect x="8" y="118" width="174" height="12" rx="3" fill="#1d4e89"/>
+      <rect x="78" y="130" width="34" height="16" fill="#1d4e89"/>
+      <rect x="36" y="78" width="16" height="28" fill="#2f6cb5"/>
+      <rect x="58" y="58" width="16" height="48" fill="#1d4e89"/>
+      <rect x="80" y="40" width="16" height="66" fill="#49a0e6"/>
+      <rect x="102" y="66" width="16" height="40" fill="#2f6cb5"/>
+      <path d="M40 70 L70 46 L100 58 L130 34" fill="none" stroke="#e07a2f" stroke-width="2.4"/>
+      <circle cx="148" cy="48" r="18" fill="none" stroke="#1d4e89" stroke-width="3"/>
+      <path d="M160 60 L174 74" stroke="#1d4e89" stroke-width="3"/>
+      <path d="M118 28 l8 -16 6 8 10 -4" fill="none" stroke="#1d4e89" stroke-width="1.6"/>
+    </g>
+    <rect x="520" y="490" width="340" height="82" rx="14" fill="#d7e7f7" stroke="#1d4e89" stroke-width="1.6"/>
+    <g transform="translate(548,508)">
+      <ellipse cx="28" cy="22" rx="28" ry="10" fill="none" stroke="#0d2f6b" stroke-width="2"/>
+      <path d="M0 22 v28 a28 10 0 0 0 56 0 v-28" fill="none" stroke="#0d2f6b" stroke-width="2"/>
+      <ellipse cx="28" cy="50" rx="28" ry="10" fill="none" stroke="#0d2f6b" stroke-width="2"/>
+    </g>
+    <text x="700" y="528" text-anchor="middle" font-size="16" font-weight="700">System Database</text>
+    <text x="700" y="550" text-anchor="middle" font-size="14" fill="#3d628f">(Anonymized operational data)</text>
+
+    <!-- university db -->
+    <rect x="1092" y="168" width="286" height="168" rx="16" fill="#f3f8fd" stroke="#1d4e89" stroke-width="2"/>
+    <text x="1235" y="196" text-anchor="middle" font-size="16" font-weight="700">University Registration</text>
+    <text x="1235" y="216" text-anchor="middle" font-size="16" font-weight="700">Database</text>
+    <g transform="translate(1204,230)">
+      <ellipse cx="28" cy="12" rx="28" ry="10" fill="#d7e7f7" stroke="#0d2f6b" stroke-width="2"/>
+      <path d="M0 12 v22 a28 10 0 0 0 56 0 v-22" fill="#e7f1fb" stroke="#0d2f6b" stroke-width="2"/>
+      <path d="M0 24 a28 10 0 0 0 56 0" fill="none" stroke="#0d2f6b" stroke-width="1.4"/>
+      <ellipse cx="28" cy="34" rx="28" ry="10" fill="none" stroke="#0d2f6b" stroke-width="2"/>
+    </g>
+    <text x="1235" y="316" text-anchor="middle" font-size="13" fill="#3d628f">(Live records — outside)</text>
+
+    <!-- students -->
+    <rect x="1092" y="430" width="286" height="168" rx="16" fill="#f3f8fd" stroke="#1d4e89" stroke-width="2"/>
+    <text x="1235" y="460" text-anchor="middle" font-size="16" font-weight="700">Students</text>
+    <g transform="translate(1188,476)">
+      <circle cx="16" cy="10" r="8" fill="#1d4e89"/>
+      <path d="M2 36 Q16 20 30 36" fill="#1d4e89"/>
+      <circle cx="48" cy="10" r="8" fill="#2f6cb5"/>
+      <path d="M34 36 Q48 20 62 36" fill="#2f6cb5"/>
+      <circle cx="80" cy="10" r="8" fill="#49a0e6"/>
+      <path d="M66 36 Q80 20 94 36" fill="#49a0e6"/>
+    </g>
+    <text x="1235" y="560" text-anchor="middle" font-size="13" fill="#3d628f">(SPR only — no cohort</text>
+    <text x="1235" y="576" text-anchor="middle" font-size="13" fill="#3d628f">risk list)</text>
+
+    <!-- arrows CEIT -->
+    <line x1="300" y1="220" x2="428" y2="250" stroke="#1d4e89" stroke-width="2.2" marker-end="url(#arr)"/>
+    <line x1="428" y1="292" x2="300" y2="262" stroke="#1d4e89" stroke-width="2.2" marker-end="url(#arr)"/>
+    <rect x="308" y="188" width="116" height="34" rx="4" fill="#fff"/>
+    <text x="366" y="202" text-anchor="middle" font-size="11" font-weight="650" fill="#1d4e89">Files, filters, notes</text>
+    <text x="366" y="216" text-anchor="middle" font-size="11" font-weight="650" fill="#1d4e89">and credentials</text>
+    <rect x="308" y="292" width="116" height="34" rx="4" fill="#fff"/>
+    <text x="366" y="306" text-anchor="middle" font-size="11" font-weight="650" fill="#1d4e89">Dashboards, alerts,</text>
+    <text x="366" y="320" text-anchor="middle" font-size="11" font-weight="650" fill="#1d4e89">referrals, reports</text>
+
+    <!-- arrows OASFA -->
+    <line x1="300" y1="470" x2="428" y2="500" stroke="#1d4e89" stroke-width="2.2" marker-end="url(#arr)"/>
+    <line x1="428" y1="542" x2="300" y2="512" stroke="#1d4e89" stroke-width="2.2" marker-end="url(#arr)"/>
+    <rect x="308" y="448" width="116" height="34" rx="4" fill="#fff"/>
+    <text x="366" y="462" text-anchor="middle" font-size="11" font-weight="650" fill="#1d4e89">Scholarship and</text>
+    <text x="366" y="476" text-anchor="middle" font-size="11" font-weight="650" fill="#1d4e89">referral context</text>
+    <rect x="308" y="548" width="116" height="34" rx="4" fill="#fff"/>
+    <text x="366" y="562" text-anchor="middle" font-size="11" font-weight="650" fill="#1d4e89">Insights and</text>
+    <text x="366" y="576" text-anchor="middle" font-size="11" font-weight="650" fill="#1d4e89">referral reports</text>
+
+    <!-- optional up -->
+    <line x1="620" y1="126" x2="620" y2="166" stroke="#5b7ea8" stroke-width="2" stroke-dasharray="6 5" marker-end="url(#arrDashed)" marker-start="url(#arrDashed)"/>
+    <line x1="760" y1="126" x2="760" y2="166" stroke="#5b7ea8" stroke-width="2" stroke-dasharray="6 5" marker-end="url(#arrDashed)" marker-start="url(#arrDashed)"/>
+    <text x="620" y="158" text-anchor="end" font-size="12" fill="#5b7ea8">Send OTP</text>
+    <text x="772" y="158" font-size="12" fill="#5b7ea8">Request assistance</text>
+
+    <!-- university restricted -->
+    <line x1="950" y1="250" x2="1090" y2="230" stroke="#5b7ea8" stroke-width="2" stroke-dasharray="6 5"/>
+    <circle cx="1020" cy="240" r="16" fill="#fff" stroke="#d64545" stroke-width="2.4"/>
+    <line x1="1009" y1="251" x2="1031" y2="229" stroke="#d64545" stroke-width="2.4"/>
+    <text x="1020" y="206" text-anchor="middle" font-size="12" font-weight="700" fill="#9b2c2c">No direct access</text>
+    <text x="1020" y="276" text-anchor="middle" font-size="12" fill="#3d628f">Exported files only</text>
+
+    <!-- students -->
+    <line x1="1090" y1="478" x2="952" y2="508" stroke="#1d4e89" stroke-width="2.2" marker-end="url(#arr)"/>
+    <line x1="952" y1="548" x2="1090" y2="518" stroke="#1d4e89" stroke-width="2.2" marker-end="url(#arr)"/>
+    <rect x="956" y="448" width="128" height="20" rx="4" fill="#fff"/>
+    <text x="1020" y="462" text-anchor="middle" font-size="11" font-weight="650" fill="#1d4e89">SPR form or token</text>
+    <rect x="956" y="552" width="128" height="20" rx="4" fill="#fff"/>
+    <text x="1020" y="566" text-anchor="middle" font-size="11" font-weight="650" fill="#1d4e89">Saved SPR only</text>
+  </svg>
+  <div class="legend">
+    <strong style="color:#0d2f6b">Legend:</strong>
+    <span class="lg"><svg width="54" height="14"><line x1="2" y1="7" x2="42" y2="7" stroke="#1d4e89" stroke-width="2.2"/><path d="M42 2 L52 7 L42 12 Z" fill="#1d4e89"/></svg> Data flow</span>
+    <span class="lg"><svg width="54" height="14"><line x1="2" y1="7" x2="46" y2="7" stroke="#5b7ea8" stroke-width="2" stroke-dasharray="5 4"/></svg> Optional flow</span>
+    <span class="lg"><svg width="22" height="22"><circle cx="11" cy="11" r="8" fill="none" stroke="#d64545" stroke-width="2"/><line x1="6" y1="16" x2="16" y2="6" stroke="#d64545" stroke-width="2"/></svg> Restricted access</span>
+  </div>
+</div>
+</body>
+</html>

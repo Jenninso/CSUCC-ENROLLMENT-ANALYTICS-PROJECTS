@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Figure 4. ERD</title>
+<style>
+  body { margin: 0; background: #fff; font-family: "Segoe UI", Calibri, Arial, sans-serif; color: #16325c; }
+  .sheet { width: 1500px; height: 1040px; padding: 22px 26px 16px; position: relative; }
+  .title-wrap { text-align: center; }
+  h1 { display: inline-block; margin: 0; background: #0d2f6b; color: #fff; font-size: 32px; font-weight: 700; border-radius: 16px; padding: 8px 32px; }
+  .sub { margin: 6px 0 0; color: #1d4a86; font-size: 18px; font-weight: 650; }
+  svg { position: absolute; left: 18px; top: 100px; }
+  .legend { position: absolute; left: 26px; right: 26px; bottom: 14px; background: #eef3f8; border-radius: 14px; height: 48px; display: flex; align-items: center; gap: 22px; padding: 0 18px; font-size: 15px; }
+</style>
+</head>
+<body>
+<div class="sheet">
+  <div class="title-wrap">
+    <h1>Entity Relationship Diagram</h1>
+    <p class="sub">College structure, term records, and the prediction workflow</p>
+  </div>
+  <svg width="1460" height="860" viewBox="0 0 1460 860">
+    <defs>
+      <marker id="c" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="8" markerHeight="8" orient="auto">
+        <path d="M0 1 L10 5 L0 9" fill="none" stroke="#1d4e89" stroke-width="1.4"/>
+      </marker>
+    </defs>
+    <g font-family="Segoe UI, Calibri, Arial" font-size="12">
+      <!-- boxes -->
+      <g>
+        <rect x="20" y="20" width="200" height="118" rx="8" fill="#fff" stroke="#0d2f6b" stroke-width="2"/>
+        <rect x="20" y="20" width="200" height="26" rx="8" fill="#0d2f6b"/>
+        <text x="120" y="38" text-anchor="middle" fill="#fff" font-weight="700">ROLE</text>
+        <text x="32" y="64">PK role_id</text>
+        <text x="32" y="82">role_name</text>
+        <text x="32" y="100">description</text>
+      </g>
+      <g>
+        <rect x="360" y="20" width="210" height="150" rx="8" fill="#fff" stroke="#0d2f6b" stroke-width="2"/>
+        <rect x="360" y="20" width="210" height="26" rx="8" fill="#0d2f6b"/>
+        <text x="465" y="38" text-anchor="middle" fill="#fff" font-weight="700">USER</text>
+        <text x="372" y="64">PK user_id</text>
+        <text x="372" y="82">FK role_id</text>
+        <text x="372" y="100">username, email</text>
+        <text x="372" y="118">status</text>
+        <text x="372" y="136">must_change_password</text>
+      </g>
+      <g>
+        <rect x="700" y="20" width="210" height="100" rx="8" fill="#fff" stroke="#0d2f6b" stroke-width="2"/>
+        <rect x="700" y="20" width="210" height="26" rx="8" fill="#0d2f6b"/>
+        <text x="805" y="38" text-anchor="middle" fill="#fff" font-weight="700">PERMISSION</text>
+        <text x="712" y="64">PK permission_id</text>
+        <text x="712" y="82">key, name, module</text>
+      </g>
+      <g>
+        <rect x="20" y="220" width="210" height="132" rx="8" fill="#fff" stroke="#0d2f6b" stroke-width="2"/>
+        <rect x="20" y="220" width="210" height="26" rx="8" fill="#0d2f6b"/>
+        <text x="125" y="238" text-anchor="middle" fill="#fff" font-weight="700">COLLEGE</text>
+        <text x="32" y="264">PK college_id</text>
+        <text x="32" y="282">college_code</text>
+        <text x="32" y="300">college_name</text>
+      </g>
+      <g>
+        <rect x="300" y="220" width="220" height="132" rx="8" fill="#fff" stroke="#0d2f6b" stroke-width="2"/>
+        <rect x="300" y="220" width="220" height="26" rx="8" fill="#0d2f6b"/>
+        <text x="410" y="238" text-anchor="middle" fill="#fff" font-weight="700">DEPARTMENT</text>
+        <text x="312" y="264">PK department_id</text>
+        <text x="312" y="282">FK college_id</text>
+        <text x="312" y="300">department_name</text>
+      </g>
+      <g>
+        <rect x="590" y="220" width="210" height="132" rx="8" fill="#fff" stroke="#0d2f6b" stroke-width="2"/>
+        <rect x="590" y="220" width="210" height="26" rx="8" fill="#0d2f6b"/>
+        <text x="695" y="238" text-anchor="middle" fill="#fff" font-weight="700">PROGRAM</text>
+        <text x="602" y="264">PK program_id</text>
+        <text x="602" y="282">FK department_id</text>
+        <text x="602" y="300">program_code</text>
+      </g>
+      <g>
+        <rect x="880" y="200" width="250" height="168" rx="8" fill="#fff" stroke="#0d2f6b" stroke-width="2"/>
+        <rect x="880" y="200" width="250" height="26" rx="8" fill="#0d2f6b"/>
+        <text x="1005" y="218" text-anchor="middle" fill="#fff" font-weight="700">ACADEMIC YEAR / SEMESTER</text>
+        <text x="892" y="246">PK academic_year_id</text>
+        <text x="892" y="264">PK semester_id</text>
+        <text x="892" y="282">year_name, semester_name</text>
+        <text x="892" y="308">Label every term-bound row</text>
+      </g>
+      <g>
+        <rect x="200" y="430" width="300" height="210" rx="8" fill="#fff" stroke="#0d2f6b" stroke-width="2"/>
+        <rect x="200" y="430" width="300" height="26" rx="8" fill="#0d2f6b"/>
+        <text x="350" y="448" text-anchor="middle" fill="#fff" font-weight="700">STUDENT RECORD</text>
+        <text x="212" y="474">PK id</text>
+        <text x="212" y="492">student_id (surrogate on shared screens)</text>
+        <text x="212" y="510">FK program_id, academic_year_id, semester_id</text>
+        <text x="212" y="528">year_level, section, age</text>
+        <text x="212" y="546">gpa, attendance_percent</text>
+        <text x="212" y="564">failed_subjects, scholarship_status</text>
+        <text x="212" y="582">risk_level (High / Medium / Low)</text>
+        <text x="212" y="612">Unique per student and term</text>
+      </g>
+      <g>
+        <rect x="560" y="430" width="270" height="168" rx="8" fill="#fff" stroke="#0d2f6b" stroke-width="2"/>
+        <rect x="560" y="430" width="270" height="26" rx="8" fill="#0d2f6b"/>
+        <text x="695" y="448" text-anchor="middle" fill="#fff" font-weight="700">ENROLLMENT RECORD</text>
+        <text x="572" y="474">PK id</text>
+        <text x="572" y="492">FK year, semester, college,</text>
+        <text x="572" y="510">department, program</text>
+        <text x="572" y="528">year_level, enrollment_type</text>
+        <text x="572" y="546">enrollment_count</text>
+      </g>
+      <g>
+        <rect x="880" y="430" width="250" height="150" rx="8" fill="#fff" stroke="#0d2f6b" stroke-width="2"/>
+        <rect x="880" y="430" width="250" height="26" rx="8" fill="#0d2f6b"/>
+        <text x="1005" y="448" text-anchor="middle" fill="#fff" font-weight="700">SPR APPLICATION</text>
+        <text x="892" y="474">PK id</text>
+        <text x="892" y="492">public token</text>
+        <text x="892" y="510">profile fields, signature</text>
+        <text x="892" y="528">status</text>
+      </g>
+      <g>
+        <rect x="20" y="680" width="250" height="130" rx="8" fill="#fff" stroke="#0d2f6b" stroke-width="2"/>
+        <rect x="20" y="680" width="250" height="26" rx="8" fill="#0d2f6b"/>
+        <text x="145" y="698" text-anchor="middle" fill="#fff" font-weight="700">FORECAST</text>
+        <text x="32" y="724">PK id</text>
+        <text x="32" y="742">FK program_id, college_id</text>
+        <text x="32" y="760">predicted_enrollment</text>
+        <text x="32" y="778">lower_bound, upper_bound</text>
+      </g>
+      <g>
+        <rect x="300" y="690" width="250" height="120" rx="8" fill="#fff" stroke="#0d2f6b" stroke-width="2"/>
+        <rect x="300" y="690" width="250" height="26" rx="8" fill="#0d2f6b"/>
+        <text x="425" y="708" text-anchor="middle" fill="#fff" font-weight="700">ALERT / AI INSIGHT</text>
+        <text x="312" y="734">PK id</text>
+        <text x="312" y="752">title, severity, metric</text>
+        <text x="312" y="770">generated notice</text>
+      </g>
+      <g>
+        <rect x="580" y="680" width="270" height="140" rx="8" fill="#fff" stroke="#0d2f6b" stroke-width="2"/>
+        <rect x="580" y="680" width="270" height="26" rx="8" fill="#0d2f6b"/>
+        <text x="715" y="698" text-anchor="middle" fill="#fff" font-weight="700">INTERVENTION</text>
+        <text x="592" y="724">PK id</text>
+        <text x="592" y="742">FK student record, acting user</text>
+        <text x="592" y="760">action taken</text>
+        <text x="592" y="778">financial or scholarship referral</text>
+      </g>
+      <g>
+        <rect x="890" y="680" width="280" height="130" rx="8" fill="#fff" stroke="#0d2f6b" stroke-width="2"/>
+        <rect x="890" y="680" width="280" height="26" rx="8" fill="#0d2f6b"/>
+        <text x="1030" y="698" text-anchor="middle" fill="#fff" font-weight="700">AUDIT LOG / LOGIN LOG</text>
+        <text x="902" y="724">PK id</text>
+        <text x="902" y="742">FK user_id</text>
+        <text x="902" y="760">action, timestamp</text>
+      </g>
+    </g>
+    <!-- relationships -->
+    <g stroke="#1d4e89" fill="#1d4e89" stroke-width="1.6" font-size="12" font-weight="700">
+      <line x1="220" y1="70" x2="360" y2="70"/>
+      <text x="280" y="62" text-anchor="middle">1</text>
+      <text x="340" y="62" text-anchor="middle">N</text>
+      <line x1="570" y1="70" x2="700" y2="70"/>
+      <text x="610" y="62">N</text>
+      <text x="680" y="62">N</text>
+      <line x1="230" y1="270" x2="300" y2="270"/>
+      <text x="250" y="262">1</text>
+      <text x="286" y="262">N</text>
+      <line x1="520" y1="270" x2="590" y2="270"/>
+      <text x="536" y="262">1</text>
+      <text x="572" y="262">N</text>
+      <line x1="695" y1="352" x2="350" y2="430"/>
+      <text x="500" y="390">1</text>
+      <text x="380" y="420">N</text>
+      <line x1="500" y1="640" x2="680" y2="680"/>
+      <text x="560" y="656">1</text>
+      <text x="668" y="674">N</text>
+      <text x="900" y="400" font-size="12" font-weight="600">Year and semester label both term tables, 1 to N.</text>
+      <text x="900" y="640" font-size="12" font-weight="600">User 1 to N audit log. SPR stands beside the student, not inside the score.</text>
+    </g>
+  </svg>
+  <div class="legend">
+    <strong style="color:#0d2f6b">Legend:</strong>
+    <span>1 — one</span>
+    <span>N — many</span>
+    <span>PK primary key</span>
+    <span>FK foreign key</span>
+    <span>Role–permission is many-to-many. Shared screens show the student identifier, not a full personal name.</span>
+  </div>
+</div>
+</body>
+</html>

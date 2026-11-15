@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Figure 5. System Architecture</title>
+<style>
+  body { margin: 0; background: #fff; font-family: "Segoe UI", Calibri, Arial, sans-serif; color: #16325c; }
+  .sheet { width: 1440px; height: 980px; padding: 22px 36px 16px; }
+  .title-wrap { text-align: center; }
+  h1 { display: inline-block; margin: 0; background: #0d2f6b; color: #fff; font-size: 32px; font-weight: 700; border-radius: 16px; padding: 8px 32px; }
+  .sub { margin: 6px 0 16px; color: #1d4a86; font-size: 18px; font-weight: 650; }
+  .stack { width: 860px; margin: 0 auto; }
+  .layer { border: 2px solid #0d2f6b; border-radius: 14px; background: #f4f8fd; margin-bottom: 8px; padding: 10px 16px 12px; }
+  .layer strong { display: block; color: #0d2f6b; font-size: 15px; margin-bottom: 6px; }
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; }
+  .chip { background: #fff; border: 1.5px solid #1d4e89; border-radius: 999px; padding: 6px 12px; font-size: 13.5px; font-weight: 650; }
+  .arrow { text-align: center; color: #1d4e89; font-size: 18px; line-height: 1; margin: 0 0 6px; font-weight: 700; }
+  .side { display: flex; gap: 16px; width: 1100px; margin: 8px auto 0; }
+  .opt { flex: 1; border: 2px dashed #7aa0cc; border-radius: 14px; padding: 12px 14px; background: #f7fbff; }
+  .opt strong { color: #1d4e89; }
+  .ban { flex: 1; border: 2px solid #d64545; border-radius: 14px; padding: 12px 14px; background: #fff7f7; }
+  .legend { margin-top: 14px; background: #eef3f8; border-radius: 14px; padding: 10px 16px; font-size: 14px; }
+</style>
+</head>
+<body>
+<div class="sheet">
+  <div class="title-wrap">
+    <h1>System Architecture</h1>
+    <p class="sub">Laravel model–view–controller, with scoring kept in replaceable services</p>
+  </div>
+  <div class="stack">
+    <div class="layer">
+      <strong>Browser</strong>
+      <div class="chips">
+        <span class="chip">Blade pages</span>
+        <span class="chip">Sidebar navigation</span>
+        <span class="chip">Charts drawn in the browser</span>
+        <span class="chip">PDF and Excel download</span>
+      </div>
+    </div>
+    <div class="arrow">↓ HTTPS · only path into the application</div>
+    <div class="layer">
+      <strong>Web server</strong>
+      <div class="chips"><span class="chip">Apache</span><span class="chip">PHP 8.3</span><span class="chip">Laravel routes</span></div>
+    </div>
+    <div class="arrow">↓</div>
+    <div class="layer">
+      <strong>Middleware</strong>
+      <div class="chips">
+        <span class="chip">Authentication</span>
+        <span class="chip">Active account</span>
+        <span class="chip">Account setup</span>
+        <span class="chip">Permission check</span>
+        <span class="chip">Student scope</span>
+      </div>
+    </div>
+    <div class="arrow">↓</div>
+    <div class="layer">
+      <strong>Controllers — thin</strong>
+      <div class="chips">
+        <span class="chip">Dashboard</span>
+        <span class="chip">Students &amp; enrollment</span>
+        <span class="chip">SPR</span>
+        <span class="chip">At-risk</span>
+        <span class="chip">Forecast</span>
+        <span class="chip">Analytics</span>
+        <span class="chip">Reports</span>
+        <span class="chip">Accounts</span>
+      </div>
+    </div>
+    <div class="arrow">↓</div>
+    <div class="layer" style="background:#e7f1fb;">
+      <strong>Services — where the model lives</strong>
+      <div class="chips">
+        <span class="chip">Random Forest regressor</span>
+        <span class="chip">Forecast service</span>
+        <span class="chip">Student risk analysis</span>
+        <span class="chip">Attrition service</span>
+        <span class="chip">Analytics service</span>
+        <span class="chip">Import and reports</span>
+        <span class="chip">Assistant service</span>
+      </div>
+    </div>
+    <div class="arrow">↓</div>
+    <div class="layer">
+      <strong>Persistence</strong>
+      <div class="chips">
+        <span class="chip">Eloquent models</span>
+        <span class="chip">PostgreSQL</span>
+        <span class="chip">Same stored scores feed the screen and the export</span>
+      </div>
+    </div>
+  </div>
+  <div class="side">
+    <div class="opt">
+      <strong>Optional, outside the core</strong>
+      <div class="chips" style="margin-top:8px;">
+        <span class="chip">Mail service — OTP</span>
+        <span class="chip">Assistant model — drafted replies</span>
+      </div>
+    </div>
+    <div class="ban">
+      <strong style="color:#9b2c2c;">Not connected</strong>
+      <p style="margin:6px 0 0;font-size:14px;">University registration database. The pilot reads exported files only. A retrained forest or a revised program list is a service and data change, not a new screen.</p>
+    </div>
+  </div>
+  <div class="legend"><strong style="color:#0d2f6b">Request path:</strong> Browser → Apache → middleware → controller → service → PostgreSQL. The browser never talks to the database.</div>
+</div>
+</body>
+</html>

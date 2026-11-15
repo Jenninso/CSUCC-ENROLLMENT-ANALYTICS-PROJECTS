@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Figure 3. Level 1 DFD</title>
+<style>
+  body { margin: 0; background: #fff; font-family: "Segoe UI", Calibri, Arial, sans-serif; color: #16325c; }
+  .sheet { width: 1500px; height: 860px; padding: 22px 28px 16px; }
+  .title-wrap { text-align: center; }
+  h1 { display: inline-block; margin: 0; background: #0d2f6b; color: #fff; font-size: 30px; font-weight: 700; border-radius: 16px; padding: 8px 28px; }
+  .sub { margin: 8px 0 14px; color: #1d4a86; font-size: 18px; font-weight: 650; }
+  .row { display: flex; gap: 18px; }
+  .panel { flex: 1; border: 2px solid #0d2f6b; border-radius: 16px; background: #f7fbff; padding: 14px 16px 18px; }
+  .panel h2 { margin: 0 0 12px; text-align: center; color: #0d2f6b; font-size: 18px; }
+  .step { display: flex; align-items: center; gap: 8px; margin: 8px 0; }
+  .bubble { width: 168px; height: 64px; border-radius: 40px; border: 2px solid #0d2f6b; background: #e7f1fb; display: flex; align-items: center; justify-content: center; text-align: center; font-size: 13px; font-weight: 700; line-height: 1.15; flex: 0 0 168px; }
+  .arrow { color: #1d4e89; font-weight: 700; font-size: 18px; }
+  .tag { font-size: 12px; color: #1d4e89; font-weight: 650; width: 150px; }
+  .store { margin-top: 10px; border-top: 2px solid #0d2f6b; border-bottom: 2px solid #0d2f6b; background: #fff; padding: 8px 10px; font-weight: 700; font-size: 13px; }
+  .back { margin-top: 8px; font-size: 13px; color: #1d4e89; }
+  .legend { margin-top: 14px; background: #eef3f8; border-radius: 14px; padding: 10px 16px; font-size: 14px; }
+</style>
+</head>
+<body>
+<div class="sheet">
+  <div class="title-wrap">
+    <h1>Data Flow Diagram — Level 1</h1>
+    <p class="sub">Import is committed only after a preview. A risk band can be traced back to a feature.</p>
+  </div>
+  <div class="row">
+    <section class="panel">
+      <h2>2.0 Data Management — import</h2>
+      <div class="step"><span class="tag">CSV or Excel file</span><span class="arrow">→</span><div class="bubble">2.1<br>Parse the file</div></div>
+      <div class="step"><span class="tag">Parsed rows</span><span class="arrow">→</span><div class="bubble">2.2<br>Validate columns and values</div></div>
+      <div class="step"><span class="tag">Valid rows, and the error list</span><span class="arrow">→</span><div class="bubble">2.3<br>Show the preview</div></div>
+      <div class="step"><span class="tag">Confirmed preview only</span><span class="arrow">→</span><div class="bubble">2.4<br>Commit</div></div>
+      <div class="store">D1 Student and enrollment records &nbsp;&nbsp; D2 SPR applications</div>
+      <p class="back">Rows with a missing identifier or an impossible value return to the staff user. They are not written.</p>
+    </section>
+    <section class="panel">
+      <h2>4.0 Attrition scoring</h2>
+      <div class="step"><span class="tag">D1 academic features</span><span class="arrow">→</span><div class="bubble">4.1<br>Prepare features</div></div>
+      <div class="step"><span class="tag">Grade, attendance, failed subjects, year, age</span><span class="arrow">→</span><div class="bubble">4.2<br>Random Forest predict</div></div>
+      <div class="step"><span class="tag">Score</span><span class="arrow">→</span><div class="bubble">4.3<br>Band High, Medium, or Low</div></div>
+      <div class="step"><span class="tag">Band plus contributing features</span><span class="arrow">→</span><div class="bubble">4.4<br>Explain the flag</div></div>
+      <div class="store">D4 Alerts and the student risk view</div>
+      <p class="back">The adviser sees the band first and the features that dominated it second. The forest is not stored as a label with no source.</p>
+    </section>
+  </div>
+  <div class="legend"><strong style="color:#0d2f6b">Legend:</strong> Oval — Level 1 process. Arrow — data flow into the next step. Open bar — data store written or read. A single period is not enough for the enrollment forecast; that check stays in process 5.0.</div>
+</div>
+</body>
+</html>

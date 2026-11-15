@@ -20,6 +20,12 @@ class StudentRiskAnalysis
 
     public const LEVELS = ['low', 'moderate', 'high', 'critical'];
 
+    public function __construct(
+        private ?SubjectCurriculumService $curriculum = null
+    ) {
+        $this->curriculum ??= app(SubjectCurriculumService::class);
+    }
+
     /**
      * Latest academic term for every student, with SPR context attached.
      *
@@ -145,6 +151,12 @@ class StudentRiskAnalysis
             'student_type' => $record->student_type,
         ]);
 
+        $struggling = '';
+        if ((int) $record->failed_subjects > 0) {
+            $subData = $this->curriculum->forStudentRecord($record);
+            $struggling = $subData['summary']['struggling_subjects_text'] ?? '';
+        }
+
         return [
             'student_record_id' => (int) $record->id,
             'student_id' => (string) $record->student_id,
@@ -156,6 +168,7 @@ class StudentRiskAnalysis
             'gpa' => (float) $record->gpa,
             'attendance' => (float) $record->attendance_percent,
             'failed_subjects' => (int) $record->failed_subjects,
+            'struggling_subjects' => $struggling,
             'level' => $level,
             'level_label' => StudentRecord::RISK_LEVELS[$level] ?? ucfirst($level),
             'enrolled' => StudentRecord::ENROLLED_STATUSES[$record->enrolled_status] ?? ucfirst((string) $record->enrolled_status),
@@ -259,6 +272,7 @@ class StudentRiskAnalysis
             'spr' => $context['spr'],
             'narrative' => $this->narrative($level, $academicLevel, $sharpDecline, $indicators, $context['factors']),
             'recommendations' => $recommendations,
+            'subject_analysis' => $this->curriculum->forStudentRecord($current),
             'history' => $ordered->map(fn (StudentRecord $row) => [
                 'id' => $row->id,
                 'term' => trim(($row->academicYear?->academic_year ?? '').' '.($row->semester?->semester_name ?? '')),

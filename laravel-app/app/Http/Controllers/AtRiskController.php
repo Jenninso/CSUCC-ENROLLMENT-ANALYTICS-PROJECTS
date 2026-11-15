@@ -21,6 +21,7 @@ class AtRiskController extends Controller
             'summary' => $listing['summary'],
             'students' => $listing['students'],
             'programs' => $listing['programs'],
+            'cohortHeatmap' => app(\App\Services\SubjectCurriculumService::class)->cohortHeatmap(),
         ]);
     }
 

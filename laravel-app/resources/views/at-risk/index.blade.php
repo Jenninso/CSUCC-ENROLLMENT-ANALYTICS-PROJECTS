@@ -197,6 +197,61 @@
     </div>
 </div>
 
+@if(!empty($cohortHeatmap['rows']))
+<div class="ui-panel p-5 mb-6">
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-3">
+        <div>
+            <div class="flex items-center gap-2">
+                <span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-indigo-100 text-indigo-800">Diagnostics</span>
+                <h3 class="text-base font-semibold text-gray-900">Subject Difficulty Heatmap by Course & Year</h3>
+            </div>
+            <p class="risk-note">Average number of failed subjects by program and year level. Darker red indicates curriculum bottlenecks where students struggle most.</p>
+        </div>
+        <div class="flex items-center gap-1.5 text-xs text-gray-500 self-start sm:self-auto">
+            <span>Low Risk</span>
+            <span class="inline-block w-3.5 h-3.5 rounded" style="background: #ecfdf5; border: 1px solid #a7f3d0;"></span>
+            <span class="inline-block w-3.5 h-3.5 rounded" style="background: #fee2e2; border: 1px solid #fca5a5;"></span>
+            <span class="inline-block w-3.5 h-3.5 rounded" style="background: #b91c1c;"></span>
+            <span>Critical</span>
+        </div>
+    </div>
+    <div class="overflow-x-auto">
+        <table class="w-full text-xs">
+            <thead>
+                <tr class="text-left text-gray-500 border-b border-gray-200">
+                    <th class="py-2 pr-3 font-semibold">Course</th>
+                    @foreach(($cohortHeatmap['levels'] ?? [1, 2, 3, 4]) as $level)
+                        <th class="py-2 px-2 font-semibold">Year {{ $level }}</th>
+                    @endforeach
+                </tr>
+            </thead>
+            <tbody>
+                @foreach(($cohortHeatmap['rows'] ?? []) as $row)
+                <tr class="border-b border-gray-50 last:border-0 hover:bg-gray-50/50">
+                    <td class="py-2 pr-3 font-semibold text-gray-800">{{ $row['program'] }}</td>
+                    @foreach($cohortHeatmap['levels'] as $level)
+                        @php
+                            $cell = $row['cells'][$level] ?? null;
+                            $failed = $cell['failed'] ?? 0;
+                            $max = max(0.01, (float) ($cohortHeatmap['max'] ?? 1));
+                            $mix = (int) round(($failed / $max) * 75);
+                        @endphp
+                        <td class="py-1.5 px-2">
+                            <span class="inline-flex min-w-16 justify-center rounded px-2.5 py-1 text-xs font-semibold"
+                                  style="background: color-mix(in srgb, #b91c1c {{ $mix }}%, #ecfdf5); color: {{ $mix > 45 ? '#ffffff' : '#1f2937' }};"
+                                  title="{{ $cell['students'] ?? 0 }} students enrolled">
+                                {{ $cell ? number_format($failed, 2) : '—' }}
+                            </span>
+                        </td>
+                    @endforeach
+                </tr>
+                @endforeach
+            </tbody>
+        </table>
+    </div>
+</div>
+@endif
+
 <div class="ui-panel overflow-hidden">
     <div class="px-5 py-4 border-b border-gray-100">
         <h3 class="text-base font-semibold">Student list</h3>
@@ -261,7 +316,23 @@
                     <td>{{ $row['program'] }} · {{ $row['year_label'] }} {{ $row['section'] }}</td>
                     <td class="tabular-nums">{{ number_format($row['gpa'], 2) }}</td>
                     <td class="tabular-nums">{{ number_format($row['attendance'], 1) }}%</td>
-                    <td>{{ $row['failed_subjects'] }}</td>
+                    <td>
+                        @if($row['failed_subjects'] > 0)
+                            <div class="flex flex-col">
+                                <span class="inline-flex items-center gap-1 font-bold text-red-600 text-xs">
+                                    <span class="w-1.5 h-1.5 rounded-full bg-red-600"></span>
+                                    {{ $row['failed_subjects'] }} failed
+                                </span>
+                                @if(!empty($row['struggling_subjects']))
+                                    <span class="text-[11px] text-red-700 font-medium max-w-[200px] truncate" title="{{ $row['struggling_subjects'] }}">
+                                        {{ $row['struggling_subjects'] }}
+                                    </span>
+                                @endif
+                            </div>
+                        @else
+                            <span class="text-xs text-gray-500 font-mono">0</span>
+                        @endif
+                    </td>
                     <td><span class="px-2 py-0.5 rounded-full text-xs font-medium {{ \App\Models\StudentRecord::query()->make(['risk_level' => $row['level']])->riskBadgeClass() }}">{{ $row['level_label'] }}</span></td>
                     <td class="text-right"><a href="{{ route('at-risk.show', $row['student_record_id']) }}" class="ui-link text-xs">Open</a></td>
                 </tr>

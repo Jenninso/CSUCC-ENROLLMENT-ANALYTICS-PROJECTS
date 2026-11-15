@@ -43,6 +43,39 @@
         </tbody>
     </table>
 
+    @if(!empty($analysis['subject_analysis']['subjects']))
+    <h2>Subject Difficulties & Course Standing (Term Diagnostics)</h2>
+    @if(($analysis['subject_analysis']['summary']['failed_count'] ?? 0) > 0)
+        <p style="color: #b91c1c; font-weight: bold;">Failing in: {{ $analysis['subject_analysis']['summary']['struggling_subjects_text'] }}</p>
+    @endif
+    <table>
+        <thead>
+            <tr>
+                <th>Subject Code & Title</th>
+                <th>Category</th>
+                <th>Units</th>
+                <th>Difficulty Level</th>
+                <th>Grade</th>
+                <th>Status</th>
+                <th>Advising Recommendation</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach($analysis['subject_analysis']['subjects'] as $sub)
+            <tr style="{{ $sub['is_failed'] ? 'background-color: #fee2e2; font-weight: bold;' : ($sub['is_warning'] ? 'background-color: #fef3c7;' : '') }}">
+                <td>{{ $sub['code'] }} - {{ $sub['title'] }}</td>
+                <td>{{ $sub['category'] }}</td>
+                <td>{{ number_format($sub['units'], 1) }}</td>
+                <td>{{ $sub['difficulty_label'] }} ({{ $sub['difficulty_pct'] }}%)</td>
+                <td>{{ $sub['grade'] }}</td>
+                <td>{{ $sub['status_label'] }}</td>
+                <td>{{ $sub['recommendation'] }}</td>
+            </tr>
+            @endforeach
+        </tbody>
+    </table>
+    @endif
+
     <h2>SPR background</h2>
     @if($analysis['spr'])
         <p>Household: {{ $analysis['spr']['household'] }}. Solo parent: {{ $analysis['spr']['solo_parent'] }}. Working student: {{ $analysis['spr']['working'] }}. 4Ps: {{ $analysis['spr']['four_ps'] }}.</p>

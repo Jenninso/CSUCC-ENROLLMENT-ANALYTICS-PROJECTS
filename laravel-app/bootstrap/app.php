@@ -33,4 +33,20 @@ return Application::configure(basePath: dirname(__DIR__))
         $exceptions->shouldRenderJsonWhen(
             fn (Request $request) => $request->is('api/*') || $request->expectsJson(),
         );
+
+        // Redirect to the section's index with a friendly message when a model is not found.
+        $exceptions->render(function (\Illuminate\Database\Eloquent\ModelNotFoundException $e, Request $request) {
+            if ($request->expectsJson()) {
+                return null; // Let the default JSON handler run.
+            }
+
+            $segments = $request->segments();
+            // Build an index URL from the first two URL segments (e.g. /data-management/academic-years).
+            $indexUrl = count($segments) >= 2
+                ? url(implode('/', array_slice($segments, 0, 2)))
+                : route('dashboard');
+
+            return redirect($indexUrl)
+                ->with('error', 'The record you tried to access no longer exists. It may have been removed or the database was refreshed.');
+        });
     })->create();

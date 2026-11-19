@@ -210,20 +210,25 @@
             </form>
         </div>
         @if(! $me->isSuperAdmin() && $user->id !== $me->id)
-        <div x-show="deleteId === {{ $user->id }}" x-cloak class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-            <form method="POST" action="{{ route('users.destroy', $user) }}" class="ui-panel p-6 w-full max-w-md space-y-4 shadow-2xl">
+        <div x-show="deleteId === {{ $user->id }}" x-cloak class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 overflow-y-auto">
+            <form method="POST" action="{{ route('users.destroy', $user) }}" class="ui-panel p-6 w-full max-w-md space-y-4 shadow-2xl my-auto max-h-[min(92vh,40rem)] overflow-y-auto">
                 @csrf @method('DELETE')
-                <h3 class="font-semibold text-gray-800">Request deletion</h3>
+                <h3 class="font-semibold text-gray-800">Request account deletion</h3>
                 <p class="text-sm text-gray-500">This is sent to the Super Administrator with the account snapshot and your reason. Confirm with your email and password before sending.</p>
-                <p class="text-xs bg-slate-50 border rounded-lg p-3">
-                    {{ $user->employee_id }} · {{ $user->fullName() }} · {{ $user->email }} · {{ $user->roleName() }}
-                    <span class="block mt-1 font-medium {{ $user->isInstitutionalAccount() ? 'text-emerald-700' : 'text-slate-700' }}">{{ $user->accountCategoryLabel() }}</span>
-                </p>
-                <textarea name="reason" rows="4" required class="ui-input w-full @error('reason') border-red-500 @enderror" placeholder="Reason to delete">{{ old('reason') }}</textarea>
-                @error('reason') <p class="text-xs text-red-600 -mt-2">{{ $message }}</p> @enderror
+                <div class="text-xs bg-slate-50 border border-slate-200 rounded-lg p-3 space-y-1">
+                    <p class="font-medium text-slate-800">Account to delete</p>
+                    <p class="font-mono text-slate-700">{{ $user->employee_id }} · {{ $user->fullName() }}</p>
+                    <p class="text-slate-600">{{ $user->email }} · {{ $user->roleName() }}</p>
+                    <p class="font-medium {{ $user->isInstitutionalAccount() ? 'text-emerald-700' : 'text-slate-700' }}">{{ $user->accountCategoryLabel() }}</p>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Reason to delete</label>
+                    <textarea name="reason" rows="3" required class="ui-input w-full @error('reason') border-red-500 @enderror" placeholder="Explain why this account should be removed">{{ old('reason') }}</textarea>
+                    @error('reason') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
+                </div>
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">Your email</label>
-                    <input type="email" name="confirm_email" value="{{ old('confirm_email') }}" required autocomplete="username"
+                    <input type="email" name="confirm_email" value="{{ old('confirm_email', $me->email) }}" required autocomplete="email"
                         class="ui-input w-full @error('confirm_email') border-red-500 @enderror"
                         placeholder="{{ $me->email }}">
                     @error('confirm_email') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
@@ -235,9 +240,9 @@
                         placeholder="Current password">
                     @error('confirm_password') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
                 </div>
-                <div class="flex justify-end gap-2">
+                <div class="flex justify-end gap-2 pt-1">
                     <button type="button" @click="deleteId = null" class="ui-btn-clear">Cancel</button>
-                    <button class="ui-btn-filter" style="background: linear-gradient(135deg, #dc2626, #b91c1c);">Send to Super Admin</button>
+                    <button type="submit" class="ui-btn-filter" style="background: linear-gradient(135deg, #dc2626, #b91c1c);">Send to Super Admin</button>
                 </div>
             </form>
         </div>

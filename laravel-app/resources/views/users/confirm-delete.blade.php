@@ -38,7 +38,7 @@
 
             <div>
                 <label for="confirm_email" class="block text-sm font-medium text-gray-700 mb-1">Your email</label>
-                <input id="confirm_email" type="email" name="confirm_email" value="{{ old('confirm_email') }}" required autocomplete="username"
+                <input id="confirm_email" type="email" name="confirm_email" value="{{ old('confirm_email', $me->email) }}" required autocomplete="email"
                     class="w-full border rounded-lg px-3 py-2 text-sm @error('confirm_email') border-red-500 @enderror"
                     placeholder="{{ $me->email }}">
                 @error('confirm_email')

@@ -2,11 +2,15 @@
 
 namespace App\Services;
 
+use XMLReader;
 use ZipArchive;
 
 /**
  * Lightweight CSV / Excel (.xlsx) reader — no PhpSpreadsheet dependency.
  * Old binary .xls is not supported; save as .xlsx or .csv instead.
+ *
+ * .xlsx parsing uses XMLReader over zip:// streams so large CEIT extracts
+ * do not need the whole worksheet XML in memory at once.
  */
 class SpreadsheetFileReader
 {
@@ -74,30 +78,29 @@ class SpreadsheetFileReader
             return ['ok' => false, 'rows' => [], 'errors' => ['Unable to open the Excel file.']];
         }
 
-        $shared = [];
-        $sharedXml = $zip->getFromName('xl/sharedStrings.xml');
-        if ($sharedXml !== false) {
-            $shared = $this->parseSharedStrings($sharedXml);
-        }
-
-        $sheetXml = $zip->getFromName('xl/worksheets/sheet1.xml');
-        if ($sheetXml === false) {
-            // Fallback: first worksheet entry
+        $sheetPath = null;
+        if ($zip->locateName('xl/worksheets/sheet1.xml') !== false) {
+            $sheetPath = 'xl/worksheets/sheet1.xml';
+        } else {
             for ($i = 0; $i < $zip->numFiles; $i++) {
                 $name = $zip->getNameIndex($i);
                 if (is_string($name) && preg_match('#^xl/worksheets/sheet\d+\.xml$#', $name)) {
-                    $sheetXml = $zip->getFromIndex($i);
+                    $sheetPath = $name;
                     break;
                 }
             }
         }
+
+        $hasShared = $zip->locateName('xl/sharedStrings.xml') !== false;
         $zip->close();
 
-        if ($sheetXml === false || $sheetXml === null || $sheetXml === '') {
+        if ($sheetPath === null) {
             return ['ok' => false, 'rows' => [], 'errors' => ['No worksheet data found in the Excel file.']];
         }
 
-        $rows = $this->parseSheet($sheetXml, $shared);
+        $shared = $hasShared ? $this->parseSharedStringsFromZip($path) : [];
+        $rows = $this->parseSheetFromZip($path, $sheetPath, $shared);
+
         if ($rows === []) {
             return ['ok' => false, 'rows' => [], 'errors' => ['The Excel sheet is empty.']];
         }
@@ -108,23 +111,21 @@ class SpreadsheetFileReader
     /**
      * @return list<string>
      */
-    private function parseSharedStrings(string $xml): array
+    private function parseSharedStringsFromZip(string $path): array
     {
-        $out = [];
-        $sx = @simplexml_load_string($xml);
-        if (! $sx) {
-            return $out;
+        $reader = new XMLReader;
+        $uri = 'zip://'.$path.'#xl/sharedStrings.xml';
+        if (! @$reader->open($uri)) {
+            return [];
         }
 
-        $sx->registerXPathNamespace('m', 'http://schemas.openxmlformats.org/spreadsheetml/2006/main');
-        foreach ($sx->xpath('//m:si') ?: [] as $si) {
-            $texts = $si->xpath('.//m:t') ?: [];
-            $parts = [];
-            foreach ($texts as $t) {
-                $parts[] = (string) $t;
+        $out = [];
+        while ($reader->read()) {
+            if ($reader->nodeType === XMLReader::ELEMENT && $reader->localName === 'si') {
+                $out[] = $this->readInlineText($reader, 'si');
             }
-            $out[] = implode('', $parts);
         }
+        $reader->close();
 
         return $out;
     }
@@ -133,47 +134,52 @@ class SpreadsheetFileReader
      * @param  list<string>  $shared
      * @return list<list<string>>
      */
-    private function parseSheet(string $xml, array $shared): array
+    private function parseSheetFromZip(string $path, string $sheetPath, array $shared): array
     {
-        $sx = @simplexml_load_string($xml);
-        if (! $sx) {
+        $reader = new XMLReader;
+        $uri = 'zip://'.$path.'#'.$sheetPath;
+        if (! @$reader->open($uri)) {
             return [];
         }
 
-        $sx->registerXPathNamespace('m', 'http://schemas.openxmlformats.org/spreadsheetml/2006/main');
         $grid = [];
         $maxCol = 0;
+        $sequentialRow = 0;
 
-        foreach ($sx->xpath('//m:sheetData/m:row') ?: [] as $row) {
-            $rAttr = (int) ($row['r'] ?? 0);
-            $rowIndex = $rAttr > 0 ? $rAttr - 1 : count($grid);
-            foreach ($row->xpath('./m:c') ?: [] as $cell) {
-                $ref = (string) ($cell['r'] ?? '');
+        while ($reader->read()) {
+            if ($reader->nodeType !== XMLReader::ELEMENT || $reader->localName !== 'row') {
+                continue;
+            }
+
+            $rAttr = (int) ($reader->getAttribute('r') ?? 0);
+            $rowIndex = $rAttr > 0 ? $rAttr - 1 : $sequentialRow;
+            $sequentialRow++;
+
+            $rowXml = $reader->readOuterXml();
+            if ($rowXml === '') {
+                continue;
+            }
+
+            $rowReader = new XMLReader;
+            $rowReader->xml($rowXml, null, LIBXML_NONET | LIBXML_COMPACT);
+            while ($rowReader->read()) {
+                if ($rowReader->nodeType !== XMLReader::ELEMENT || $rowReader->localName !== 'c') {
+                    continue;
+                }
+
+                $ref = (string) ($rowReader->getAttribute('r') ?? '');
                 $colIndex = $this->columnIndexFromRef($ref);
                 if ($colIndex < 0) {
                     continue;
                 }
                 $maxCol = max($maxCol, $colIndex);
-                $type = (string) ($cell['t'] ?? '');
-                $value = '';
-                if (isset($cell->v)) {
-                    $raw = (string) $cell->v;
-                    if ($type === 's') {
-                        $value = $shared[(int) $raw] ?? '';
-                    } else {
-                        $value = $raw;
-                    }
-                } elseif (isset($cell->is)) {
-                    $texts = $cell->xpath('.//m:t') ?: [];
-                    $parts = [];
-                    foreach ($texts as $t) {
-                        $parts[] = (string) $t;
-                    }
-                    $value = implode('', $parts);
-                }
+                $type = (string) ($rowReader->getAttribute('t') ?? '');
+                $value = $this->readCellValue($rowReader, $type, $shared);
                 $grid[$rowIndex][$colIndex] = trim($value);
             }
+            $rowReader->close();
         }
+        $reader->close();
 
         if ($grid === []) {
             return [];
@@ -193,6 +199,51 @@ class SpreadsheetFileReader
         }
 
         return $rows;
+    }
+
+    /**
+     * @param  list<string>  $shared
+     */
+    private function readCellValue(XMLReader $reader, string $type, array $shared): string
+    {
+        $depth = $reader->depth;
+        $value = '';
+        $inline = '';
+
+        while ($reader->read() && $reader->depth > $depth) {
+            if ($reader->nodeType !== XMLReader::ELEMENT) {
+                continue;
+            }
+            if ($reader->localName === 'v') {
+                $raw = $reader->readString();
+                if ($type === 's') {
+                    $value = $shared[(int) $raw] ?? '';
+                } else {
+                    $value = $raw;
+                }
+            } elseif ($reader->localName === 't') {
+                $inline .= $reader->readString();
+            }
+        }
+
+        if ($value === '' && $inline !== '') {
+            return $inline;
+        }
+
+        return $value;
+    }
+
+    private function readInlineText(XMLReader $reader, string $untilLocalName): string
+    {
+        $depth = $reader->depth;
+        $parts = [];
+        while ($reader->read() && $reader->depth > $depth) {
+            if ($reader->nodeType === XMLReader::ELEMENT && $reader->localName === 't') {
+                $parts[] = $reader->readString();
+            }
+        }
+
+        return implode('', $parts);
     }
 
     private function columnIndexFromRef(string $ref): int

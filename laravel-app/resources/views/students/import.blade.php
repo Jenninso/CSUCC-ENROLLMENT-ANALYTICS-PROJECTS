@@ -65,6 +65,7 @@
                 <li>enrolled_status, student_type, scholarship_status, tuition_status</li>
             </ul>
             <p class="mt-2 text-xs text-slate-500">Optional: academic_standing, names, email, mobile, address. Risk level is calculated automatically. New academic years and semesters found in the file are created automatically.</p>
+            <p class="mt-2 text-xs text-slate-500">Tip: for very large CEIT extracts, upload <span class="font-semibold text-slate-700">CSV</span> when possible — it validates faster and uses less memory than .xlsx.</p>
         </div>
 
         <form method="POST" action="{{ route('students.import.preview') }}" enctype="multipart/form-data"

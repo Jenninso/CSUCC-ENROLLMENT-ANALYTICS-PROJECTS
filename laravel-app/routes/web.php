@@ -83,6 +83,9 @@ Route::middleware(['auth', 'active', 'setup', 'student.scope'])->group(function 
         Route::get('students/template', [StudentRecordController::class, 'template'])->name('students.template');
         Route::post('students/import/preview', [StudentRecordController::class, 'importPreview'])->name('students.import.preview');
         Route::post('students/import/confirm', [StudentRecordController::class, 'importCommit'])->name('students.import.confirm');
+        // GET refresh after a failed/timed-out POST used to show 405 — send users back to the form.
+        Route::get('students/import/preview', fn () => redirect()->route('students.import'));
+        Route::get('students/import/confirm', fn () => redirect()->route('students.import'));
         Route::get('students/{student}/edit', [StudentRecordController::class, 'edit'])->name('students.edit');
         Route::put('students/{student}', [StudentRecordController::class, 'update'])->name('students.update');
         Route::delete('students/{student}', [StudentRecordController::class, 'destroy'])->name('students.destroy');

@@ -105,6 +105,8 @@ class SpesApplicationTest extends TestCase
             ->get(route('spes.index'))
             ->assertOk()
             ->assertSee('Print QR')
+            ->assertSee('Export CSV')
+            ->assertSee('Import file')
             ->assertSee('data:image/svg+xml;base64,', false)
             ->assertSee('Actions')
             ->assertSee(route('spes.show', $application), false)
@@ -266,6 +268,40 @@ class SpesApplicationTest extends TestCase
         $this->assertSame('Maria', $application->fresh()->first_name);
         $this->assertStringStartsWith('data:image/png;base64,', (string) $application->spr_data['signature_image']);
         $this->get(route('spr.public.edit', 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'))->assertNotFound();
+    }
+
+    public function test_staff_can_export_and_import_spr_csv_into_the_form(): void
+    {
+        $staff = $this->officeUser(['spr.edit', 'spr.view', 'enrollment.view']);
+
+        $this->post(route('spr.public.store'), $this->payload([
+            'id_no' => '2025-09999',
+            'last_name' => 'Export',
+            'first_name' => 'Sample',
+        ]))->assertRedirect();
+
+        $csv = $this->actingAs($staff)->get(route('spes.export'));
+        $csv->assertOk();
+        $this->assertStringContainsString('last_name', $csv->streamedContent());
+        $this->assertStringContainsString('Export', $csv->streamedContent());
+
+        $importCsv = implode("\n", [
+            'last_name,first_name,middle_name,birth_date,id_no,sex_at_birth,mobile,priority_1,signature_name,status',
+            'Imported,Row,Test,2006-05-01,2025-08888,Female,09170001111,BS Information Technology,Row Test Imported,submitted',
+        ])."\n";
+
+        $file = \Illuminate\Http\UploadedFile::fake()->createWithContent('spr.csv', $importCsv);
+
+        $this->actingAs($staff)
+            ->post(route('spes.import.store'), ['file' => $file])
+            ->assertRedirect();
+
+        $imported = SpesApplication::query()->where('student_id', '2025-08888')->first();
+        $this->assertNotNull($imported);
+        $this->assertSame('Imported', $imported->last_name);
+        $this->assertSame('Row', $imported->first_name);
+        $this->assertSame('BS Information Technology', $imported->spr_data['priority_1'] ?? null);
+        $this->assertSame('09170001111', $imported->spr_data['mobile'] ?? null);
     }
 
     private function officeUser(array $permissionKeys): User

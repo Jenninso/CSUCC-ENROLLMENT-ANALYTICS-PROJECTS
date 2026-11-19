@@ -9,6 +9,12 @@
         <h3 class="ui-page-title">SPR</h3>
         <p class="ui-page-sub">Student Personal Record. The printed form is one long bond page, 8.5 × 13 inches, with the CSU Cabadbaran header.</p>
     </div>
+    <div class="flex flex-wrap gap-2 shrink-0">
+        <a href="{{ route('spes.export', request()->query()) }}" class="ui-btn-secondary">Export CSV</a>
+        @if(auth()->user()?->canAccess('spr.edit'))
+            <a href="{{ route('spes.import') }}" class="ui-btn-filter">Import file</a>
+        @endif
+    </div>
 </div>
 
 <div class="ui-panel p-4 mb-4 flex flex-col lg:flex-row lg:items-center gap-4">
@@ -63,6 +69,17 @@
         </div>
     </form>
 </div>
+
+@if(session('import_issues'))
+<div class="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 mb-4 text-sm text-amber-900">
+    <p class="font-semibold mb-1">Import notes</p>
+    <ul class="list-disc ml-5 space-y-0.5">
+        @foreach(session('import_issues') as $issue)
+            <li>{{ $issue }}</li>
+        @endforeach
+    </ul>
+</div>
+@endif
 
 <div class="ui-panel overflow-x-auto">
     <table class="ui-table">

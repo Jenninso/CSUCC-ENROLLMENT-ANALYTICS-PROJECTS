@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\SpesApplication;
 use App\Models\StudentRecord;
 use App\Services\AuditLogger;
+use App\Services\SpesImportExportService;
 use App\Services\SprPdf;
 use App\Support\SprQr;
 use Illuminate\Support\Str;
@@ -12,6 +13,8 @@ use Throwable;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
+use Symfony\Component\HttpFoundation\StreamedResponse;
+
 class SpesApplicationController extends Controller
 {
     public function index(Request $request)
@@ -149,6 +152,156 @@ class SpesApplicationController extends Controller
     public function pdf(SpesApplication $spes, SprPdf $pdf)
     {
         return $this->pdfResponse($pdf, $spes, false);
+    }
+
+    public function export(Request $request, SpesImportExportService $exporter): StreamedResponse
+    {
+        @set_time_limit(0);
+        @ini_set('memory_limit', '1024M');
+
+        $query = SpesApplication::query();
+        if ($search = trim((string) $request->query('q', ''))) {
+            $query->where(function ($inner) use ($search) {
+                $inner->where('reference_no', 'like', "%{$search}%")
+                    ->orWhere('student_id', 'like', "%{$search}%");
+            });
+        }
+        if ($request->filled('status')) {
+            $query->where('status', $request->query('status'));
+        }
+        if ($request->filled('application_year')) {
+            $query->where('application_year', $request->integer('application_year'));
+        }
+
+        $filename = 'spr_export_'.now()->format('Ymd_His').'.csv';
+
+        return response()->streamDownload(function () use ($query, $exporter) {
+            $out = fopen('php://output', 'w');
+            fwrite($out, "\xEF\xBB\xBF");
+            fputcsv($out, $exporter->headerRow());
+            $query->orderBy('id')->chunk(200, function ($rows) use ($out, $exporter) {
+                foreach ($rows as $application) {
+                    fputcsv($out, $exporter->exportRow($application));
+                }
+            });
+            fclose($out);
+        }, $filename, [
+            'Content-Type' => 'text/csv; charset=UTF-8',
+        ]);
+    }
+
+    public function template(SpesImportExportService $exporter): StreamedResponse
+    {
+        $sample = [
+            'status' => 'submitted',
+            'id_no' => '2025-01001',
+            'last_name' => 'Santos',
+            'first_name' => 'Maria',
+            'middle_name' => 'Reyes',
+            'birth_date' => '2007-03-15',
+            'age' => '19',
+            'sex_at_birth' => 'Female',
+            'civil_status' => 'Single',
+            'place_of_birth' => 'Cabadbaran City',
+            'citizenship' => 'Filipino',
+            'home_purok' => 'P-1',
+            'home_barangay' => 'Comagascas',
+            'home_city' => 'Cabadbaran City',
+            'home_province' => 'Agusan del Norte',
+            'home_zip' => '8605',
+            'mobile' => '09171234567',
+            'email' => 'maria@example.com',
+            'student_level' => 'undergraduate',
+            'admission_type' => 'new_student',
+            'preferred_campus' => 'cabadbaran',
+            'father_name' => 'Pedro Santos',
+            'father_status' => 'living',
+            'father_occupation' => 'Farmer',
+            'mother_name' => 'Ana Reyes',
+            'mother_status' => 'living',
+            'mother_occupation' => 'Vendor',
+            'secondary_school' => 'Cabadbaran City NHS',
+            'secondary_address' => 'Cabadbaran City',
+            'secondary_sy' => '2023-2024',
+            'shs_track' => 'stem',
+            'priority_1' => 'BS Information Technology',
+            'signature_name' => 'Maria Reyes Santos',
+            'application_year' => (string) now()->year,
+            'application_date' => now()->toDateString(),
+            'has_birth_certificate' => 'yes',
+            'has_enrollment_cert' => 'yes',
+            'has_grades' => 'yes',
+            'has_indigency' => 'no',
+            'has_photo' => 'yes',
+        ];
+
+        return response()->streamDownload(function () use ($exporter, $sample) {
+            $out = fopen('php://output', 'w');
+            fwrite($out, "\xEF\xBB\xBF");
+            $headers = $exporter->headerRow();
+            fputcsv($out, $headers);
+            fputcsv($out, array_map(fn (string $col) => $sample[$col] ?? '', $headers));
+            fclose($out);
+        }, 'spr_import_template.csv', [
+            'Content-Type' => 'text/csv; charset=UTF-8',
+        ]);
+    }
+
+    public function importForm()
+    {
+        return view('spes.import');
+    }
+
+    public function importStore(Request $request, SpesImportExportService $importer, AuditLogger $audit)
+    {
+        @set_time_limit(0);
+        @ini_set('memory_limit', '1024M');
+
+        $uploaded = $request->file('file');
+        if ($uploaded && ! $uploaded->isValid()) {
+            return back()->withErrors(['file' => 'The file failed to upload. Keep it under 200 MB and try again.']);
+        }
+
+        $request->validate([
+            'file' => ['required', 'file', 'extensions:csv,txt,xlsx,xls', 'max:204800'],
+        ], [
+            'file.extensions' => 'Upload a CSV or Excel (.xlsx) file.',
+            'file.max' => 'The file may be up to 200 MB.',
+        ]);
+
+        $file = $request->file('file');
+        $result = $importer->import($file->getRealPath(), $file->getClientOriginalName(), (int) $request->user()->id);
+
+        if ($result['imported'] === 0 && $result['errors'] !== []) {
+            return back()->withErrors(['file' => implode(' ', array_slice($result['errors'], 0, 8))]);
+        }
+
+        $audit->log('import', 'spes', "Imported {$result['imported']} SPR form(s) from file ({$result['skipped']} skipped).");
+
+        // One row → open that SPR form so details show on the edit screen immediately.
+        if ($result['imported'] === 1 && count($result['created_ids']) === 1) {
+            $spes = SpesApplication::query()->find($result['created_ids'][0]);
+            if ($spes && $request->user()?->canAccess('spr.edit')) {
+                return redirect()
+                    ->route('spes.edit', $spes)
+                    ->with('success', 'SPR imported. Form fields were filled from the file.')
+                    ->with('warning', $result['skipped'] ? "{$result['skipped']} row(s) skipped." : null);
+            }
+
+            return redirect()
+                ->route('spes.show', $spes)
+                ->with('success', 'SPR imported. Form details were saved from the file.');
+        }
+
+        $message = "Imported {$result['imported']} SPR form(s).";
+        if ($result['skipped'] > 0) {
+            $message .= " Skipped {$result['skipped']}.";
+        }
+
+        return redirect()
+            ->route('spes.index')
+            ->with('success', $message)
+            ->with('import_issues', array_slice($result['errors'], 0, 50));
     }
 
     private function prefillFromStudent(int $studentId): array

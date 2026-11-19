@@ -91,6 +91,9 @@ Route::middleware(['auth', 'active', 'setup', 'student.scope'])->group(function 
         Route::delete('students/{student}', [StudentRecordController::class, 'destroy'])->name('students.destroy');
     });
     Route::middleware('permission:spr.edit')->group(function () {
+        Route::get('spes/import', [SpesApplicationController::class, 'importForm'])->name('spes.import');
+        Route::post('spes/import', [SpesApplicationController::class, 'importStore'])->name('spes.import.store');
+        Route::get('spes/template', [SpesApplicationController::class, 'template'])->name('spes.template');
         Route::get('spes/{spes}/edit', [SpesApplicationController::class, 'edit'])->name('spes.edit');
         Route::put('spes/{spes}', [SpesApplicationController::class, 'update'])->name('spes.update');
         Route::put('spes/{spes}/status', [SpesApplicationController::class, 'updateStatus'])->name('spes.status');
@@ -103,6 +106,7 @@ Route::middleware(['auth', 'active', 'setup', 'student.scope'])->group(function 
     });
     Route::middleware('permission:spr.view')->group(function () {
         Route::get('spes', [SpesApplicationController::class, 'index'])->name('spes.index');
+        Route::get('spes/export', [SpesApplicationController::class, 'export'])->name('spes.export');
         Route::get('spes/share-qr', [SpesApplicationController::class, 'shareQr'])->name('spes.share-qr');
         Route::get('spes/{spes}/print', [SpesApplicationController::class, 'print'])->name('spes.print');
         Route::get('spes/{spes}/pdf', [SpesApplicationController::class, 'pdf'])->name('spes.pdf');

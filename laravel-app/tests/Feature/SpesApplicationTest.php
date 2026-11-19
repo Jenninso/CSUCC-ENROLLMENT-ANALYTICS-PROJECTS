@@ -278,12 +278,63 @@ class SpesApplicationTest extends TestCase
             'id_no' => '2025-09999',
             'last_name' => 'Export',
             'first_name' => 'Sample',
+            'mobile' => '09171234567',
+            'priority_1' => 'BS Information Technology',
+            'home_barangay' => 'Comagascas',
         ]))->assertRedirect();
 
         $csv = $this->actingAs($staff)->get(route('spes.export'));
         $csv->assertOk();
-        $this->assertStringContainsString('last_name', $csv->streamedContent());
-        $this->assertStringContainsString('Export', $csv->streamedContent());
+        $content = $csv->streamedContent();
+        $this->assertStringContainsString('last_name', $content);
+        $this->assertStringContainsString('birth_date', $content);
+        $this->assertStringContainsString('id_no', $content);
+        $this->assertStringContainsString('Export', $content);
+        $this->assertStringContainsString('Sample', $content);
+        $this->assertStringContainsString('09171234567', $content);
+        $this->assertStringContainsString('Comagascas', $content);
+
+        $template = $this->actingAs($staff)->get(route('spes.template'));
+        $template->assertOk();
+        $this->assertStringContainsString('birth_date', $template->streamedContent());
+
+        // Round-trip: re-import the exported CSV with a new Student ID so it is not skipped as duplicate.
+        $lines = preg_split("/\r\n|\n|\r/", trim($content)) ?: [];
+        $this->assertGreaterThanOrEqual(2, count($lines));
+        $header = str_getcsv((string) $lines[0]);
+        $row = str_getcsv((string) $lines[1]);
+        $this->assertCount(count($header), $row);
+        $mapped = array_combine($header, $row);
+        $this->assertIsArray($mapped);
+        $this->assertSame('Export', $mapped['last_name']);
+        $this->assertSame('Sample', $mapped['first_name']);
+        $this->assertNotSame('', $mapped['birth_date']);
+        $idIndex = array_search('id_no', $header, true);
+        $lastIndex = array_search('last_name', $header, true);
+        $this->assertNotFalse($idIndex);
+        $this->assertNotFalse($lastIndex);
+        // Change id + last name so duplicate detection (same person) does not skip the row.
+        $row[$idIndex] = '2025-07777';
+        $row[$lastIndex] = 'ExportClone';
+        $handle = fopen('php://temp', 'r+');
+        fputcsv($handle, $header);
+        fputcsv($handle, $row);
+        rewind($handle);
+        $roundTrip = stream_get_contents($handle) ?: '';
+        fclose($handle);
+
+        $file = \Illuminate\Http\UploadedFile::fake()->createWithContent('spr_roundtrip.csv', $roundTrip);
+        $this->actingAs($staff)
+            ->post(route('spes.import.store'), ['file' => $file])
+            ->assertRedirect();
+
+        $cloned = SpesApplication::query()->where('student_id', '2025-07777')->first();
+        $this->assertNotNull($cloned);
+        $this->assertSame('ExportClone', $cloned->last_name);
+        $this->assertSame('Sample', $cloned->first_name);
+        $this->assertSame('09171234567', $cloned->contact_number);
+        $this->assertSame('Comagascas', $cloned->barangay);
+        $this->assertSame('BS Information Technology', $cloned->course);
 
         $importCsv = implode("\n", [
             'last_name,first_name,middle_name,date_of_birth,student_id,sex_at_birth,mobile,priority_1,signature_name,status',

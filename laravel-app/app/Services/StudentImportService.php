@@ -118,18 +118,42 @@ class StudentImportService
         $valid = [];
         $seen = [];
 
-        // Pre-create any academic years / semesters named in the file so imports stay dynamic.
+        // Unique terms only — avoid firstOrCreate on every row (was very slow on Render).
+        $terms = [];
+        $studentIds = [];
         foreach ($parsedRows as $row) {
             $ay = trim((string) ($row['data']['academic_year'] ?? ''));
             $sem = $this->normalizeSemesterName(trim((string) ($row['data']['semester'] ?? '')));
             if ($ay !== '' && $sem !== '') {
-                $this->ensureAcademicTerm($ay, $sem);
+                $terms[$ay.'|'.$sem] = [$ay, $sem];
             }
+            $sid = strtoupper(trim((string) ($row['data']['student_id'] ?? '')));
+            if ($sid !== '') {
+                $studentIds[$sid] = true;
+            }
+        }
+        foreach ($terms as [$ay, $sem]) {
+            $this->ensureAcademicTerm($ay, $sem);
         }
 
         $years = AcademicYear::query()->get()->keyBy(fn ($y) => strtolower($y->academic_year));
         $programs = Program::query()->with('department.college')->get()->keyBy(fn ($p) => strtolower($p->program_code));
-        $semesters = Semester::query()->get();
+        $semesterByKey = [];
+        foreach (Semester::query()->get() as $semester) {
+            $semesterByKey[$semester->academic_year_id.'|'.strtolower($semester->semester_name)] = $semester;
+        }
+
+        // One batched lookup instead of exists() per row.
+        $existingKeys = [];
+        foreach (array_chunk(array_keys($studentIds), 500) as $chunk) {
+            $rows = DB::table('student_records')
+                ->select(['student_id', 'academic_year_id', 'semester_id'])
+                ->whereIn('student_id', $chunk)
+                ->get();
+            foreach ($rows as $row) {
+                $existingKeys[strtoupper((string) $row->student_id).'|'.$row->academic_year_id.'|'.$row->semester_id] = true;
+            }
+        }
 
         foreach ($parsedRows as $row) {
             $line = $row['line'];
@@ -266,10 +290,7 @@ class StudentImportService
             $semester = null;
             $normalizedSemester = $this->normalizeSemesterName($semName);
             if ($year && $normalizedSemester !== '') {
-                $semester = $semesters->first(function ($s) use ($year, $normalizedSemester) {
-                    return $s->academic_year_id === $year->id
-                        && strcasecmp($s->semester_name, $normalizedSemester) === 0;
-                });
+                $semester = $semesterByKey[$year->id.'|'.strtolower($normalizedSemester)] ?? null;
                 if (! $semester) {
                     $rowErrors[] = "Semester '{$semName}' is not defined for {$year->academic_year}.";
                 }
@@ -299,12 +320,8 @@ class StudentImportService
             $seen[$dupKey] = true;
 
             if ($studentId !== '' && $year && $semester) {
-                $exists = StudentRecord::query()->where([
-                    'student_id' => $studentId,
-                    'academic_year_id' => $year->id,
-                    'semester_id' => $semester->id,
-                ])->exists();
-                if ($exists) {
+                $existKey = $studentId.'|'.$year->id.'|'.$semester->id;
+                if (isset($existingKeys[$existKey])) {
                     $rowErrors[] = 'This Student ID already has a record for this academic year and semester.';
                 }
             }
@@ -439,11 +456,19 @@ class StudentImportService
      * Create academic year + semester on demand so Excel uploads stay scalable
      * when new terms appear in the registrar extract.
      */
+    /** @var array<string, true> */
+    private array $ensuredTerms = [];
+
     public function ensureAcademicTerm(string $academicYear, string $semesterName): void
     {
         $yearLabel = trim($academicYear);
         $semLabel = $this->normalizeSemesterName(trim($semesterName));
         if ($yearLabel === '' || $semLabel === '') {
+            return;
+        }
+
+        $cacheKey = strtolower($yearLabel).'|'.strtolower($semLabel);
+        if (isset($this->ensuredTerms[$cacheKey])) {
             return;
         }
 
@@ -477,6 +502,8 @@ class StudentImportService
                 'is_active' => false,
             ]
         );
+
+        $this->ensuredTerms[$cacheKey] = true;
     }
 
     private function normalizeHeader(string $header): string

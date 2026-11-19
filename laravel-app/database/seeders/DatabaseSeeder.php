@@ -114,7 +114,12 @@ class DatabaseSeeder extends Seeder
         $this->call(CeitBsitScopeSeeder::class);
         $this->call(StudentRecordSeeder::class);
         $this->call(StatisticalHistorySeeder::class);
-        // CEIT registrar master (scrubbed). Replaces thin demo data on first boot / when forced.
-        $this->call(CeitMasterImportSeeder::class);
+
+        // Heavy CEIT master import (~13k rows) is opt-in only.
+        // Running it on every Render boot times out the deploy health check.
+        // Set CEIT_FORCE_IMPORT=true once, or: php artisan db:seed --class=CeitMasterImportSeeder
+        if (filter_var(env('CEIT_FORCE_IMPORT', false), FILTER_VALIDATE_BOOL)) {
+            $this->call(CeitMasterImportSeeder::class);
+        }
     }
 }

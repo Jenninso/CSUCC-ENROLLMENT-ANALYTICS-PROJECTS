@@ -35,6 +35,8 @@ class WipeOperationalData extends Command
         'jobs',
         'job_batches',
         'failed_jobs',
+        'semesters',
+        'academic_years',
     ];
 
     /** @var list<string> */
@@ -48,8 +50,6 @@ class WipeOperationalData extends Command
         'password_reset_tokens',
         'users',
         'roles',
-        'semesters',
-        'academic_years',
         'programs',
         'departments',
         'colleges',
@@ -70,30 +70,37 @@ class WipeOperationalData extends Command
 
         $tables = $all
             ? array_merge($this->operationalTables, $this->accountAndSetupTables)
-            : array_merge($this->operationalTables, [
-                'semesters',
-                'academic_years',
-            ]);
+            : $this->operationalTables;
+
+        $existing = array_values(array_filter(
+            $tables,
+            fn (string $table): bool => Schema::hasTable($table)
+        ));
+
+        if ($existing === []) {
+            $this->info('Nothing to wipe.');
+
+            return self::SUCCESS;
+        }
 
         $driver = DB::getDriverName();
         if ($driver === 'pgsql') {
-            DB::statement('SET session_replication_role = replica');
-        } else {
-            Schema::disableForeignKeyConstraints();
-        }
-
-        try {
-            foreach ($tables as $table) {
-                if (! Schema::hasTable($table)) {
-                    continue;
-                }
-                DB::table($table)->delete();
+            $quoted = implode(', ', array_map(
+                fn (string $table): string => '"'.str_replace('"', '""', $table).'"',
+                $existing
+            ));
+            DB::statement("TRUNCATE TABLE {$quoted} RESTART IDENTITY CASCADE");
+            foreach ($existing as $table) {
                 $this->line("cleared {$table}");
             }
-        } finally {
-            if ($driver === 'pgsql') {
-                DB::statement('SET session_replication_role = DEFAULT');
-            } else {
+        } else {
+            Schema::disableForeignKeyConstraints();
+            try {
+                foreach ($existing as $table) {
+                    DB::table($table)->delete();
+                    $this->line("cleared {$table}");
+                }
+            } finally {
                 Schema::enableForeignKeyConstraints();
             }
         }
@@ -104,4 +111,4 @@ class WipeOperationalData extends Command
 
         return self::SUCCESS;
     }
-}
+};

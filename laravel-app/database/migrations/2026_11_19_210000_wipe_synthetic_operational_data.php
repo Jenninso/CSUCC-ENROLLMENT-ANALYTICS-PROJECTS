@@ -5,8 +5,10 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 /**
- * One-shot Render/local cleanup: remove leftover demo/synthetic operational rows
- * so the dashboard starts empty. Staff accounts and CEIT college/program setup stay.
+ * One-shot cleanup: remove leftover demo/synthetic operational rows.
+ * Staff accounts and CEIT college/program setup stay.
+ *
+ * Avoids SET session_replication_role (needs superuser; fails on Render Postgres).
  */
 return new class extends Migration
 {
@@ -37,26 +39,32 @@ return new class extends Migration
 
     public function up(): void
     {
-        $driver = Schema::getConnection()->getDriverName();
-        if ($driver === 'pgsql') {
-            DB::statement('SET session_replication_role = replica');
-        } else {
-            Schema::disableForeignKeyConstraints();
+        $existing = array_values(array_filter(
+            $this->tables,
+            fn (string $table): bool => Schema::hasTable($table)
+        ));
+
+        if ($existing === []) {
+            return;
         }
 
-        try {
-            foreach ($this->tables as $table) {
-                if (! Schema::hasTable($table)) {
-                    continue;
-                }
-                DB::table($table)->delete();
+        $driver = Schema::getConnection()->getDriverName();
+        if ($driver === 'pgsql') {
+            try {
+                $quoted = implode(', ', array_map(
+                    fn (string $table): string => '"'.str_replace('"', '""', $table).'"',
+                    $existing
+                ));
+                DB::statement("TRUNCATE TABLE {$quoted} RESTART IDENTITY CASCADE");
+
+                return;
+            } catch (\Throwable) {
+                // Fall through to ordered deletes if TRUNCATE is restricted.
             }
-        } finally {
-            if ($driver === 'pgsql') {
-                DB::statement('SET session_replication_role = DEFAULT');
-            } else {
-                Schema::enableForeignKeyConstraints();
-            }
+        }
+
+        foreach ($existing as $table) {
+            DB::table($table)->delete();
         }
     }
 

@@ -15,4 +15,4 @@ RUN composer install --no-dev --optimize-autoloader --no-interaction \
 
 # Boot: migrate (one-shot synthetic wipe migration), optional CLEAR_RENDER_DATA wipe,
 # then seed roles/users/CEIT scope only — never demo students on Render.
-CMD sh -c "php artisan migrate --force && php artisan storage:link --force && if [ \"\$CLEAR_RENDER_DATA\" = \"true\" ] || [ \"\$CLEAR_RENDER_DATA\" = \"1\" ]; then php artisan app:wipe-data --force || true; fi && (php artisan db:seed --force || true) && php artisan serve --host=0.0.0.0 --port=\${PORT:-8000}"
+CMD sh -c "php artisan migrate --force && php artisan storage:link --force; if [ \"\$CLEAR_RENDER_DATA\" = \"true\" ] || [ \"\$CLEAR_RENDER_DATA\" = \"1\" ]; then php artisan app:wipe-data --force || true; fi; php artisan db:seed --force || true; php artisan serve --host=0.0.0.0 --port=\${PORT:-8000}"

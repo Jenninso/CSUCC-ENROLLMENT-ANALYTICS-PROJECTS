@@ -8,14 +8,14 @@
     uploading: false,
     fileName: '',
     fileError: '',
-    maxBytes: 50 * 1024 * 1024,
+    maxBytes: 200 * 1024 * 1024,
     onFile(e) {
         const f = e.target.files && e.target.files[0];
         this.fileError = '';
         this.fileName = '';
         if (!f) return;
         if (f.size > this.maxBytes) {
-            this.fileError = 'File is over 50 MB (' + (f.size / (1024 * 1024)).toFixed(1) + ' MB). Compress or split the extract, then try again.';
+            this.fileError = 'File is over 200 MB (' + (f.size / (1024 * 1024)).toFixed(1) + ' MB). Compress or split the extract, then try again.';
             e.target.value = '';
             return;
         }
@@ -36,7 +36,7 @@
         <div class="ui-kpi ui-kpi-info">
             <p class="ui-kpi-label">Step 1</p>
             <p class="mt-1 text-sm font-semibold text-gray-800">Prepare file</p>
-            <p class="text-xs text-gray-500 mt-1">CSV or .xlsx up to 50 MB</p>
+            <p class="text-xs text-gray-500 mt-1">CSV or .xlsx up to 200 MB</p>
         </div>
         <div class="ui-kpi ui-kpi-sky">
             <p class="ui-kpi-label">Step 2</p>
@@ -73,7 +73,7 @@
             <label class="block cursor-pointer rounded-xl border-2 border-dashed border-teal-200 bg-gradient-to-b from-teal-50/70 to-white p-8 text-center hover:border-teal-400 transition">
                 <svg class="w-11 h-11 text-teal-600 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5"/></svg>
                 <p class="text-sm font-semibold text-teal-900" x-text="fileName || 'Click to select CSV or Excel (.xlsx)'"></p>
-                <p class="text-xs text-teal-700/80 mt-1">Max 50 MB · large CEIT extracts supported</p>
+                <p class="text-xs text-teal-700/80 mt-1">Max 200 MB · large CEIT extracts supported</p>
                 <input type="file" name="file" accept=".csv,.txt,.xlsx,.xls,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" required
                        class="sr-only" @change="onFile($event)">
             </label>

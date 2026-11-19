@@ -178,12 +178,12 @@ class StudentRecordController extends Controller
         }
 
         $request->validate([
-            // 50 MB — large CEIT extracts; preview payload is file-backed (not session).
-            'file' => ['required', 'file', 'extensions:csv,txt,xlsx,xls', 'max:51200'],
+            // 200 MB — large CEIT extracts; preview payload is file-backed (not session).
+            'file' => ['required', 'file', 'extensions:csv,txt,xlsx,xls', 'max:204800'],
         ], [
             'file.extensions' => 'Upload a CSV or Excel (.xlsx) file.',
-            'file.max' => 'The file may be up to 50 MB.',
-            'file.uploaded' => 'The file failed to upload. Keep it under 50 MB and try again.',
+            'file.max' => 'The file may be up to 200 MB.',
+            'file.uploaded' => 'The file failed to upload. Keep it under 200 MB and try again.',
         ]);
 
         $file = $request->file('file');
@@ -468,13 +468,13 @@ class StudentRecordController extends Controller
     private function describeUploadFailure(int $error): string
     {
         return match ($error) {
-            UPLOAD_ERR_INI_SIZE, UPLOAD_ERR_FORM_SIZE => 'The file is larger than the server allows. Keep CSV/Excel under 50 MB.',
+            UPLOAD_ERR_INI_SIZE, UPLOAD_ERR_FORM_SIZE => 'The file is larger than the server allows. Keep CSV/Excel under 200 MB.',
             UPLOAD_ERR_PARTIAL => 'The upload was interrupted. Check your connection and try again.',
             UPLOAD_ERR_NO_FILE => 'No file was received. Select a CSV or Excel file and try again.',
             UPLOAD_ERR_NO_TMP_DIR => 'Server temp folder is missing. Contact the system administrator.',
             UPLOAD_ERR_CANT_WRITE => 'Server could not save the upload. Check disk space and temp folder permissions.',
             UPLOAD_ERR_EXTENSION => 'A PHP extension blocked the upload. Try again or convert the file to CSV.',
-            default => 'The file failed to upload. Keep it under 50 MB and try again.',
+            default => 'The file failed to upload. Keep it under 200 MB and try again.',
         };
     }
 }

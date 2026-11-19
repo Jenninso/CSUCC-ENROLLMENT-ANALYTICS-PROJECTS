@@ -26,8 +26,11 @@ class CeitMasterImportSeeder extends Seeder
         }
 
         $existing = StudentRecord::query()->count();
+        $withStanding = StudentRecord::query()->whereNotNull('academic_standing')->count();
         $force = filter_var(env('CEIT_FORCE_IMPORT', false), FILTER_VALIDATE_BOOL);
-        if (! $force && $existing >= self::TARGET_MIN_ROWS) {
+        // Re-import once when the live DB is large but still missing CEIT standing fields.
+        $looksComplete = $existing >= self::TARGET_MIN_ROWS && $withStanding >= (int) ($existing * 0.5);
+        if (! $force && $looksComplete) {
             $this->command?->info("CeitMasterImportSeeder: {$existing} student records already present — skipping.");
 
             return;

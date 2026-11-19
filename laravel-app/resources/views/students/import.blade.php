@@ -7,9 +7,19 @@
 <div class="max-w-4xl" x-data="{
     uploading: false,
     fileName: '',
+    fileError: '',
+    maxBytes: 50 * 1024 * 1024,
     onFile(e) {
         const f = e.target.files && e.target.files[0];
-        this.fileName = f ? f.name : '';
+        this.fileError = '';
+        this.fileName = '';
+        if (!f) return;
+        if (f.size > this.maxBytes) {
+            this.fileError = 'File is over 50 MB (' + (f.size / (1024 * 1024)).toFixed(1) + ' MB). Compress or split the extract, then try again.';
+            e.target.value = '';
+            return;
+        }
+        this.fileName = f.name;
     }
 }">
     <div class="page-head">
@@ -67,9 +77,11 @@
                 <input type="file" name="file" accept=".csv,.txt,.xlsx,.xls,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" required
                        class="sr-only" @change="onFile($event)">
             </label>
+            <p x-show="fileError" x-cloak class="text-red-500 text-xs mt-2" x-text="fileError"></p>
             @error('file') <p class="text-red-500 text-xs mt-2">{{ $message }}</p> @enderror
 
-            <button type="submit" class="ui-btn-filter mt-4" :disabled="uploading">
+            <button type="submit" class="ui-btn-filter mt-4" :disabled="uploading || !!fileError || !fileName"
+                    @click="if (!fileName) { fileError = 'Select a CSV or Excel file first.'; $event.preventDefault(); }">
                 <svg x-show="uploading" x-cloak class="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg>
                 <span x-text="uploading ? 'Validating file…' : 'Upload & validate'"></span>
             </button>

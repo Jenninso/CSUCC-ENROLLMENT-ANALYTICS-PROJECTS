@@ -181,6 +181,29 @@ class StudentRecordTest extends TestCase
         ]);
     }
 
+    public function test_import_preview_explains_interrupted_php_upload(): void
+    {
+        $this->seedScope();
+        $user = User::factory()->create([
+            'role_id' => Role::query()->where('role_name', 'Super Administrator')->value('id'),
+            'status' => 'active',
+            'must_change_password' => false,
+            'credentials_completed_at' => now(),
+        ]);
+
+        $tmp = tempnam(sys_get_temp_dir(), 'upl');
+        file_put_contents($tmp, 'partial');
+        $file = new UploadedFile($tmp, 'students.csv', 'text/csv', \UPLOAD_ERR_PARTIAL, true);
+
+        $this->actingAs($user)
+            ->from(route('students.import'))
+            ->post(route('students.import.preview'), ['file' => $file])
+            ->assertRedirect(route('students.import'))
+            ->assertSessionHasErrors([
+                'file' => 'The upload was interrupted. Check your connection and try again.',
+            ]);
+    }
+
     public function test_withdraw_stop_student_type_is_critical_risk(): void
     {
         $this->assertSame('critical', StudentRecord::assessRisk([

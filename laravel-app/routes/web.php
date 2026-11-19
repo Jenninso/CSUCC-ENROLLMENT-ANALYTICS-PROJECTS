@@ -212,6 +212,7 @@ Route::middleware(['auth', 'active', 'setup', 'student.scope'])->group(function 
         Route::post('delete-requests/{deleteRequest}/reject', [DeleteRequestController::class, 'reject'])->name('delete-requests.reject');
         Route::get('audit-logs', [SettingsController::class, 'auditLogs'])->name('audit-logs.index');
         Route::post('settings/test-mail', [SettingsController::class, 'testMail'])->name('settings.test-mail');
+        Route::post('settings/wipe-data', [SettingsController::class, 'wipeOperationalData'])->name('settings.wipe-data');
     });
 
     Route::middleware('permission:logs.view')->get('login-logs', [LoginLogController::class, 'index'])->name('login-logs.index');

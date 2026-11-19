@@ -68,5 +68,16 @@
     @csrf
     <button class="px-4 py-2 bg-slate-100 text-slate-800 rounded-lg text-sm">Send test OTP to my email</button>
 </form>
+
+<form method="POST" action="{{ route('settings.wipe-data') }}" class="max-w-xl mt-6 bg-white dark-panel rounded-lg shadow-sm p-6 space-y-3 border border-rose-200"
+      onsubmit="return confirm('This deletes students, enrollment, SPR, alerts, and academic years. Staff login accounts stay. Continue?');">
+    @csrf
+    <h3 class="font-semibold text-rose-800">Reset to empty system</h3>
+    <p class="text-sm text-gray-600">Removes synthetic/demo records so the dashboard shows zeros. CEIT programs and staff accounts are kept.</p>
+    <label class="block text-sm">Type <span class="font-mono font-semibold">EMPTY</span> to confirm
+        <input name="confirm" class="mt-1 w-full border rounded-lg px-3 py-2" placeholder="EMPTY" autocomplete="off" required>
+    </label>
+    <button class="px-4 py-2 bg-rose-700 text-white rounded-lg text-sm">Clear all operational data</button>
+</form>
 @endif
 @endsection

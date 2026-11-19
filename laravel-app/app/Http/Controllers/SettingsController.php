@@ -179,6 +179,21 @@ class SettingsController extends Controller
         return back()->with('error', 'OTP email was not sent: '.($otp->lastSendError ?: 'SMTP is not configured.'));
     }
 
+    public function wipeOperationalData(Request $request, AuditLogger $audit)
+    {
+        abort_unless($request->user()?->isSuperAdmin(), 403);
+
+        $request->validate([
+            'confirm' => ['required', 'in:EMPTY'],
+        ]);
+
+        \Illuminate\Support\Facades\Artisan::call('app:wipe-data', ['--force' => true]);
+
+        $audit->log('wipe', 'settings', 'Cleared synthetic/operational enrollment data. Staff accounts kept.');
+
+        return redirect()->route('dashboard')->with('success', 'System data cleared. Dashboard is empty — ready for real records.');
+    }
+
     public function auditLogs(Request $request)
     {
         abort_unless($request->user()?->isSuperAdmin(), 403);

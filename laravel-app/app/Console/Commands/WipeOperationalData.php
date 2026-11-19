@@ -8,12 +8,14 @@ use Illuminate\Support\Facades\Schema;
 
 class WipeOperationalData extends Command
 {
-    protected $signature = 'app:wipe-data {--force : Required confirmation flag}';
+    protected $signature = 'app:wipe-data
+                            {--force : Required confirmation flag}
+                            {--all : Wipe everything including staff accounts, roles, and academic setup}';
 
-    protected $description = 'Empty operational analytics data (students, enrollment, SPR, alerts). Keeps staff login accounts.';
+    protected $description = 'Empty Render/app data. Use --all for a total wipe including login accounts.';
 
     /** @var list<string> */
-    private array $tables = [
+    private array $operationalTables = [
         'student_interventions',
         'spes_applications',
         'student_records',
@@ -35,13 +37,37 @@ class WipeOperationalData extends Command
         'failed_jobs',
     ];
 
+    /** @var list<string> */
+    private array $accountAndSetupTables = [
+        'user_avatars',
+        'user_secret_answers',
+        'user_permission',
+        'role_permission',
+        'permissions',
+        'secret_questions',
+        'password_reset_tokens',
+        'users',
+        'roles',
+        'semesters',
+        'academic_years',
+        'programs',
+        'departments',
+        'colleges',
+        'system_settings',
+    ];
+
     public function handle(): int
     {
+        $all = $this->option('all') || filter_var(env('CLEAR_RENDER_DATA', false), FILTER_VALIDATE_BOOL);
         if (! $this->option('force') && ! filter_var(env('CLEAR_RENDER_DATA', false), FILTER_VALIDATE_BOOL)) {
             $this->error('Refusing to wipe. Pass --force or set CLEAR_RENDER_DATA=true.');
 
             return self::FAILURE;
         }
+
+        $tables = $all
+            ? array_merge($this->operationalTables, $this->accountAndSetupTables)
+            : $this->operationalTables;
 
         $driver = DB::getDriverName();
         if ($driver === 'pgsql') {
@@ -51,7 +77,7 @@ class WipeOperationalData extends Command
         }
 
         try {
-            foreach ($this->tables as $table) {
+            foreach ($tables as $table) {
                 if (! Schema::hasTable($table)) {
                     continue;
                 }
@@ -66,7 +92,9 @@ class WipeOperationalData extends Command
             }
         }
 
-        $this->info('Operational data wiped. Staff accounts / roles kept.');
+        $this->info($all
+            ? 'FULL wipe done. No accounts, no students, no academic seed data left.'
+            : 'Operational data wiped. Staff accounts / roles kept.');
 
         return self::SUCCESS;
     }

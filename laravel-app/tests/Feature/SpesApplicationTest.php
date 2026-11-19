@@ -286,7 +286,7 @@ class SpesApplicationTest extends TestCase
         $this->assertStringContainsString('Export', $csv->streamedContent());
 
         $importCsv = implode("\n", [
-            'last_name,first_name,middle_name,birth_date,id_no,sex_at_birth,mobile,priority_1,signature_name,status',
+            'last_name,first_name,middle_name,date_of_birth,student_id,sex_at_birth,mobile,priority_1,signature_name,status',
             'Imported,Row,Test,2006-05-01,2025-08888,Female,09170001111,BS Information Technology,Row Test Imported,submitted',
         ])."\n";
 
@@ -300,6 +300,7 @@ class SpesApplicationTest extends TestCase
         $this->assertNotNull($imported);
         $this->assertSame('Imported', $imported->last_name);
         $this->assertSame('Row', $imported->first_name);
+        $this->assertSame('2006-05-01', $imported->birth_date?->format('Y-m-d'));
         $this->assertSame('BS Information Technology', $imported->spr_data['priority_1'] ?? null);
         $this->assertSame('09170001111', $imported->spr_data['mobile'] ?? null);
     }

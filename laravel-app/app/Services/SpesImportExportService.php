@@ -144,11 +144,20 @@ class SpesImportExportService
 
         $header = array_map(fn ($h) => $this->normalizeHeader((string) $h), $headerRow);
         $required = ['last_name', 'first_name', 'birth_date'];
-        $missing = array_diff($required, $header);
+        $missing = array_values(array_diff($required, $header));
         if ($missing) {
+            $found = implode(', ', array_values(array_filter($header, fn ($h) => $h !== '')));
+            $hint = in_array('birth_date', $missing, true)
+                ? ' For birthday use birth_date or date_of_birth (YYYY-MM-DD). Download the SPR template, or Export CSV from SPR.'
+                : '';
+
             return [
                 'ok' => false,
-                'errors' => ['Missing required columns: '.implode(', ', $missing)],
+                'errors' => [
+                    'Missing required columns: '.implode(', ', $missing).'.'
+                    .$hint
+                    .($found !== '' ? ' Found: '.$found.'.' : ''),
+                ],
                 'imported' => 0,
                 'skipped' => 0,
                 'created_ids' => [],
@@ -355,13 +364,29 @@ class SpesImportExportService
         $aliases = [
             'student_id' => 'id_no',
             'studid' => 'id_no',
+            'idno' => 'id_no',
+            'id' => 'id_no',
             'sex' => 'sex_at_birth',
             'gender' => 'sex_at_birth',
+            'sex_at_birth' => 'sex_at_birth',
+            'date_of_birth' => 'birth_date',
+            'dateofbirth' => 'birth_date',
+            'dob' => 'birth_date',
+            'birthday' => 'birth_date',
+            'bday' => 'birth_date',
+            'birthdate' => 'birth_date',
+            'lastname' => 'last_name',
+            'surname' => 'last_name',
+            'firstname' => 'first_name',
+            'given_name' => 'first_name',
+            'middlename' => 'middle_name',
             'phone' => 'mobile',
             'contact' => 'mobile',
             'contact_number' => 'mobile',
             'course' => 'priority_1',
             'program' => 'priority_1',
+            'program_name' => 'priority_1',
+            'program_code' => 'priority_1',
         ];
 
         return $aliases[$key] ?? $key;

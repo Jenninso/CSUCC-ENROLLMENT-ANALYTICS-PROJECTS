@@ -34,9 +34,9 @@
     <div class="ui-panel p-5">
         <div class="rounded-xl border border-slate-200 bg-slate-50/80 p-4 mb-5 text-sm text-slate-600">
             <p class="font-semibold text-slate-700 mb-2">Required columns</p>
-            <p class="text-xs sm:text-sm">last_name, first_name, birth_date</p>
-            <p class="mt-2 text-xs text-slate-500">Optional: id_no, middle_name, address fields, parents, course (priority_1), documents (yes/no), and the rest of the SPR form columns from the template/export.</p>
-            <p class="mt-2 text-xs text-slate-500">Duplicate Student ID or same name + birth date rows are skipped.</p>
+            <p class="text-xs sm:text-sm">last_name, first_name, birth_date <span class="text-slate-500">(or date_of_birth)</span></p>
+            <p class="mt-2 text-xs text-slate-500">Optional: id_no / student_id, middle_name, address, parents, course / priority_1, documents (yes/no), and other SPR form columns from the template or Export CSV.</p>
+            <p class="mt-2 text-xs text-slate-500">Use <span class="font-semibold text-slate-700">Download template</span> or Export from SPR — the student master CSV is a different format. Duplicate Student ID or same name + birth date rows are skipped.</p>
         </div>
 
         <form method="POST" action="{{ route('spes.import.store') }}" enctype="multipart/form-data" @submit="uploading = true">

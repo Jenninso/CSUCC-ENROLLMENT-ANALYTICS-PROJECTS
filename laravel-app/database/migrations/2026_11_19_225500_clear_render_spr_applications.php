@@ -12,7 +12,9 @@ return new class extends Migration
 {
     public function up(): void
     {
-        if (! Schema::hasTable('spes_applications')) {
+        // Local restore must stay intact — only clear hosted Render DB.
+        $onRender = filled(env('RENDER_EXTERNAL_URL')) || filled(env('RENDER'));
+        if (! $onRender || ! Schema::hasTable('spes_applications')) {
             return;
         }
 

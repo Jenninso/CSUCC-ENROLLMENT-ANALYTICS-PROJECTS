@@ -172,7 +172,8 @@ class SpesImportExportService
         $createdIds = [];
         $errors = [];
         $now = now();
-        $batchStarted = $now->copy();
+        $batchToken = strtolower(Str::random(10));
+        $tempSeq = 0;
 
         // Preload duplicates + student links once (per-row queries were killing Render on large CSVs).
         $existingByStudentId = [];
@@ -280,22 +281,25 @@ class SpesImportExportService
             $payload['has_indigency'] = ! empty($payload['has_indigency']) ? 1 : 0;
             $payload['has_photo'] = ! empty($payload['has_photo']) ? 1 : 0;
             $payload['parents_annual_income'] = $payload['parents_annual_income'] ?? 0;
+            // Unique temp refs — reference_no is UNIQUE, so SPR-PENDING cannot be reused in bulk inserts.
+            $tempSeq++;
+            $payload['reference_no'] = sprintf('SPR-TMP-%s-%05d', $batchToken, $tempSeq);
             $payload['created_at'] = $now;
             $payload['updated_at'] = $now;
 
             $pending[] = $payload;
             if (count($pending) >= 200) {
-                $this->flushInsertChunk($pending, $imported, $createdIds);
+                $this->flushInsertChunk($pending, $imported, $createdIds, $batchToken);
                 $pending = [];
             }
         }
 
         if ($pending !== []) {
-            $this->flushInsertChunk($pending, $imported, $createdIds);
+            $this->flushInsertChunk($pending, $imported, $createdIds, $batchToken);
         }
 
         // Assign real reference numbers for this batch (driver-aware bulk update).
-        $this->assignPendingReferences($encodedBy, $batchStarted);
+        $this->assignPendingReferences($batchToken);
 
         return [
             'ok' => $imported > 0 || $errors === [],
@@ -310,14 +314,20 @@ class SpesImportExportService
      * @param  list<array<string, mixed>>  $chunk
      * @param  list<int>  $createdIds
      */
-    private function flushInsertChunk(array $chunk, int &$imported, array &$createdIds): void
+    private function flushInsertChunk(array $chunk, int &$imported, array &$createdIds, string $batchToken): void
     {
         DB::table('spes_applications')->insert($chunk);
         $imported += count($chunk);
 
         // Keep at most one id for single-row “open form” redirect.
         if (count($createdIds) === 0 && count($chunk) === 1 && $imported === 1) {
-            $id = (int) DB::table('spes_applications')->where('reference_no', 'SPR-PENDING')->orderByDesc('id')->value('id');
+            $tempRef = $chunk[0]['reference_no'] ?? null;
+            $id = $tempRef
+                ? (int) DB::table('spes_applications')->where('reference_no', $tempRef)->value('id')
+                : (int) DB::table('spes_applications')
+                    ->where('reference_no', 'like', 'SPR-TMP-'.$batchToken.'-%')
+                    ->orderByDesc('id')
+                    ->value('id');
             if ($id > 0) {
                 $createdIds[] = $id;
             }
@@ -332,16 +342,17 @@ class SpesImportExportService
             .trim((string) ($birth ?? ''));
     }
 
-    private function assignPendingReferences(int $encodedBy, mixed $batchStarted): void
+    private function assignPendingReferences(string $batchToken): void
     {
+        $prefix = 'SPR-TMP-'.$batchToken.'-%';
         $driver = DB::connection()->getDriverName();
 
         if ($driver === 'pgsql') {
             DB::update(
                 "UPDATE spes_applications
                  SET reference_no = 'SPR-' || application_year::text || '-' || lpad(id::text, 4, '0')
-                 WHERE reference_no = ? AND encoded_by = ? AND created_at >= ?",
-                ['SPR-PENDING', $encodedBy, $batchStarted]
+                 WHERE reference_no LIKE ?",
+                [$prefix]
             );
 
             return;
@@ -351,8 +362,8 @@ class SpesImportExportService
             DB::update(
                 "UPDATE spes_applications
                  SET reference_no = CONCAT('SPR-', application_year, '-', LPAD(id, 4, '0'))
-                 WHERE reference_no = ? AND encoded_by = ? AND created_at >= ?",
-                ['SPR-PENDING', $encodedBy, $batchStarted]
+                 WHERE reference_no LIKE ?",
+                [$prefix]
             );
 
             return;
@@ -360,9 +371,7 @@ class SpesImportExportService
 
         SpesApplication::query()
             ->select(['id', 'application_year'])
-            ->where('reference_no', 'SPR-PENDING')
-            ->where('encoded_by', $encodedBy)
-            ->where('created_at', '>=', $batchStarted)
+            ->where('reference_no', 'like', $prefix)
             ->orderBy('id')
             ->chunkById(500, function ($rows) {
                 foreach ($rows as $app) {

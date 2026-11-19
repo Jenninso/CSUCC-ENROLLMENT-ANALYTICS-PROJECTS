@@ -210,39 +210,101 @@
             </form>
         </div>
         @if(! $me->isSuperAdmin() && $user->id !== $me->id)
-        <div x-show="deleteId === {{ $user->id }}" x-cloak class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 overflow-y-auto">
-            <form method="POST" action="{{ route('users.destroy', $user) }}" class="ui-panel p-6 w-full max-w-md space-y-4 shadow-2xl my-auto max-h-[min(92vh,40rem)] overflow-y-auto">
+        <div
+            x-show="deleteId === {{ $user->id }}"
+            x-cloak
+            x-transition.opacity.duration.150ms
+            @keydown.escape.window="if (deleteId === {{ $user->id }}) deleteId = null"
+            class="fixed inset-0 z-50 flex items-center justify-center p-4"
+            style="background: color-mix(in srgb, #0f172a 48%, transparent); backdrop-filter: blur(3px);"
+        >
+            <div class="absolute inset-0" @click="deleteId = null" aria-hidden="true"></div>
+            @php
+                $deleteInitials = strtoupper(\Illuminate\Support\Str::substr((string) ($user->first_name ?: $user->username ?: 'U'), 0, 1)
+                    . \Illuminate\Support\Str::substr((string) ($user->last_name ?: ''), 0, 1));
+            @endphp
+            <form
+                method="POST"
+                action="{{ route('users.destroy', $user) }}"
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby="delete-req-title-{{ $user->id }}"
+                @click.stop
+                class="relative w-full max-w-3xl overflow-hidden shadow-2xl rounded-2xl"
+                style="background: var(--theme-panel); color: var(--theme-text); border: 1px solid var(--theme-border);"
+            >
                 @csrf @method('DELETE')
-                <h3 class="font-semibold text-gray-800">Request account deletion</h3>
-                <p class="text-sm text-gray-500">This is sent to the Super Administrator with the account snapshot and your reason. Confirm with your email and password before sending.</p>
-                <div class="text-xs bg-slate-50 border border-slate-200 rounded-lg p-3 space-y-1">
-                    <p class="font-medium text-slate-800">Account to delete</p>
-                    <p class="font-mono text-slate-700">{{ $user->employee_id }} · {{ $user->fullName() }}</p>
-                    <p class="text-slate-600">{{ $user->email }} · {{ $user->roleName() }}</p>
-                    <p class="font-medium {{ $user->isInstitutionalAccount() ? 'text-emerald-700' : 'text-slate-700' }}">{{ $user->accountCategoryLabel() }}</p>
+
+                <div class="flex items-start justify-between gap-3 px-5 py-4 border-b" style="border-color: var(--theme-border); background: linear-gradient(90deg, color-mix(in srgb, var(--tone-bad) 10%, var(--theme-panel)), var(--theme-panel));">
+                    <div class="flex items-start gap-3 min-w-0">
+                        <span class="mt-0.5 inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl" style="background: color-mix(in srgb, var(--tone-bad) 14%, var(--theme-panel)); color: var(--tone-bad); border: 1px solid color-mix(in srgb, var(--tone-bad) 28%, var(--theme-border));">
+                            <svg class="h-4.5 w-4.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z"/></svg>
+                        </span>
+                        <div class="min-w-0">
+                            <p class="text-[11px] font-semibold uppercase tracking-wide" style="color: var(--tone-bad);">Deletion request</p>
+                            <h3 id="delete-req-title-{{ $user->id }}" class="text-base font-semibold leading-tight" style="color: var(--theme-text);">Send to Super Admin</h3>
+                            <p class="mt-0.5 text-xs" style="color: var(--theme-muted);">Not deleted yet — Super Admin reviews your reason and confirmation.</p>
+                        </div>
+                    </div>
+                    <button type="button" @click="deleteId = null" class="shrink-0 rounded-lg p-1.5 transition hover:opacity-80" style="color: var(--theme-muted);" aria-label="Close">
+                        <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                    </button>
                 </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Reason to delete</label>
-                    <textarea name="reason" rows="3" required class="ui-input w-full @error('reason') border-red-500 @enderror" placeholder="Explain why this account should be removed">{{ old('reason') }}</textarea>
-                    @error('reason') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Your email</label>
-                    <input type="email" name="confirm_email" value="{{ old('confirm_email', $me->email) }}" required autocomplete="email"
-                        class="ui-input w-full @error('confirm_email') border-red-500 @enderror"
-                        placeholder="{{ $me->email }}">
-                    @error('confirm_email') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Your password</label>
-                    <input type="password" name="confirm_password" required autocomplete="current-password"
-                        class="ui-input w-full @error('confirm_password') border-red-500 @enderror"
-                        placeholder="Current password">
-                    @error('confirm_password') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
-                </div>
-                <div class="flex justify-end gap-2 pt-1">
-                    <button type="button" @click="deleteId = null" class="ui-btn-clear">Cancel</button>
-                    <button type="submit" class="ui-btn-filter" style="background: linear-gradient(135deg, #dc2626, #b91c1c);">Send to Super Admin</button>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-0 md:divide-x" style="border-color: var(--theme-border);">
+                    <div class="p-5 space-y-3">
+                        <p class="text-[11px] font-semibold uppercase tracking-wide" style="color: var(--theme-muted);">Account to delete</p>
+                        <div class="rounded-xl p-3.5" style="background: color-mix(in srgb, var(--theme-bg) 70%, var(--theme-panel)); border: 1px solid var(--theme-border);">
+                            <div class="flex items-center gap-3">
+                                <span class="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-sm font-bold" style="background: color-mix(in srgb, var(--theme-primary) 14%, var(--theme-panel)); color: var(--theme-primary); border: 1px solid color-mix(in srgb, var(--theme-primary) 28%, var(--theme-border));">
+                                    {{ $deleteInitials }}
+                                </span>
+                                <div class="min-w-0">
+                                    <p class="text-sm font-semibold truncate" style="color: var(--theme-text);">{{ $user->fullName() }}</p>
+                                    <p class="text-xs truncate" style="color: var(--theme-muted);">{{ $user->email }}</p>
+                                </div>
+                            </div>
+                            <div class="mt-3 flex flex-wrap gap-1.5">
+                                <span class="inline-flex items-center rounded-md px-2 py-0.5 text-[11px] font-mono font-medium" style="background: var(--theme-panel); border: 1px solid var(--theme-border); color: var(--theme-text);">{{ $user->employee_id }}</span>
+                                <span class="inline-flex items-center rounded-md px-2 py-0.5 text-[11px] font-medium" style="background: var(--theme-panel); border: 1px solid var(--theme-border); color: var(--theme-muted);">{{ $user->roleName() }}</span>
+                                @if($user->isInstitutionalAccount())
+                                    <span class="inline-flex items-center rounded-md px-2 py-0.5 text-[11px] font-medium" style="background: color-mix(in srgb, var(--tone-good) 12%, var(--theme-panel)); border: 1px solid color-mix(in srgb, var(--tone-good) 35%, var(--theme-border)); color: var(--tone-good);">{{ $user->accountCategoryLabel() }}</span>
+                                @else
+                                    <span class="inline-flex items-center rounded-md px-2 py-0.5 text-[11px] font-medium" style="background: var(--theme-panel); border: 1px solid var(--theme-border); color: var(--theme-text);">{{ $user->accountCategoryLabel() }}</span>
+                                @endif
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-semibold mb-1.5" style="color: var(--theme-text);">Reason to delete</label>
+                            <textarea name="reason" rows="4" required class="ui-input w-full resize-none @error('reason') border-red-500 @enderror" placeholder="Why should this account be removed?">{{ old('reason') }}</textarea>
+                            @error('reason') <p class="text-xs mt-1" style="color: var(--tone-bad);">{{ $message }}</p> @enderror
+                        </div>
+                    </div>
+
+                    <div class="p-5 space-y-3" style="background: color-mix(in srgb, var(--theme-primary) 4%, var(--theme-panel));">
+                        <p class="text-[11px] font-semibold uppercase tracking-wide" style="color: var(--theme-primary);">Confirm it is you</p>
+                        <div>
+                            <label class="block text-xs font-semibold mb-1.5" style="color: var(--theme-text);">Your email</label>
+                            <input type="email" name="confirm_email" value="{{ old('confirm_email', $me->email) }}" required autocomplete="email"
+                                class="ui-input w-full @error('confirm_email') border-red-500 @enderror"
+                                placeholder="{{ $me->email }}">
+                            @error('confirm_email') <p class="text-xs mt-1" style="color: var(--tone-bad);">{{ $message }}</p> @enderror
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold mb-1.5" style="color: var(--theme-text);">Your password</label>
+                            <input type="password" name="confirm_password" required autocomplete="current-password"
+                                class="ui-input w-full @error('confirm_password') border-red-500 @enderror"
+                                placeholder="Current password">
+                            @error('confirm_password') <p class="text-xs mt-1" style="color: var(--tone-bad);">{{ $message }}</p> @enderror
+                        </div>
+                        <div class="flex items-center justify-end gap-2 pt-2">
+                            <button type="button" @click="deleteId = null" class="ui-btn-clear">Cancel</button>
+                            <button type="submit" class="ui-btn-filter" style="background: linear-gradient(135deg, #dc2626, #991b1b); box-shadow: 0 8px 18px color-mix(in srgb, #b91c1c 28%, transparent);">
+                                Send request
+                            </button>
+                        </div>
+                    </div>
                 </div>
             </form>
         </div>

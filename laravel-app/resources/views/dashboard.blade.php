@@ -49,9 +49,8 @@
         <label>
             <span class="dash-label">College</span>
             <select name="college_id" class="ui-input">
-                <option value="">All colleges</option>
                 @foreach($colleges ?? [] as $college)
-                    <option value="{{ $college->id }}" @selected(($filters['college_id'] ?? '') == $college->id)>{{ $college->college_name }}</option>
+                    <option value="{{ $college->id }}" @selected((string) ($filters['college_id'] ?? $college->id) === (string) $college->id)>{{ $college->college_code }}</option>
                 @endforeach
             </select>
         </label>
@@ -73,7 +72,7 @@
                 @endfor
             </select>
         </label>
-        <button class="ui-btn-primary h-[2.45rem]">Apply filters</button>
+        <button class="ui-btn-filter h-[2.45rem]">Apply filters</button>
     </form>
 </div>
 
@@ -116,22 +115,22 @@
 <section class="dash-section">
     <p class="dash-kicker">This term</p>
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div class="ui-kpi dash-kpi">
+        <div class="ui-kpi ui-kpi-info dash-kpi">
             <p class="ui-kpi-label">Total enrollment</p>
             <p class="ui-kpi-value">{{ number_format($totalEnrollment ?? 0) }}</p>
             <p class="mt-2 text-sm font-medium {{ $totalChangeClass }}">{{ $totalChange }}</p>
         </div>
-        <div class="ui-kpi dash-kpi">
+        <div class="ui-kpi ui-kpi-good dash-kpi">
             <p class="ui-kpi-label">New students</p>
             <p class="ui-kpi-value">{{ number_format($newStudents ?? 0) }}</p>
             <p class="mt-2 text-sm font-medium {{ $newChangeClass }}">{{ $newChange }}</p>
         </div>
-        <div class="ui-kpi dash-kpi">
+        <div class="ui-kpi ui-kpi-sky dash-kpi">
             <p class="ui-kpi-label">Returning / continuing</p>
             <p class="ui-kpi-value">{{ number_format($returningStudents ?? 0) }}</p>
             <p class="mt-2 text-sm font-medium {{ $returningChangeClass }}">{{ $returningChange }}</p>
         </div>
-        <div class="ui-kpi dash-kpi">
+        <div class="ui-kpi ui-kpi-good dash-kpi">
             <p class="ui-kpi-label">Retention rate</p>
             <p class="ui-kpi-value">{{ $retentionRate ?? 0 }}%</p>
             <p class="dash-note">{{ empty($previousAY) ? 'No prior year to compare' : 'Returning and continuing students divided by the '.$previousAY->academic_year.' total' }}</p>
@@ -142,22 +141,22 @@
 <section class="dash-section">
     <p class="dash-kicker">Students who moved or left</p>
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div class="ui-kpi dash-kpi dash-kpi-watch">
+        <div class="ui-kpi ui-kpi-warn dash-kpi dash-kpi-watch">
             <p class="ui-kpi-label">Shiftees</p>
             <p class="ui-kpi-value">{{ number_format($shifteeStudents ?? 0) }}</p>
             <p class="mt-2 text-sm font-medium {{ $shifteeChangeClass }}">{{ $shifteeChange }}</p>
         </div>
-        <div class="ui-kpi dash-kpi dash-kpi-watch">
+        <div class="ui-kpi ui-kpi-alert dash-kpi dash-kpi-watch">
             <p class="ui-kpi-label">Transferred</p>
             <p class="ui-kpi-value">{{ number_format($transferredStudents ?? 0) }}</p>
             <p class="mt-2 text-sm font-medium {{ $transferredChangeClass }}">{{ $transferredChange }}</p>
         </div>
-        <div class="ui-kpi dash-kpi dash-kpi-watch">
+        <div class="ui-kpi ui-kpi-bad dash-kpi dash-kpi-watch">
             <p class="ui-kpi-label">Withdrawn</p>
             <p class="ui-kpi-value">{{ number_format($withdrawnStudents ?? 0) }}</p>
             <p class="mt-2 text-sm font-medium {{ $withdrawnChangeClass }}">{{ $withdrawnChange }}</p>
         </div>
-        <div class="ui-kpi dash-kpi dash-kpi-watch">
+        <div class="ui-kpi ui-kpi-bad dash-kpi dash-kpi-watch">
             <p class="ui-kpi-label">Dropped</p>
             <p class="ui-kpi-value">{{ number_format($droppedStudents ?? 0) }}</p>
             <p class="mt-2 text-sm font-medium {{ $droppedChangeClass }}">{{ $droppedChange }}</p>
@@ -168,22 +167,22 @@
 <section class="dash-section">
     <p class="dash-kicker">Programs and the next forecast</p>
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div class="ui-kpi dash-kpi">
+        <div class="ui-kpi ui-kpi-info dash-kpi">
             <p class="ui-kpi-label">Highest-enrolled program</p>
             <p class="mt-2 text-lg font-bold leading-snug">{{ $highestProgram['program_name'] ?? 'N/A' }}</p>
             <p class="dash-note">{{ number_format($highestProgram['current'] ?? 0) }} students in this view</p>
         </div>
-        <div class="ui-kpi dash-kpi">
+        <div class="ui-kpi ui-kpi-warn dash-kpi">
             <p class="ui-kpi-label">Lowest-enrolled program</p>
             <p class="mt-2 text-lg font-bold leading-snug">{{ $lowestProgram['program_name'] ?? 'N/A' }}</p>
             <p class="dash-note">{{ number_format($lowestProgram['current'] ?? 0) }} students in this view</p>
         </div>
-        <div class="ui-kpi dash-kpi">
+        <div class="ui-kpi ui-kpi-sky dash-kpi">
             <p class="ui-kpi-label">Forecasted next period</p>
             <p class="ui-kpi-value">{{ $forecast ? number_format($forecast->predicted_enrollment) : '—' }}</p>
             <p class="dash-note">{{ $forecast ? $forecast->model_used.' · institution forecast' : 'Run an institution forecast to show a number here' }}</p>
         </div>
-        <div class="ui-kpi dash-kpi">
+        <div class="ui-kpi {{ ($unreadAlerts ?? 0) > 0 ? 'ui-kpi-alert' : 'ui-kpi-good' }} dash-kpi">
             <p class="ui-kpi-label">Unread alerts</p>
             <p class="ui-kpi-value">{{ $unreadAlerts ?? 0 }}</p>
             <p class="dash-note">{{ ($unreadAlerts ?? 0) > 0 ? 'Open Alerts to review them' : 'No unread alerts' }}</p>
@@ -199,20 +198,36 @@
     </div>
 </div>
 
+@php
+    $programChartRows = collect($topPrograms ?? [])->filter(fn ($row) => (int) ($row['current'] ?? 0) > 0)->values();
+    $collegeChartRows = collect($collegeRows ?? [])->filter(fn ($row) => (int) ($row['total'] ?? 0) > 0)->values();
+@endphp
 <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
     <div class="ui-panel p-5">
         <h3 class="text-base font-semibold mb-1">Top programs</h3>
         <p class="dash-note mb-4">Programs with the most students in the selected term.</p>
-        <div class="dash-chart-short">
-            <canvas id="programChart"></canvas>
-        </div>
+        @if($programChartRows->isEmpty())
+            <div class="dash-chart-short flex items-center justify-center rounded-xl border border-dashed border-gray-200 bg-slate-50">
+                <p class="text-sm text-gray-500 px-4 text-center">No program enrollment yet for this term. Import student records to populate this chart.</p>
+            </div>
+        @else
+            <div class="dash-chart-short">
+                <canvas id="programChart"></canvas>
+            </div>
+        @endif
     </div>
     <div class="ui-panel p-5">
         <h3 class="text-base font-semibold mb-1">Enrollment by college</h3>
         <p class="dash-note mb-4">Share of the selected term by college.</p>
-        <div class="dash-chart-short">
-            <canvas id="collegeChart"></canvas>
-        </div>
+        @if($collegeChartRows->isEmpty())
+            <div class="dash-chart-short flex items-center justify-center rounded-xl border border-dashed border-gray-200 bg-slate-50">
+                <p class="text-sm text-gray-500 px-4 text-center">No college enrollment share yet for this term.</p>
+            </div>
+        @else
+            <div class="dash-chart-short">
+                <canvas id="collegeChart"></canvas>
+            </div>
+        @endif
     </div>
 </div>
 
@@ -283,7 +298,33 @@
 
 @push('scripts')
 <script>
-    const themePrimary = getComputedStyle(document.documentElement).getPropertyValue('--theme-primary').trim() || '#0b5d3b';
+    function resolveChartColor() {
+        const styles = getComputedStyle(document.documentElement);
+        const candidates = [
+            styles.getPropertyValue('--theme-link').trim(),
+            styles.getPropertyValue('--csucc-green').trim(),
+            styles.getPropertyValue('--theme-primary').trim(),
+            '#0b5d3b',
+        ].filter(Boolean);
+
+        const isTooLight = (value) => {
+            const raw = String(value).trim().toLowerCase();
+            if (!raw || raw === 'white' || raw === 'transparent') return true;
+            const hex = raw.replace('#', '');
+            if (!/^[0-9a-f]{3}$|^[0-9a-f]{6}$/i.test(hex)) return false;
+            const full = hex.length === 3 ? hex.split('').map((c) => c + c).join('') : hex;
+            const r = parseInt(full.slice(0, 2), 16);
+            const g = parseInt(full.slice(2, 4), 16);
+            const b = parseInt(full.slice(4, 6), 16);
+            const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+            return luminance > 0.82;
+        };
+
+        return candidates.find((color) => !isTooLight(color)) || '#0b5d3b';
+    }
+
+    const themePrimary = resolveChartColor();
+    const chartPalette = [themePrimary, '#d4a017', '#0f766e', '#b45309', '#334155', '#0369a1', '#7c3aed'];
     const axis = {
         x: { grid: { display: false }, ticks: { color: '#64748b' } },
         y: { beginAtZero: true, ticks: { color: '#64748b' }, grid: { color: 'rgba(148, 163, 184, 0.25)' } }
@@ -311,32 +352,67 @@
             scales: axis
         }
     });
-    new Chart(document.getElementById('programChart'), {
-        type: 'bar',
-        data: {
-            labels: @json(collect($topPrograms ?? [])->pluck('program_code')),
-            datasets: [{ label: 'Students', data: @json(collect($topPrograms ?? [])->pluck('current')), backgroundColor: themePrimary, borderRadius: 6 }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            indexAxis: 'y',
-            plugins: { legend: { display: false } },
-            scales: { x: { beginAtZero: true, grid: { color: 'rgba(148, 163, 184, 0.25)' } }, y: { grid: { display: false } } }
-        }
-    });
-    new Chart(document.getElementById('collegeChart'), {
-        type: 'doughnut',
-        data: {
-            labels: @json(collect($collegeRows ?? [])->pluck('college_name')),
-            datasets: [{ data: @json(collect($collegeRows ?? [])->pluck('total')), backgroundColor: [themePrimary, '#d4a017', '#0f766e', '#b45309', '#334155'], borderWidth: 0 }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: { legend: { position: 'bottom' } },
-            cutout: '62%'
-        }
-    });
+    @if($programChartRows->isNotEmpty())
+    (() => {
+        const programData = @json($programChartRows->pluck('current')->values());
+        new Chart(document.getElementById('programChart'), {
+            type: 'bar',
+            data: {
+                labels: @json($programChartRows->pluck('program_code')->values()),
+                datasets: [{
+                    label: 'Students',
+                    data: programData,
+                    backgroundColor: programData.map((_, i) => chartPalette[i % chartPalette.length]),
+                    borderRadius: 6
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                indexAxis: 'y',
+                plugins: { legend: { display: false } },
+                scales: {
+                    x: {
+                        beginAtZero: true,
+                        ticks: { color: '#64748b', precision: 0 },
+                        grid: { color: 'rgba(148, 163, 184, 0.25)' }
+                    },
+                    y: {
+                        ticks: { color: '#334155' },
+                        grid: { display: false }
+                    }
+                }
+            }
+        });
+    })();
+    @endif
+    @if($collegeChartRows->isNotEmpty())
+    (() => {
+        const collegeData = @json($collegeChartRows->pluck('total')->values());
+        new Chart(document.getElementById('collegeChart'), {
+            type: 'doughnut',
+            data: {
+                labels: @json($collegeChartRows->pluck('college_name')->values()),
+                datasets: [{
+                    data: collegeData,
+                    backgroundColor: collegeData.map((_, i) => chartPalette[i % chartPalette.length]),
+                    borderWidth: 2,
+                    borderColor: '#ffffff'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: { color: '#334155', boxWidth: 12, usePointStyle: true }
+                    }
+                },
+                cutout: '62%'
+            }
+        });
+    })();
+    @endif
 </script>
 @endpush

@@ -6,24 +6,19 @@
     This report is for authorized school staff and for educational support only. Family structure and income are possible circumstances. They are not used to classify the student, and they should be checked with the student or a guardian before action.
 </div>
 
-<div class="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
-    <div class="ui-kpi">
+<div class="grid grid-cols-2 lg:grid-cols-3 gap-3 mb-4">
+    <div class="ui-kpi {{ match($analysis['level']) { 'low' => 'ui-kpi-good', 'moderate' => 'ui-kpi-warn', 'high' => 'ui-kpi-alert', default => 'ui-kpi-bad' } }}">
         <p class="ui-kpi-label">Risk level</p>
         <p class="mt-2"><span class="px-2 py-0.5 rounded-full text-xs font-medium {{ $badge }}">{{ $analysis['level_label'] }}</span></p>
     </div>
-    <div class="ui-kpi">
+    <div class="ui-kpi ui-kpi-sky">
         <p class="ui-kpi-label">Current GPA</p>
         <p class="ui-kpi-value text-xl">{{ number_format($analysis['gpa'], 2) }}</p>
         @if($analysis['previous_gpa'] !== null)
             <p class="text-xs text-gray-400 mt-1">Previous {{ number_format($analysis['previous_gpa'], 2) }}</p>
         @endif
     </div>
-    <div class="ui-kpi">
-        <p class="ui-kpi-label">Attendance</p>
-        <p class="ui-kpi-value text-xl">{{ number_format($analysis['attendance'], 1) }}%</p>
-        <p class="text-xs text-gray-400 mt-1">About {{ $analysis['estimated_absences'] }} absences</p>
-    </div>
-    <div class="ui-kpi">
+    <div class="ui-kpi {{ (int) $analysis['failed_subjects'] > 0 ? 'ui-kpi-alert' : 'ui-kpi-good' }}">
         <p class="ui-kpi-label">Failed subjects</p>
         <p class="ui-kpi-value text-xl">{{ $analysis['failed_subjects'] }}</p>
         <p class="text-xs text-gray-400 mt-1">of {{ $analysis['subjects_count'] }}</p>
@@ -43,7 +38,7 @@
                 <li>{{ $item }}</li>
             @endforeach
         </ul>
-        <p class="text-xs text-gray-500 mt-3">Absences are estimated from attendance using {{ \App\Services\StudentRiskAnalysis::TERM_MEETINGS }} class meetings. The academic file does not store tardiness or subject-by-subject grades.</p>
+        <p class="text-xs text-gray-500 mt-3">Attendance is not available in the CEIT academic dataset, so risk uses GPA, failed subjects, and enrollment standing only.</p>
     </div>
     <div class="ui-panel p-5">
         <h3 class="text-base font-semibold text-gray-800 mb-3">Possible contributing circumstances</h3>
@@ -68,7 +63,6 @@
                     <th class="text-left">Term</th>
                     <th class="text-left">GPA</th>
                     <th class="text-left">Average</th>
-                    <th class="text-left">Attendance</th>
                     <th class="text-left">Failed</th>
                     <th class="text-left">Standing</th>
                     <th class="text-left">Term risk</th>
@@ -80,7 +74,6 @@
                     <td>{{ $term['term'] }}</td>
                     <td class="tabular-nums">{{ number_format($term['gpa'], 2) }}</td>
                     <td class="tabular-nums">{{ number_format($term['average_grade'], 2) }}</td>
-                    <td class="tabular-nums">{{ number_format($term['attendance'], 1) }}%</td>
                     <td>{{ $term['failed_subjects'] }}</td>
                     <td>{{ $term['enrolled'] }}</td>
                     <td>{{ \App\Models\StudentRecord::RISK_LEVELS[$term['level']] ?? $term['level'] }}</td>
@@ -324,14 +317,26 @@
 </div>
 @endif
 
-<div class="ui-panel p-5 mb-4">
-    <h3 class="text-base font-semibold text-gray-800 mb-3">SPR family and financial background</h3>
+<div class="ui-panel p-5 mb-4" style="border-left: 4px solid var(--tone-info);">
+    <div class="flex items-center gap-2 mb-3">
+        <span class="ui-chip ui-chip-sky">SPR context</span>
+        <h3 class="text-base font-semibold text-gray-800">SPR family and financial background</h3>
+    </div>
     @if($analysis['spr'])
         <dl class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-3 text-sm">
             <div><dt class="ui-kpi-label mb-1">Household</dt><dd class="font-semibold text-gray-900">{{ $analysis['spr']['household'] }}</dd></div>
-            <div><dt class="ui-kpi-label mb-1">Solo parent</dt><dd class="font-semibold text-gray-900">{{ $analysis['spr']['solo_parent'] }}</dd></div>
-            <div><dt class="ui-kpi-label mb-1">Working student</dt><dd class="font-semibold text-gray-900">{{ $analysis['spr']['working'] }}</dd></div>
-            <div><dt class="ui-kpi-label mb-1">4Ps</dt><dd class="font-semibold text-gray-900">{{ $analysis['spr']['four_ps'] }}</dd></div>
+            <div>
+                <dt class="ui-kpi-label mb-1">Solo parent</dt>
+                <dd><span class="ui-chip {{ $analysis['spr']['solo_parent'] === 'Yes' ? 'ui-chip-warn' : 'ui-chip-good' }}">{{ $analysis['spr']['solo_parent'] }}</span></dd>
+            </div>
+            <div>
+                <dt class="ui-kpi-label mb-1">Working student</dt>
+                <dd><span class="ui-chip {{ $analysis['spr']['working'] === 'Yes' ? 'ui-chip-alert' : 'ui-chip-good' }}">{{ $analysis['spr']['working'] }}</span></dd>
+            </div>
+            <div>
+                <dt class="ui-kpi-label mb-1">4Ps</dt>
+                <dd><span class="ui-chip {{ $analysis['spr']['four_ps'] === 'Yes' ? 'ui-chip-info' : 'ui-chip-good' }}">{{ $analysis['spr']['four_ps'] }}</span></dd>
+            </div>
             <div><dt class="ui-kpi-label mb-1">Estimated monthly income</dt><dd class="font-semibold text-gray-900">{{ $analysis['spr']['income'] }}</dd></div>
             <div><dt class="ui-kpi-label mb-1">Estimated annual income</dt><dd class="font-semibold text-gray-900">₱{{ $analysis['spr']['annual_income'] }}</dd></div>
             <div class="sm:col-span-2"><dt class="ui-kpi-label mb-1">Father's occupation</dt><dd class="font-semibold text-gray-900">{{ $analysis['spr']['father'] }}</dd></div>
@@ -344,13 +349,16 @@
 </div>
 
 <div class="ui-panel p-5 mb-4">
-    <h3 class="text-base font-semibold text-gray-800 mb-3">Recommended support</h3>
-    <ul class="space-y-3">
+    <div class="flex items-center gap-2 mb-3">
+        <span class="ui-chip ui-chip-info ui-live-dot">Support plan</span>
+        <h3 class="text-base font-semibold text-gray-800">Recommended support</h3>
+    </div>
+    <div>
         @foreach($analysis['recommendations'] as $item)
-        <li>
+        <div class="ui-support-item">
             <p class="text-sm font-semibold text-gray-900">{{ $item['title'] }}</p>
             <p class="text-sm text-gray-600 mt-0.5">{{ $item['detail'] }}</p>
-        </li>
+        </div>
         @endforeach
-    </ul>
+    </div>
 </div>

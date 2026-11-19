@@ -90,37 +90,46 @@ class StudentRecordTest extends TestCase
         $this->assertNotNull($enrollment);
         $this->assertSame(1, $enrollment->enrollment_count);
 
-        $this->actingAs($user)->put(route('students.update', $record), [
-            'student_id' => '2025-01001',
-            'gender' => 'female',
-            'age' => 19,
-            'college_id' => $program->department->college_id,
-            'program_id' => $program->id,
-            'year_level' => 1,
-            'section' => 'a',
-            'academic_year_id' => $year->id,
-            'semester_id' => $semester->id,
-            'gpa' => 1.75,
-            'average_grade' => 90,
-            'attendance_percent' => 95,
-            'subjects_count' => 8,
-            'failed_subjects' => 0,
-            'units_enrolled' => 24,
+        $record->update([
             'enrolled_status' => 'dropped',
-            'student_type' => 'returning',
-            'scholarship_status' => 'none',
-            'tuition_status' => 'paid',
-        ])->assertRedirect();
+        ]);
 
         $this->assertNull(EnrollmentRecord::query()->where('enrollment_type', 'returning')->first());
         $this->assertSame(1, EnrollmentRecord::query()->where('enrollment_type', 'dropped')->value('enrollment_count'));
+
+        $this->actingAs($user)
+            ->get(route('students.edit', $record))
+            ->assertForbidden();
+
+        $this->actingAs($user)
+            ->put(route('students.update', $record), [
+                'student_id' => '2025-01001',
+                'gender' => 'female',
+                'age' => 19,
+                'college_id' => $program->department->college_id,
+                'program_id' => $program->id,
+                'year_level' => 1,
+                'section' => 'a',
+                'academic_year_id' => $year->id,
+                'semester_id' => $semester->id,
+                'gpa' => 1.75,
+                'average_grade' => 90,
+                'subjects_count' => 8,
+                'failed_subjects' => 0,
+                'units_enrolled' => 24,
+                'enrolled_status' => 'enrolled',
+                'student_type' => 'returning',
+                'scholarship_status' => 'none',
+                'tuition_status' => 'paid',
+            ])
+            ->assertForbidden();
 
         $this->actingAs($user)
             ->get(route('students.index'))
             ->assertOk()
             ->assertSee('2025-01001')
             ->assertSee('Student ID')
-            ->assertSee('Returning')
+            ->assertSee('Old')
             ->assertSee('CEIT')
             ->assertSee('BSIT')
             ->assertSee('Information Technology')
@@ -130,7 +139,7 @@ class StudentRecordTest extends TestCase
             ->get(route('students.show', $record))
             ->assertOk()
             ->assertSee('Student Type')
-            ->assertSee('Returning');
+            ->assertSee('Old');
     }
 
     public function test_student_csv_import_preview_and_commit(): void

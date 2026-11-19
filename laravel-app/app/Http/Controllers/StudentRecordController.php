@@ -11,6 +11,8 @@ use App\Services\AuditLogger;
 use App\Services\StudentImportService;
 use App\Services\StudentRiskAnalysis;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
@@ -26,7 +28,6 @@ class StudentRecordController extends Controller
             'high' => (clone $query)->where('risk_level', 'high')->count(),
             'critical' => (clone $query)->where('risk_level', 'critical')->count(),
             'avg_gpa' => (clone $query)->avg('gpa'),
-            'avg_attendance' => (clone $query)->avg('attendance_percent'),
         ];
 
         $students = $query
@@ -67,15 +68,12 @@ class StudentRecordController extends Controller
 
     public function edit(StudentRecord $student)
     {
-        return view('students.form', array_merge($this->formData(), ['student' => $student]));
+        abort(403, 'Student records are read-only. Re-import the dataset to change values.');
     }
 
     public function update(Request $request, StudentRecord $student, AuditLogger $audit)
     {
-        $student->update($this->validated($request, $student->id));
-        $audit->log('update', 'students', 'Updated student record '.$student->student_id.'.');
-
-        return redirect()->route('students.show', $student)->with('success', 'Student record updated. Risk level is '.$student->riskLabel().'.');
+        abort(403, 'Student records are read-only. Re-import the dataset to change values.');
     }
 
     public function destroy(StudentRecord $student, AuditLogger $audit)
@@ -110,7 +108,6 @@ class StudentRecordController extends Controller
                 'semester',
                 'gpa',
                 'average_grade',
-                'attendance_percent',
                 'number_of_subjects',
                 'failed_subjects',
                 'units_enrolled',
@@ -118,6 +115,19 @@ class StudentRecordController extends Controller
                 'student_type',
                 'scholarship_status',
                 'tuition_status',
+                'last_name',
+                'first_name',
+                'middle_name',
+                'ext_name',
+                'email',
+                'date_of_birth',
+                'mobile',
+                'academic_standing',
+                'block',
+                'scholar_code',
+                'home_address',
+                'municipality',
+                'province',
             ]);
             fputcsv($handle, [
                 '2025-01001',
@@ -131,7 +141,6 @@ class StudentRecordController extends Controller
                 'First Semester',
                 '1.75',
                 '90',
-                '95',
                 '8',
                 '0',
                 '24',
@@ -139,6 +148,19 @@ class StudentRecordController extends Controller
                 'New',
                 'None',
                 'Paid',
+                'Dela Cruz',
+                'Ana',
+                'Lopez',
+                '',
+                'ana@example.com',
+                '2006-05-01',
+                '09171234567',
+                'Regular',
+                'BSIT1A',
+                '',
+                'Cabadbaran City',
+                'Cabadbaran City',
+                'Agusan del Norte',
             ]);
             fclose($handle);
         }, 'student_import_template.csv', ['Content-Type' => 'text/csv']);
@@ -146,10 +168,16 @@ class StudentRecordController extends Controller
 
     public function importPreview(Request $request, StudentImportService $importer)
     {
+        @set_time_limit(0);
+        @ini_set('max_execution_time', '0');
+        @ini_set('memory_limit', '1024M');
+
         $request->validate([
-            'file' => ['required', 'file', 'extensions:csv,txt,xlsx,xls', 'max:10240'],
+            // 50 MB — large CEIT extracts; preview payload is file-backed (not session).
+            'file' => ['required', 'file', 'extensions:csv,txt,xlsx,xls', 'max:51200'],
         ], [
             'file.extensions' => 'Upload a CSV or Excel (.xlsx) file.',
+            'file.max' => 'The file may be up to 50 MB.',
         ]);
 
         $file = $request->file('file');
@@ -159,23 +187,72 @@ class StudentRecordController extends Controller
         }
 
         $report = $importer->validate($parsed['rows']);
-        session(['student_import_preview' => $report]);
+        $token = (string) Str::uuid();
+        Storage::disk('local')->put(
+            'imports/'.$token.'.json',
+            json_encode($report['valid'] ?? [], JSON_THROW_ON_ERROR)
+        );
+
+        // Keep only a light summary in session so large Excel uploads stay scalable.
+        $issues = array_slice($report['issues'] ?? [], 0, 200);
+        session([
+            'student_import_preview' => [
+                'token' => $token,
+                'score' => $report['score'] ?? 0,
+                'counts' => $report['counts'] ?? ['rows' => 0, 'valid' => 0, 'invalid' => 0],
+                'issues' => $issues,
+                'issues_truncated' => count($report['issues'] ?? []) > 200,
+                'header' => $parsed['header'] ?? [],
+                'file_name' => $file->getClientOriginalName(),
+            ],
+        ]);
 
         return redirect()->route('students.import')->with('success', 'Validation complete. Review the report before confirming.');
     }
 
     public function importCommit(StudentImportService $importer, AuditLogger $audit)
     {
+        @set_time_limit(0);
+        @ini_set('max_execution_time', '0');
+        @ini_set('memory_limit', '1024M');
+
         $preview = session('student_import_preview');
-        if (! $preview || empty($preview['valid'])) {
+        $token = is_array($preview) ? ($preview['token'] ?? null) : null;
+        $path = $token ? 'imports/'.$token.'.json' : null;
+        $valid = [];
+        if ($path && Storage::disk('local')->exists($path)) {
+            $valid = json_decode(Storage::disk('local')->get($path), true) ?: [];
+        } elseif (is_array($preview) && ! empty($preview['valid'])) {
+            // Backward-compatible with older in-session previews.
+            $valid = $preview['valid'];
+        }
+
+        if ($valid === []) {
             return redirect()->route('students.import')->with('error', 'No validated rows to import.');
         }
 
-        $count = $importer->commit($preview['valid']);
-        $audit->log('import', 'students', "Imported {$count} student records.");
+        $result = $importer->commit($valid);
+        $imported = (int) ($result['imported'] ?? 0);
+        $skipped = (int) ($result['skipped'] ?? 0);
+        $audit->log('import', 'students', "Imported {$imported} student records ({$skipped} skipped as duplicates).");
         session()->forget('student_import_preview');
+        if ($path && Storage::disk('local')->exists($path)) {
+            Storage::disk('local')->delete($path);
+        }
 
-        return redirect()->route('students.index')->with('success', "{$count} student records imported. Invalid rows were not stored.");
+        if ($imported === 0 && $skipped > 0) {
+            return redirect()->route('students.index')->with(
+                'success',
+                "No new rows imported. {$skipped} records were already in the system for the same student, academic year, and semester."
+            );
+        }
+
+        $message = "{$imported} student records imported.";
+        if ($skipped > 0) {
+            $message .= " {$skipped} duplicate rows were skipped.";
+        }
+
+        return redirect()->route('students.index')->with('success', $message);
     }
 
     public function exportCsv(Request $request): StreamedResponse
@@ -197,12 +274,12 @@ class StudentRecordController extends Controller
                 'semester',
                 'gpa',
                 'average_grade',
-                'attendance_percent',
                 'number_of_subjects',
                 'failed_subjects',
                 'units_enrolled',
                 'enrolled_status',
                 'student_type',
+                'academic_standing',
                 'scholarship_status',
                 'tuition_status',
                 'student_risk_level',
@@ -225,12 +302,12 @@ class StudentRecordController extends Controller
                             $record->semester?->semester_name,
                             $record->gpa,
                             $record->average_grade,
-                            $record->attendance_percent,
                             $record->subjects_count,
                             $record->failed_subjects,
                             $record->units_enrolled,
                             $record->enrolledLabel(),
                             $record->studentTypeLabel(),
+                            $record->academicStandingLabel(),
                             $record->scholarshipLabel(),
                             $record->tuitionLabel(),
                             $record->riskLabel(),
@@ -252,7 +329,6 @@ class StudentRecordController extends Controller
 
         foreach ([
             'academic_year_id',
-            'semester_id',
             'program_id',
             'year_level',
             'section',
@@ -266,6 +342,14 @@ class StudentRecordController extends Controller
             if ($request->filled($field)) {
                 $query->where($field, $request->input($field));
             }
+        }
+
+        // Filter by term name (First / Second / Summer), not a specific semester row.
+        if ($request->filled('semester')) {
+            $semesterName = (string) $request->input('semester');
+            $query->whereHas('semester', fn ($semester) => $semester->where('semester_name', $semesterName));
+        } elseif ($request->filled('semester_id')) {
+            $query->where('semester_id', $request->input('semester_id'));
         }
 
         if ($request->filled('college_id')) {
@@ -282,8 +366,21 @@ class StudentRecordController extends Controller
     {
         return [
             'academicYears' => AcademicYear::query()->orderByDesc('academic_year')->get(),
-            'semesters' => Semester::query()->with('academicYear')->orderByDesc('academic_year_id')->orderBy('id')->get(),
-            'colleges' => College::query()->orderBy('college_name')->get(),
+            'semesters' => Semester::query()
+                ->with('academicYear')
+                ->join('academic_years', 'academic_years.id', '=', 'semesters.academic_year_id')
+                ->orderByDesc('academic_years.academic_year')
+                ->orderBy('semesters.semester_order')
+                ->orderBy('semesters.id')
+                ->select('semesters.*')
+                ->get(),
+            'semesterNames' => Semester::query()
+                ->select('semester_name')
+                ->selectRaw('MIN(semester_order) as semester_order')
+                ->groupBy('semester_name')
+                ->orderBy('semester_order')
+                ->pluck('semester_name'),
+            'colleges' => College::forFilters(),
             'programs' => Program::query()->with('department.college')->orderBy('program_name')->get(),
         ];
     }
@@ -315,8 +412,9 @@ class StudentRecordController extends Controller
                     }
                 },
             ],
-            'year_level' => ['required', 'integer', 'min:1', 'max:4'],
+            'year_level' => ['required', 'integer', 'min:1', 'max:5'],
             'section' => ['required', 'string', 'max:20'],
+            'block' => ['nullable', 'string', 'max:40'],
             'academic_year_id' => ['required', 'exists:academic_years,id'],
             'semester_id' => [
                 'required',
@@ -328,9 +426,20 @@ class StudentRecordController extends Controller
                     }
                 },
             ],
+            'last_name' => ['nullable', 'string', 'max:100'],
+            'first_name' => ['nullable', 'string', 'max:100'],
+            'middle_name' => ['nullable', 'string', 'max:100'],
+            'ext_name' => ['nullable', 'string', 'max:30'],
+            'email' => ['nullable', 'email', 'max:150'],
+            'date_of_birth' => ['nullable', 'date'],
+            'mobile' => ['nullable', 'string', 'max:40'],
+            'academic_standing' => ['nullable', Rule::in(array_keys(StudentRecord::ACADEMIC_STANDINGS))],
+            'scholar_code' => ['nullable', 'string', 'max:40'],
+            'home_address' => ['nullable', 'string', 'max:255'],
+            'municipality' => ['nullable', 'string', 'max:100'],
+            'province' => ['nullable', 'string', 'max:100'],
             'gpa' => ['required', 'numeric', 'min:1', 'max:5'],
             'average_grade' => ['required', 'numeric', 'min:0', 'max:100'],
-            'attendance_percent' => ['required', 'numeric', 'min:0', 'max:100'],
             'subjects_count' => ['required', 'integer', 'min:0', 'max:20'],
             'failed_subjects' => ['required', 'integer', 'min:0', 'lte:subjects_count'],
             'units_enrolled' => ['required', 'numeric', 'min:0', 'max:36'],
@@ -345,6 +454,7 @@ class StudentRecordController extends Controller
         ]);
 
         unset($data['risk_level'], $data['college_id']);
+        $data['attendance_percent'] = 100;
 
         return $data;
     }

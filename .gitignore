@@ -1,0 +1,28 @@
+# Local / secrets
+.env
+.env.*
+!.env.example
+**/.env
+**/!.env.example
+
+# OS / editor junk
+Thumbs.db
+Desktop.ini
+.DS_Store
+~$*
+*.tmp
+
+# Huge raw registrar dump (keep scrubbed CEIT master in laravel-app/database/data only)
+Docs/Dataset/enrollment_csv/
+
+# Local thesis binaries (keep markdown sources if needed)
+*.docx
+!laravel-app/**
+
+# PHP / Node
+**/vendor/
+**/node_modules/
+**/storage/logs/*
+**/storage/framework/cache/*
+**/storage/framework/sessions/*
+**/storage/framework/views/*

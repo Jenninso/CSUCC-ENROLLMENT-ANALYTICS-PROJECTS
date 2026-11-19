@@ -58,8 +58,8 @@
             @endforeach
         </select>
         <div class="flex gap-2 sm:col-span-2 lg:col-span-5">
-            <button type="submit" class="ui-btn-primary">Filter</button>
-            <a href="{{ route('spes.index') }}" class="ui-btn-secondary">Clear</a>
+            <button type="submit" class="ui-btn-filter">Filter</button>
+            <a href="{{ route('spes.index') }}" class="ui-btn-clear">Clear</a>
         </div>
     </form>
 </div>

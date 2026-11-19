@@ -253,14 +253,13 @@ class SubjectCurriculumService
 
         $failedCount = max(0, (int) ($student->failed_subjects ?? 0));
         $gpa = (float) ($student->gpa ?? 2.0);
-        $attendance = (float) ($student->attendance_percent ?? 90.0);
 
-        // Calculate conditional / warning subjects count
+        // Calculate conditional / warning subjects count (attendance not available in dataset)
         $warningCount = 0;
         if ($failedCount > 0) {
             $warningCount = 1;
-        } elseif ($gpa >= 2.50 || $attendance < 80.0) {
-            $warningCount = ($gpa >= 2.85 || $attendance < 75.0) ? 2 : 1;
+        } elseif ($gpa >= 2.50) {
+            $warningCount = $gpa >= 2.85 ? 2 : 1;
         }
 
         $studentSubjects = [];

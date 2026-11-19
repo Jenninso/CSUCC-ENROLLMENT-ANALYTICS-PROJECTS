@@ -21,11 +21,16 @@ class StudentIntervention extends Model
 {
     public const TYPES = [
         'tutoring' => 'Academic tutoring and remedial classes',
+        'faculty_consultation' => 'Faculty consultation for difficult subjects',
+        'peer_mentoring' => 'Peer mentoring or study group referral',
+        'load_advising' => 'Academic load / underload advising',
+        'adviser_conference' => 'Program coordinator / course adviser conference',
         'attendance_followup' => 'Attendance monitoring and follow-up',
         'counseling' => 'Guidance counseling and student consultation',
         'financial_referral' => 'Financial assistance or scholarship referral',
         'guardian_coordination' => 'Coordination with parent or guardian',
         'working_student_support' => 'Flexible support for a working student',
+        'return_plan' => 'Return-to-studies / re-enrollment plan',
         'school_program' => 'Referral to a school support program',
     ];
 

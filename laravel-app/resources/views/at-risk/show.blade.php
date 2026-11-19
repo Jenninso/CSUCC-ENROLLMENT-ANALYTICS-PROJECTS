@@ -21,7 +21,7 @@
             <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2">
                 <div>
                     <p class="text-sm font-semibold text-gray-900">{{ $intervention->typeLabel() }}</p>
-                    <p class="text-xs text-gray-500 mt-1">{{ $intervention->provided_on?->format('M j, Y') }} · GPA then {{ number_format((float) $intervention->gpa_at_record, 2) }} · attendance {{ number_format((float) $intervention->attendance_at_record, 1) }}%</p>
+                    <p class="text-xs text-gray-500 mt-1">{{ $intervention->provided_on?->format('M j, Y') }} · GPA then {{ number_format((float) $intervention->gpa_at_record, 2) }}</p>
                     @if($intervention->notes)
                         <p class="text-sm text-gray-700 mt-1">{{ $intervention->notes }}</p>
                     @endif

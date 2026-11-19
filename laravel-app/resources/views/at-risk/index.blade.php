@@ -29,6 +29,27 @@
     };
     $indicatorMax = max(1, (int) max($summary['indicators'] ?: [0]));
     $sectionMax = max(1, (int) collect($summary['by_section'])->max());
+    $indicatorTones = [
+        'Declining grades' => ['bar' => '#d97706', 'text' => 'text-amber-700', 'track' => 'rgba(217, 119, 6, 0.16)'],
+        'Frequent absences' => ['bar' => '#ca8a04', 'text' => 'text-yellow-700', 'track' => 'rgba(202, 138, 4, 0.16)'],
+        'Failed subjects' => ['bar' => '#ea580c', 'text' => 'text-orange-700', 'track' => 'rgba(234, 88, 12, 0.16)'],
+        'Poor GPA' => ['bar' => '#dc2626', 'text' => 'text-red-700', 'track' => 'rgba(220, 38, 38, 0.16)'],
+        'Left or stopped' => ['bar' => '#b91c1c', 'text' => 'text-red-800', 'track' => 'rgba(185, 28, 28, 0.18)'],
+    ];
+    $sectionTone = function (int $count) use ($sectionMax): array {
+        $ratio = $sectionMax > 0 ? $count / $sectionMax : 0;
+        if ($ratio >= 0.75) {
+            return ['bar' => '#b91c1c', 'text' => 'text-red-700', 'track' => 'rgba(185, 28, 28, 0.16)'];
+        }
+        if ($ratio >= 0.5) {
+            return ['bar' => '#ea580c', 'text' => 'text-orange-700', 'track' => 'rgba(234, 88, 12, 0.16)'];
+        }
+        if ($ratio >= 0.25) {
+            return ['bar' => '#d97706', 'text' => 'text-amber-700', 'track' => 'rgba(217, 119, 6, 0.16)'];
+        }
+
+        return ['bar' => '#0f766e', 'text' => 'text-teal-700', 'track' => 'rgba(15, 118, 110, 0.16)'];
+    };
 @endphp
 
 <style>
@@ -54,17 +75,20 @@
         color: var(--theme-text);
         border: 1px solid var(--theme-border);
     }
-    .risk-meter { height: 0.35rem; border-radius: 999px; background: color-mix(in srgb, var(--theme-border) 70%, transparent); overflow: hidden; }
-    .risk-meter > span { display: block; height: 100%; border-radius: 999px; background: var(--theme-primary); }
+    .risk-meter { height: 0.4rem; border-radius: 999px; overflow: hidden; }
+    .risk-meter > span { display: block; height: 100%; border-radius: 999px; min-width: 0; transition: width 0.25s ease; }
 </style>
 
 <div class="ui-panel mb-6 overflow-hidden">
     <div class="px-5 pt-5 pb-4 sm:px-6 border-b border-gray-100" style="background: linear-gradient(180deg, color-mix(in srgb, var(--theme-primary) 9%, var(--theme-panel)), var(--theme-panel));">
         <div class="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
             <div class="max-w-3xl">
-                <p class="text-[11px] font-semibold uppercase tracking-[0.16em]" style="color: var(--theme-primary);">CSUCC · CEIT</p>
+                <div class="flex items-center gap-2">
+                    <p class="text-[11px] font-semibold uppercase tracking-[0.16em]" style="color: var(--theme-primary);">CSUCC · CEIT</p>
+                    <span class="ui-chip ui-chip-info ui-live-dot">Live file</span>
+                </div>
                 <h3 class="ui-page-title mt-1">Student at-risk analysis</h3>
-                <p class="ui-page-sub">Risk levels come from grades, attendance, failed subjects, and enrollment standing. SPR family and income details explain possible circumstances. They do not raise a student's risk level.</p>
+                <p class="ui-page-sub">Risk levels come from GPA, failed subjects, and enrollment standing. SPR family and income details explain possible circumstances. They do not raise a student's risk level.</p>
             </div>
             @if(auth()->user()?->canAccess('at_risk.manage'))
             <form method="POST" action="{{ route('at-risk.warnings') }}" class="shrink-0">
@@ -75,7 +99,6 @@
         </div>
         <div class="mt-4 flex flex-wrap gap-2">
             <span class="risk-chip">GPA 2.75 or worse</span>
-            <span class="risk-chip">Attendance below 75%</span>
             <span class="risk-chip">Two or more failed subjects</span>
             <span class="risk-chip">Dropped, withdrawn, or stopped</span>
         </div>
@@ -168,12 +191,18 @@
         <p class="risk-note mb-4">Counted among students above low risk.</p>
         <dl class="space-y-3">
             @foreach($summary['indicators'] as $label => $count)
+            @php
+                $tone = $indicatorTones[$label] ?? ['bar' => '#0f766e', 'text' => 'text-teal-700', 'track' => 'rgba(15, 118, 110, 0.16)'];
+                $pct = round(((int) $count) / $indicatorMax * 100);
+            @endphp
             <div>
                 <div class="flex justify-between gap-4 text-sm mb-1">
                     <dt class="text-gray-600">{{ $label }}</dt>
-                    <dd class="font-semibold tabular-nums">{{ number_format($count) }}</dd>
+                    <dd class="font-semibold tabular-nums {{ $tone['text'] }}">{{ number_format($count) }}</dd>
                 </div>
-                <div class="risk-meter"><span style="width: {{ round($count / $indicatorMax * 100) }}%"></span></div>
+                <div class="risk-meter" style="background: {{ $tone['track'] }};">
+                    <span style="width: {{ $pct }}%; background: {{ $tone['bar'] }};"></span>
+                </div>
             </div>
             @endforeach
         </dl>
@@ -183,12 +212,18 @@
         <p class="risk-note mb-4">Sections with no student above low risk are left out.</p>
         <dl class="space-y-3 max-h-72 overflow-y-auto pr-1">
             @forelse(collect($summary['by_section'])->filter()->sortDesc() as $section => $count)
+            @php
+                $tone = $sectionTone((int) $count);
+                $pct = round(((int) $count) / $sectionMax * 100);
+            @endphp
             <div>
                 <div class="flex justify-between gap-4 text-sm mb-1">
                     <dt class="text-gray-600">{{ $section }}</dt>
-                    <dd class="font-semibold tabular-nums">{{ number_format($count) }}</dd>
+                    <dd class="font-semibold tabular-nums {{ $tone['text'] }}">{{ number_format($count) }}</dd>
                 </div>
-                <div class="risk-meter"><span style="width: {{ round($count / $sectionMax * 100) }}%"></span></div>
+                <div class="risk-meter" style="background: {{ $tone['track'] }};">
+                    <span style="width: {{ $pct }}%; background: {{ $tone['bar'] }};"></span>
+                </div>
             </div>
             @empty
             <p class="text-sm text-gray-500">No section has a student above low risk.</p>
@@ -257,7 +292,15 @@
         <h3 class="text-base font-semibold">Student list</h3>
         <p class="risk-note">The full file stays in the database. This table draws one page at a time.</p>
     </div>
-    <form method="GET" action="{{ route('at-risk.index') }}" class="p-4 sm:p-5 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-3 items-end border-b border-gray-100">
+    @php
+        $atRiskChips = collect([
+            request('q') ? ['key' => 'q', 'label' => 'ID: '.request('q')] : null,
+            request('level') ? ['key' => 'level', 'label' => \App\Models\StudentRecord::RISK_LEVELS[request('level')] ?? request('level')] : null,
+            request('year_level') ? ['key' => 'year_level', 'label' => \App\Models\EnrollmentRecord::yearLevelLabel((int) request('year_level'))] : null,
+            request('program_id') ? ['key' => 'program_id', 'label' => $programs[(int) request('program_id')] ?? ('Course #'.request('program_id'))] : null,
+        ])->filter()->values();
+    @endphp
+    <form method="GET" action="{{ route('at-risk.index') }}" class="p-4 sm:p-5 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-3 items-end border-b border-gray-100 sticky top-2 z-10" style="backdrop-filter: blur(8px); background: color-mix(in srgb, var(--theme-panel) 94%, transparent);">
         <label class="lg:col-span-2">
             <span class="risk-label">Student ID</span>
             <input type="text" name="q" value="{{ request('q') }}" placeholder="Search an ID" class="ui-input">
@@ -290,9 +333,20 @@
             </select>
         </label>
         <div class="flex gap-2">
-            <button type="submit" class="ui-btn-primary">Filter</button>
-            <a href="{{ route('at-risk.index') }}" class="ui-btn-secondary">Clear</a>
+            <button type="submit" class="ui-btn-filter">Filter</button>
+            <a href="{{ route('at-risk.index') }}" class="ui-btn-clear">Clear</a>
         </div>
+        @if($atRiskChips->isNotEmpty())
+        <div class="sm:col-span-2 lg:col-span-6 flex flex-wrap items-center gap-2 -mt-1">
+            <span class="text-[10px] font-bold uppercase tracking-wide text-gray-500">Active filters</span>
+            @foreach($atRiskChips as $chip)
+                <a href="{{ route('at-risk.index', request()->except($chip['key'])) }}" class="ui-chip ui-chip-info hover:opacity-80">
+                    {{ $chip['label'] }} <span class="font-bold">×</span>
+                </a>
+            @endforeach
+            <a href="{{ route('at-risk.index') }}" class="text-xs font-semibold text-amber-800 underline">Clear all</a>
+        </div>
+        @endif
     </form>
     <div class="overflow-x-auto">
         <table class="ui-table">
@@ -301,9 +355,9 @@
                     <th class="text-left">Student</th>
                     <th class="text-left">Course</th>
                     <th class="text-left">GPA</th>
-                    <th class="text-left">Attendance</th>
                     <th class="text-left">Failed</th>
                     <th class="text-left">Risk</th>
+                    <th class="text-left">Why</th>
                     <th class="text-right">Report</th>
                 </tr>
             </thead>
@@ -315,7 +369,6 @@
                     </td>
                     <td>{{ $row['program'] }} · {{ $row['year_label'] }} {{ $row['section'] }}</td>
                     <td class="tabular-nums">{{ number_format($row['gpa'], 2) }}</td>
-                    <td class="tabular-nums">{{ number_format($row['attendance'], 1) }}%</td>
                     <td>
                         @if($row['failed_subjects'] > 0)
                             <div class="flex flex-col">
@@ -334,11 +387,19 @@
                         @endif
                     </td>
                     <td><span class="px-2 py-0.5 rounded-full text-xs font-medium {{ \App\Models\StudentRecord::query()->make(['risk_level' => $row['level']])->riskBadgeClass() }}">{{ $row['level_label'] }}</span></td>
+                    <td class="text-xs text-gray-700 max-w-[220px]">{{ $row['why'] ?? '—' }}</td>
                     <td class="text-right"><a href="{{ route('at-risk.show', $row['student_record_id']) }}" class="ui-link text-xs">Open</a></td>
                 </tr>
                 @empty
                 <tr>
-                    <td colspan="7" class="text-center text-gray-500 py-10">No students match this filter.</td>
+                    <td colspan="7" class="px-4 py-12 text-center">
+                        <p class="text-base font-bold text-gray-800 mb-1">No students match this filter</p>
+                        <p class="text-sm text-gray-500 mb-4">Try another risk level or course, or clear filters to see the full file.</p>
+                        <div class="flex flex-wrap justify-center gap-2">
+                            <a href="{{ route('at-risk.index') }}" class="ui-btn-clear">Clear filters</a>
+                            <a href="{{ route('students.index') }}" class="ui-btn-secondary">Student Records</a>
+                        </div>
+                    </td>
                 </tr>
                 @endforelse
             </tbody>

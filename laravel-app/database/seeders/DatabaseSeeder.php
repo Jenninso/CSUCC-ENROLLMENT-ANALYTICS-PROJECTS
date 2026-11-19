@@ -114,5 +114,7 @@ class DatabaseSeeder extends Seeder
         $this->call(CeitBsitScopeSeeder::class);
         $this->call(StudentRecordSeeder::class);
         $this->call(StatisticalHistorySeeder::class);
+        // CEIT registrar master (scrubbed). Replaces thin demo data on first boot / when forced.
+        $this->call(CeitMasterImportSeeder::class);
     }
 }

@@ -15,14 +15,10 @@
         <p class="ui-page-sub">{{ $row['program'] }} · Year {{ $row['year_level'] }} · {{ $row['chance'] }}% estimate</p>
     </div>
     <div class="p-5 sm:p-6">
-        <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        <div class="grid grid-cols-2 lg:grid-cols-3 gap-3">
             <div class="ui-kpi">
                 <p class="ui-kpi-label">GPA</p>
                 <p class="ui-kpi-value">{{ number_format($row['gpa'], 2) }}</p>
-            </div>
-            <div class="ui-kpi" style="border-left-color: #b45309;">
-                <p class="ui-kpi-label">Attendance</p>
-                <p class="ui-kpi-value">{{ $row['attendance'] }}%</p>
             </div>
             <div class="ui-kpi" style="border-left-color: #b45309;">
                 <p class="ui-kpi-label">Failed subjects</p>

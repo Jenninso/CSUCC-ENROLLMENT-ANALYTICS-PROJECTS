@@ -26,6 +26,7 @@ return [
         'IT' => 'Information Technology',
         'CpE' => 'Computer Engineering',
         'EE' => 'Electrical Engineering',
+        'ET' => 'Engineering Technology',
     ],
     'programs' => [
         'BSIT' => [
@@ -42,6 +43,16 @@ return [
             'name' => 'BS Electrical Engineering',
             'department' => 'EE',
             'group' => 'Engineering',
+        ],
+        'EET' => [
+            'name' => 'Electrical Engineering Technology',
+            'department' => 'ET',
+            'group' => 'Engineering',
+        ],
+        'DCT' => [
+            'name' => 'Diploma in Computer Technology',
+            'department' => 'IT',
+            'group' => 'Information Technology',
         ],
     ],
 ];

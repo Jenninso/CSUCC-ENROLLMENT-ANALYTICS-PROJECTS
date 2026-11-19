@@ -32,7 +32,7 @@
             <div class="max-w-3xl">
                 <a href="{{ route('at-risk.index') }}" class="text-[11px] font-semibold uppercase tracking-[0.16em] text-teal-800">At-risk students</a>
                 <h3 class="ui-page-title mt-1">Random Forest attrition estimate</h3>
-                <p class="ui-page-sub">This is separate from the yearly enrollment forecast. It looks at grade, attendance, failed subjects, year level, and age. It learns from students already marked dropped, withdrawn, or stopped, then flags enrolled students who look similar. The status field is the answer, not an input.</p>
+                <p class="ui-page-sub">This is separate from the yearly enrollment forecast. It looks at grade, failed subjects, year level, and age. It learns from students already marked dropped, withdrawn, or stopped, then flags enrolled students who look similar. The status field is the answer, not an input.</p>
             </div>
             <form method="POST" action="{{ route('at-risk.attrition') }}" class="shrink-0">
                 @csrf

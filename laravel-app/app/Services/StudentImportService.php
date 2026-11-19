@@ -22,7 +22,6 @@ class StudentImportService
         'semester',
         'gpa',
         'average_grade',
-        'attendance_percent',
         'number_of_subjects',
         'failed_subjects',
         'units_enrolled',
@@ -34,13 +33,13 @@ class StudentImportService
 
     /** @var array<string, string> */
     private array $headerAliases = [
+        'studid' => 'student_id',
         'program_code' => 'course',
+        'progcode' => 'course',
         'program' => 'course',
         'subjects_count' => 'number_of_subjects',
         'number_of_subject' => 'number_of_subjects',
         'subjects' => 'number_of_subjects',
-        'attendance' => 'attendance_percent',
-        'attendance_%' => 'attendance_percent',
         'enrolled' => 'enrolled_status',
         'type' => 'student_type',
         'student_category' => 'student_type',
@@ -51,6 +50,20 @@ class StudentImportService
         'risk' => 'risk_level',
         'risk_level' => 'risk_level',
         'college_code' => 'college',
+        'sex' => 'gender',
+        'sy' => 'academic_year',
+        'sem' => 'semester',
+        'studlevel' => 'year_level',
+        'lastname' => 'last_name',
+        'firstname' => 'first_name',
+        'middlename' => 'middle_name',
+        'extname' => 'ext_name',
+        'dateofbirth' => 'date_of_birth',
+        'standing' => 'academic_standing',
+        'scholarcode' => 'scholar_code',
+        'homeaddress' => 'home_address',
+        'has_grades' => 'has_numeric_grades',
+        'numeric_grades' => 'has_numeric_grades',
     ];
 
     public function __construct(private SpreadsheetFileReader $reader) {}
@@ -105,6 +118,15 @@ class StudentImportService
         $valid = [];
         $seen = [];
 
+        // Pre-create any academic years / semesters named in the file so imports stay dynamic.
+        foreach ($parsedRows as $row) {
+            $ay = trim((string) ($row['data']['academic_year'] ?? ''));
+            $sem = $this->normalizeSemesterName(trim((string) ($row['data']['semester'] ?? '')));
+            if ($ay !== '' && $sem !== '') {
+                $this->ensureAcademicTerm($ay, $sem);
+            }
+        }
+
         $years = AcademicYear::query()->get()->keyBy(fn ($y) => strtolower($y->academic_year));
         $programs = Program::query()->with('department.college')->get()->keyBy(fn ($p) => strtolower($p->program_code));
         $semesters = Semester::query()->get();
@@ -118,13 +140,18 @@ class StudentImportService
             $gender = $this->mapEnum((string) ($d['gender'] ?? ''), StudentRecord::GENDERS);
             $age = $d['age'] ?? '';
             $course = strtolower(trim((string) ($d['course'] ?? '')));
+            $course = match ($course) {
+                'bsinfotech', 'bs_infotech', 'bs information technology' => 'bsit',
+                'bscpe', 'bs computer engineering' => 'bscpe',
+                'bsee', 'bs electrical engineering' => 'bsee',
+                default => $course,
+            };
             $yearLevel = $d['year_level'] ?? '';
             $section = strtoupper(trim((string) ($d['section'] ?? '')));
             $ayKey = strtolower(trim((string) ($d['academic_year'] ?? '')));
             $semName = trim((string) ($d['semester'] ?? ''));
             $gpa = $d['gpa'] ?? '';
             $avgGrade = $d['average_grade'] ?? '';
-            $attendance = $d['attendance_percent'] ?? '';
             $subjects = $d['number_of_subjects'] ?? '';
             $failed = $d['failed_subjects'] ?? '';
             $units = $d['units_enrolled'] ?? '';
@@ -151,8 +178,8 @@ class StudentImportService
                 $rowErrors[] = "Invalid course code '{$d['course']}'.";
             }
 
-            if (! is_numeric($yearLevel) || (int) $yearLevel < 1 || (int) $yearLevel > 4) {
-                $rowErrors[] = 'Year level must be an integer from 1 to 4.';
+            if (! is_numeric($yearLevel) || (int) $yearLevel < 1 || (int) $yearLevel > 5) {
+                $rowErrors[] = 'Year level must be an integer from 1 to 5.';
             }
 
             if ($section === '') {
@@ -177,10 +204,6 @@ class StudentImportService
                 $rowErrors[] = 'Average grade must be from 0 to 100.';
             }
 
-            if (! is_numeric($attendance) || (float) $attendance < 0 || (float) $attendance > 100) {
-                $rowErrors[] = 'Attendance percent must be from 0 to 100.';
-            }
-
             if (! is_numeric($subjects) || (int) $subjects < 0 || (int) $subjects > 20) {
                 $rowErrors[] = 'Number of subjects must be from 0 to 20.';
             }
@@ -199,7 +222,7 @@ class StudentImportService
                 $rowErrors[] = "Invalid enrolled status '{$d['enrolled_status']}'.";
             }
             if ($studentType === null) {
-                $rowErrors[] = "Invalid student type '{$d['student_type']}'. Use New, Returning, Transferee, or Withdraw Acad / Stop.";
+                $rowErrors[] = "Invalid student type '{$d['student_type']}'. Use New, Old, Returnee, Returnee-Shiftee, Shiftee, Transferee, or Withdraw Acad / Stop.";
             }
             if ($scholarship === null) {
                 $rowErrors[] = "Invalid scholarship status '{$d['scholarship_status']}'.";
@@ -208,13 +231,44 @@ class StudentImportService
                 $rowErrors[] = "Invalid tuition status '{$d['tuition_status']}'.";
             }
 
+            // Integrity rules so bad source rows cannot enter the system quietly.
+            if ($collegeCode = strtoupper(trim((string) ($d['college'] ?? '')))) {
+                if ($collegeCode !== 'CEIT') {
+                    $rowErrors[] = "Only CEIT college rows are allowed (got '{$d['college']}').";
+                }
+            }
+
+            $hasGradesRaw = strtolower(trim((string) ($d['has_numeric_grades'] ?? '')));
+            if ($hasGradesRaw !== '') {
+                $hasGrades = in_array($hasGradesRaw, ['1', 'true', 'yes', 'y'], true);
+                if ($hasGrades && $enrolled === 'dropped') {
+                    $rowErrors[] = 'Dropped is not allowed when has_numeric_grades=true (student still has usable grades).';
+                }
+                if (! $hasGrades && is_numeric($subjects) && (int) $subjects > 0 && $enrolled !== null && $enrolled !== 'dropped') {
+                    $rowErrors[] = 'Rows with subjects but no usable grades must use enrolled_status=Dropped.';
+                }
+            }
+
+            if ($enrolled === 'dropped') {
+                if (is_numeric($avgGrade) && (float) $avgGrade > 0) {
+                    $rowErrors[] = 'Dropped rows must have average_grade=0 (no usable grades this term).';
+                }
+                if (is_numeric($gpa) && (float) $gpa < 5) {
+                    // Soft-correct later; hard-warn only when clearly contradictory high performance.
+                    if ((float) $gpa <= 3) {
+                        $rowErrors[] = 'Dropped rows cannot keep a strong GPA leftover from another term. Use GPA 5.00.';
+                    }
+                }
+            }
+
             $year = $years[$ayKey] ?? null;
             $program = $programs[$course] ?? null;
             $semester = null;
-            if ($year && $semName !== '') {
-                $semester = $semesters->first(function ($s) use ($year, $semName) {
+            $normalizedSemester = $this->normalizeSemesterName($semName);
+            if ($year && $normalizedSemester !== '') {
+                $semester = $semesters->first(function ($s) use ($year, $normalizedSemester) {
                     return $s->academic_year_id === $year->id
-                        && strcasecmp($s->semester_name, $semName) === 0;
+                        && strcasecmp($s->semester_name, $normalizedSemester) === 0;
                 });
                 if (! $semester) {
                     $rowErrors[] = "Semester '{$semName}' is not defined for {$year->academic_year}.";
@@ -226,6 +280,15 @@ class StudentImportService
                 $expected = strtoupper((string) ($program->department?->college?->college_code ?? ''));
                 if ($expected !== '' && $collegeCode !== $expected) {
                     $rowErrors[] = "College '{$d['college']}' does not match course {$program->program_code}.";
+                }
+            }
+
+            if ($dob = trim((string) ($d['date_of_birth'] ?? ''))) {
+                $ts = strtotime($dob);
+                if ($ts === false) {
+                    $rowErrors[] = "Invalid date_of_birth '{$d['date_of_birth']}'.";
+                } elseif ($ts > time()) {
+                    $rowErrors[] = 'date_of_birth cannot be in the future.';
                 }
             }
 
@@ -249,27 +312,46 @@ class StudentImportService
             if ($rowErrors) {
                 $issues[] = ['line' => $line, 'errors' => $rowErrors, 'data' => $d];
             } else {
-                $valid[] = [
+                $standing = $this->mapEnum((string) ($d['academic_standing'] ?? ''), StudentRecord::ACADEMIC_STANDINGS);
+                $dob = trim((string) ($d['date_of_birth'] ?? ''));
+                $payload = [
                     'student_id' => $studentId,
+                    'last_name' => $this->nullableString($d['last_name'] ?? null, 100),
+                    'first_name' => $this->nullableString($d['first_name'] ?? null, 100),
+                    'middle_name' => $this->nullableString($d['middle_name'] ?? null, 100),
+                    'ext_name' => $this->nullableString($d['ext_name'] ?? null, 30),
+                    'email' => $this->nullableString($d['email'] ?? null, 150),
                     'gender' => $gender,
                     'age' => (int) $age,
+                    'date_of_birth' => $dob !== '' ? $dob : null,
+                    'mobile' => $this->nullableString($d['mobile'] ?? null, 40),
                     'program_id' => $program->id,
                     'year_level' => (int) $yearLevel,
                     'section' => $section,
+                    'block' => $this->nullableString($d['block'] ?? null, 40),
                     'academic_year_id' => $year->id,
                     'semester_id' => $semester->id,
                     'gpa' => round((float) $gpa, 2),
                     'average_grade' => round((float) $avgGrade, 2),
-                    'attendance_percent' => round((float) $attendance, 2),
+                    'attendance_percent' => 100.0, // dataset has no attendance; kept only for DB compatibility
                     'subjects_count' => (int) $subjects,
                     'failed_subjects' => (int) $failed,
                     'units_enrolled' => round((float) $units, 1),
                     'enrolled_status' => $enrolled,
                     'student_type' => $studentType,
+                    'academic_standing' => $standing,
                     'scholarship_status' => $scholarship,
+                    'scholar_code' => $this->nullableString($d['scholar_code'] ?? null, 40),
+                    'home_address' => $this->nullableString($d['home_address'] ?? null, 255),
+                    'municipality' => $this->nullableString($d['municipality'] ?? null, 100),
+                    'province' => $this->nullableString($d['province'] ?? null, 100),
                     'tuition_status' => $tuition,
+                    'has_numeric_grades' => $d['has_numeric_grades'] ?? null,
                     'line' => $line,
                 ];
+                $payload = StudentRecord::applyNoGradeDropRule($payload);
+                unset($payload['has_numeric_grades']);
+                $valid[] = $payload;
             }
         }
 
@@ -288,18 +370,113 @@ class StudentImportService
         ];
     }
 
-    public function commit(array $validRows): int
+    /**
+     * @return array{imported: int, skipped: int}
+     */
+    public function commit(array $validRows): array
     {
-        $count = 0;
-        DB::transaction(function () use ($validRows, &$count) {
-            foreach ($validRows as $row) {
-                unset($row['line']);
-                StudentRecord::create($row);
-                $count++;
+        if ($validRows === []) {
+            return ['imported' => 0, 'skipped' => 0];
+        }
+
+        @set_time_limit(0);
+        @ini_set('max_execution_time', '0');
+        @ini_set('memory_limit', '512M');
+
+        $imported = 0;
+        $skipped = 0;
+        $now = now();
+
+        $existing = DB::table('student_records')
+            ->select(['student_id', 'academic_year_id', 'semester_id'])
+            ->get()
+            ->mapWithKeys(fn ($row) => [
+                strtoupper((string) $row->student_id).'|'.$row->academic_year_id.'|'.$row->semester_id => true,
+            ]);
+
+        DB::transaction(function () use ($validRows, &$imported, &$skipped, &$existing, $now) {
+            foreach (array_chunk($validRows, 400) as $chunk) {
+                $payload = [];
+
+                foreach ($chunk as $row) {
+                    unset($row['line']);
+
+                    $row['student_id'] = strtoupper(trim((string) ($row['student_id'] ?? '')));
+                    $row['section'] = strtoupper(trim((string) ($row['section'] ?? '')));
+                    $row['risk_level'] = StudentRecord::assessRisk($row);
+                    $row['created_at'] = $now;
+                    $row['updated_at'] = $now;
+
+                    if (array_key_exists('date_of_birth', $row) && blank($row['date_of_birth'])) {
+                        $row['date_of_birth'] = null;
+                    }
+
+                    $key = $row['student_id'].'|'.$row['academic_year_id'].'|'.$row['semester_id'];
+                    if (isset($existing[$key])) {
+                        $skipped++;
+                        continue;
+                    }
+
+                    $existing[$key] = true;
+                    $payload[] = $row;
+                }
+
+                if ($payload !== []) {
+                    DB::table('student_records')->insert($payload);
+                    $imported += count($payload);
+                }
             }
         });
 
-        return $count;
+        if ($imported > 0) {
+            app(EnrollmentProjection::class)->rebuildFromStudents();
+        }
+
+        return ['imported' => $imported, 'skipped' => $skipped];
+    }
+
+    /**
+     * Create academic year + semester on demand so Excel uploads stay scalable
+     * when new terms appear in the registrar extract.
+     */
+    public function ensureAcademicTerm(string $academicYear, string $semesterName): void
+    {
+        $yearLabel = trim($academicYear);
+        $semLabel = $this->normalizeSemesterName(trim($semesterName));
+        if ($yearLabel === '' || $semLabel === '') {
+            return;
+        }
+
+        $startYear = 2000;
+        if (preg_match('/(20\d{2})\s*[-–]\s*(20\d{2})/', $yearLabel, $m)) {
+            $startYear = (int) $m[1];
+        }
+
+        $year = AcademicYear::query()->firstOrCreate(
+            ['academic_year' => $yearLabel],
+            [
+                'start_date' => sprintf('%d-08-01', $startYear),
+                'end_date' => sprintf('%d-07-31', $startYear + 1),
+                'status' => 'inactive',
+            ]
+        );
+
+        $order = match (true) {
+            str_contains(strtolower($semLabel), 'second') => 2,
+            str_contains(strtolower($semLabel), 'summer') => 3,
+            default => 1,
+        };
+
+        Semester::query()->firstOrCreate(
+            [
+                'academic_year_id' => $year->id,
+                'semester_name' => $semLabel,
+            ],
+            [
+                'semester_order' => $order,
+                'is_active' => false,
+            ]
+        );
     }
 
     private function normalizeHeader(string $header): string
@@ -350,11 +527,17 @@ class StudentImportService
 
         $slug = strtolower(trim(str_replace([' ', '-', '/'], '_', $value)));
         $aliases = [
-            'return' => 'returning',
-            'returned' => 'returning',
+            'new' => 'new',
+            'old' => 'returning',
+            'returning' => 'returning',
+            'return' => 'returnee',
+            'returned' => 'returnee',
+            'returnee' => 'returnee',
             'shiftee' => 'shiftee',
             'shiftees' => 'shiftee',
             'shift' => 'shiftee',
+            'returnee_shiftee' => 'returnee_shiftee',
+            'returnee_shiftees' => 'returnee_shiftee',
             'transfer' => 'transferee',
             'transferree' => 'transferee',
             'withdraw' => 'withdraw_stop',
@@ -366,5 +549,39 @@ class StudentImportService
         ];
 
         return $aliases[$slug] ?? null;
+    }
+
+    private function normalizeSemesterName(string $value): string
+    {
+        $raw = trim($value);
+        if ($raw === '') {
+            return '';
+        }
+
+        $key = strtolower(str_replace(['_', '-'], ' ', $raw));
+        $aliases = [
+            '1st' => 'First Semester',
+            'first' => 'First Semester',
+            'first semester' => 'First Semester',
+            '2nd' => 'Second Semester',
+            'second' => 'Second Semester',
+            'second semester' => 'Second Semester',
+            'sum' => 'Summer',
+            'summer' => 'Summer',
+            'midyear' => 'Summer',
+            'mid year' => 'Summer',
+        ];
+
+        return $aliases[$key] ?? $raw;
+    }
+
+    private function nullableString(mixed $value, int $max): ?string
+    {
+        $text = trim((string) $value);
+        if ($text === '') {
+            return null;
+        }
+
+        return mb_substr($text, 0, $max);
     }
 }

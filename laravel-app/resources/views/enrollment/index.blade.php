@@ -34,9 +34,8 @@
             @endforeach
         </select>
         <select name="college_id" class="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
-            <option value="">All Colleges</option>
             @foreach($colleges ?? [] as $college)
-                <option value="{{ $college->id }}" {{ request('college_id') == $college->id ? 'selected' : '' }}>{{ $college->college_name }}</option>
+                <option value="{{ $college->id }}" {{ (string) request('college_id', $college->id) === (string) $college->id ? 'selected' : '' }}>{{ $college->college_code }}</option>
             @endforeach
         </select>
         <select name="program_id" class="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
@@ -58,17 +57,17 @@
 {{-- Table --}}
 <div class="bg-white rounded-lg shadow-sm overflow-hidden">
     <div class="overflow-x-auto">
-        <table class="w-full text-sm">
-            <thead class="bg-slate-50 text-slate-600 text-left">
+        <table class="ui-table w-full text-sm">
+            <thead>
                 <tr>
-                    <th class="px-4 py-3 font-semibold">Academic Year</th>
-                    <th class="px-4 py-3 font-semibold">Semester</th>
-                    <th class="px-4 py-3 font-semibold">College</th>
-                    <th class="px-4 py-3 font-semibold">Program</th>
-                    <th class="px-4 py-3 font-semibold">Year Level</th>
-                    <th class="px-4 py-3 font-semibold">Type</th>
-                    <th class="px-4 py-3 font-semibold text-right">Count</th>
-                    <th class="px-4 py-3 font-semibold text-center">Actions</th>
+                    <th>Academic Year</th>
+                    <th>Semester</th>
+                    <th>College</th>
+                    <th>Program</th>
+                    <th>Year Level</th>
+                    <th>Type</th>
+                    <th class="text-right">Count</th>
+                    <th class="text-center">Actions</th>
                 </tr>
             </thead>
             <tbody>

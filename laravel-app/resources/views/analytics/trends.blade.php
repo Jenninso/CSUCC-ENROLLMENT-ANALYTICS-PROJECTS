@@ -6,9 +6,8 @@
 <div class="bg-white rounded-lg shadow-sm p-4 mb-6">
     <form method="GET" action="{{ route('analytics.trends') }}" class="grid grid-cols-1 sm:grid-cols-4 gap-3">
         <select name="college_id" class="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
-            <option value="">All Colleges</option>
             @foreach($colleges ?? [] as $college)
-                <option value="{{ $college->id }}" {{ request('college_id') == $college->id ? 'selected' : '' }}>{{ $college->college_name }}</option>
+                <option value="{{ $college->id }}" {{ (string) request('college_id', $college->id) === (string) $college->id ? 'selected' : '' }}>{{ $college->college_code }}</option>
             @endforeach
         </select>
         <select name="program_id" class="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none">

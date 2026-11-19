@@ -478,7 +478,7 @@ class AnalyticsService
                 ->unique('semester_name')
                 ->sortBy(fn (Semester $semester) => $semester->semester_name === 'First Semester' ? 0 : 1)
                 ->values(),
-            'colleges' => College::query()->orderBy('college_name')->get(),
+            'colleges' => College::forFilters(),
             'programs' => Program::query()->orderBy('program_name')->get(),
         ];
     }

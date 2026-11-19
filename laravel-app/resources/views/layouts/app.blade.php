@@ -85,6 +85,12 @@
         :root {
             --csucc-green: #0b5d3b;
             --csucc-gold: #d4a017;
+            --tone-good: #0b5d3b;
+            --tone-info: #0f766e;
+            --tone-sky: #0369a1;
+            --tone-warn: #d97706;
+            --tone-alert: #ea580c;
+            --tone-bad: #b91c1c;
             --theme-primary: {{ $themeColor }};
             --theme-on-primary: {{ $themeOnPrimary }};
             --theme-link: {{ $themeLink }};
@@ -109,30 +115,76 @@
         }
 
         body.app-shell {
-            background: var(--theme-bg);
+            background:
+                radial-gradient(900px 420px at 8% -10%, color-mix(in srgb, var(--theme-primary) 16%, transparent), transparent 60%),
+                radial-gradient(720px 380px at 92% 0%, color-mix(in srgb, var(--csucc-gold) 14%, transparent), transparent 55%),
+                radial-gradient(640px 360px at 70% 100%, color-mix(in srgb, var(--tone-info) 10%, transparent), transparent 50%),
+                var(--theme-bg);
+            background-attachment: fixed;
             color: var(--theme-text);
             font-family: var(--font-ui);
             -webkit-font-smoothing: antialiased;
         }
         .font-brand { font-family: var(--font-brand); }
 
+        @keyframes ui-rise {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes ui-soft-pulse {
+            0%, 100% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--theme-primary) 28%, transparent); }
+            50% { box-shadow: 0 0 0 6px color-mix(in srgb, var(--theme-primary) 0%, transparent); }
+        }
+        @media (prefers-reduced-motion: no-preference) {
+            .ui-page-live > * {
+                animation: ui-rise 0.45s ease both;
+            }
+            .ui-page-live > *:nth-child(1) { animation-delay: 0.02s; }
+            .ui-page-live > *:nth-child(2) { animation-delay: 0.06s; }
+            .ui-page-live > *:nth-child(3) { animation-delay: 0.1s; }
+            .ui-page-live > *:nth-child(4) { animation-delay: 0.14s; }
+            .ui-page-live > *:nth-child(5) { animation-delay: 0.18s; }
+            .ui-page-live > *:nth-child(6) { animation-delay: 0.22s; }
+            .ui-live-dot {
+                animation: ui-soft-pulse 2.4s ease-in-out infinite;
+            }
+        }
+
         /* Shared UI primitives */
         .ui-panel {
-            background: var(--theme-panel);
+            background: color-mix(in srgb, var(--theme-panel) 92%, transparent);
             color: var(--theme-text);
             border: 1px solid var(--theme-border);
             border-radius: var(--theme-radius);
             box-shadow: var(--theme-shadow);
+            backdrop-filter: blur(8px);
+            transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+        }
+        .ui-panel:hover {
+            border-color: color-mix(in srgb, var(--theme-primary) 22%, var(--theme-border));
+            box-shadow: 0 2px 8px rgba(15, 23, 42, 0.06), 0 14px 30px rgba(15, 23, 42, 0.08);
         }
         .ui-kpi {
-            background: var(--theme-panel);
+            background:
+                linear-gradient(135deg, color-mix(in srgb, var(--theme-primary) 7%, var(--theme-panel)), var(--theme-panel) 55%);
             color: var(--theme-text);
             border: 1px solid var(--theme-border);
             border-radius: var(--theme-radius);
             box-shadow: var(--theme-shadow);
-            border-left: 3px solid var(--theme-primary);
+            border-left: 4px solid var(--theme-primary);
             padding: 1.15rem 1.25rem;
+            transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
         }
+        .ui-kpi:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 14px rgba(15, 23, 42, 0.08);
+        }
+        .ui-kpi-good { border-left-color: var(--tone-good); background: linear-gradient(135deg, color-mix(in srgb, var(--tone-good) 10%, var(--theme-panel)), var(--theme-panel) 58%); }
+        .ui-kpi-info { border-left-color: var(--tone-info); background: linear-gradient(135deg, color-mix(in srgb, var(--tone-info) 10%, var(--theme-panel)), var(--theme-panel) 58%); }
+        .ui-kpi-sky { border-left-color: var(--tone-sky); background: linear-gradient(135deg, color-mix(in srgb, var(--tone-sky) 10%, var(--theme-panel)), var(--theme-panel) 58%); }
+        .ui-kpi-warn { border-left-color: var(--tone-warn); background: linear-gradient(135deg, color-mix(in srgb, var(--tone-warn) 12%, var(--theme-panel)), var(--theme-panel) 58%); }
+        .ui-kpi-alert { border-left-color: var(--tone-alert); background: linear-gradient(135deg, color-mix(in srgb, var(--tone-alert) 12%, var(--theme-panel)), var(--theme-panel) 58%); }
+        .ui-kpi-bad { border-left-color: var(--tone-bad); background: linear-gradient(135deg, color-mix(in srgb, var(--tone-bad) 12%, var(--theme-panel)), var(--theme-panel) 58%); }
         .ui-kpi-label {
             font-size: 0.75rem;
             font-weight: 600;
@@ -148,6 +200,29 @@
             color: var(--theme-text);
             line-height: 1.2;
         }
+        .ui-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+            border-radius: 999px;
+            padding: 0.28rem 0.7rem;
+            font-size: 0.75rem;
+            font-weight: 600;
+            border: 1px solid transparent;
+        }
+        .ui-chip-good { background: #d1fae5; color: #065f46; border-color: #a7f3d0; }
+        .ui-chip-info { background: #ccfbf1; color: #115e59; border-color: #99f6e4; }
+        .ui-chip-sky { background: #e0f2fe; color: #075985; border-color: #bae6fd; }
+        .ui-chip-warn { background: #fef3c7; color: #92400e; border-color: #fde68a; }
+        .ui-chip-alert { background: #ffedd5; color: #9a3412; border-color: #fed7aa; }
+        .ui-chip-bad { background: #fee2e2; color: #991b1b; border-color: #fecaca; }
+        .ui-support-item {
+            border-left: 3px solid var(--tone-info);
+            background: linear-gradient(90deg, color-mix(in srgb, var(--tone-info) 8%, var(--theme-panel)), transparent);
+            border-radius: 0.65rem;
+            padding: 0.85rem 1rem;
+        }
+        .ui-support-item + .ui-support-item { margin-top: 0.65rem; }
         .ui-btn-primary {
             display: inline-flex;
             align-items: center;
@@ -177,6 +252,37 @@
             border: 1px solid var(--theme-border);
         }
         .ui-btn-secondary:hover { background: color-mix(in srgb, var(--theme-bg) 70%, var(--theme-panel)); }
+        .ui-btn-filter {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            padding: 0.55rem 1.1rem;
+            border-radius: 0.65rem;
+            font-size: 0.875rem;
+            font-weight: 600;
+            background: linear-gradient(180deg, color-mix(in srgb, var(--tone-info) 92%, #fff), var(--tone-info));
+            color: #fff !important;
+            border: 1px solid color-mix(in srgb, var(--tone-info) 70%, #000 18%);
+            box-shadow: 0 1px 2px rgba(15, 23, 42, 0.08);
+        }
+        .ui-btn-filter:hover { filter: brightness(1.05); }
+        .ui-btn-clear {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            padding: 0.55rem 1.1rem;
+            border-radius: 0.65rem;
+            font-size: 0.875rem;
+            font-weight: 600;
+            background: color-mix(in srgb, var(--tone-warn) 12%, var(--theme-panel));
+            color: #92400e !important;
+            border: 1px solid color-mix(in srgb, var(--tone-warn) 45%, var(--theme-border));
+        }
+        .ui-btn-clear:hover {
+            background: color-mix(in srgb, var(--tone-warn) 20%, var(--theme-panel));
+        }
         .ui-link {
             color: var(--theme-link) !important;
             font-weight: 600;
@@ -242,15 +348,19 @@
         }
         .ui-table thead th {
             text-align: left;
-            font-size: 0.6875rem;
-            font-weight: 700;
-            letter-spacing: 0.05em;
+            font-size: 0.72rem;
+            font-weight: 800;
+            letter-spacing: 0.06em;
             text-transform: uppercase;
-            color: var(--theme-muted);
-            background: color-mix(in srgb, var(--theme-bg) 55%, var(--theme-panel));
-            border-bottom: 1px solid var(--theme-border);
-            padding: 0.75rem 0.85rem;
+            color: #ecfdf5;
+            background: linear-gradient(180deg, color-mix(in srgb, var(--tone-info) 88%, #042f2e), var(--tone-info));
+            border-bottom: 1px solid color-mix(in srgb, var(--tone-info) 70%, #000 20%);
+            padding: 0.8rem 0.85rem;
             white-space: nowrap;
+        }
+        .ui-table thead th.sticky {
+            background: linear-gradient(180deg, color-mix(in srgb, var(--tone-info) 88%, #042f2e), var(--tone-info));
+            color: #ecfdf5;
         }
         .ui-table tbody td {
             padding: 0.75rem 0.85rem;
@@ -602,9 +712,9 @@
                 Dashboard
             </a>
 
-            @if($navUser?->canAccess('enrollment.view'))
-            <div x-data="{ open: {{ request()->routeIs('students.*') ? 'true' : 'false' }} }" x-show="navMatch('student records') || navMatch('import file')" x-effect="if (navQuery.trim()) open = true">
-                <button @click="if ($root.sidebarCollapsed && window.matchMedia('(min-width: 1024px)').matches) { $root.sidebarCollapsed = false; localStorage.setItem('sidebarCollapsed', '0'); open = true; } else { open = !open }" title="Student Records" class="w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-sm font-medium {{ request()->routeIs('students.*') ? 'theme-primary-bg text-white' : 'text-emerald-100/80 hover:bg-black/20' }}">
+            @if($navUser?->canAccess('enrollment.view') || $navUser?->canAccess('at_risk.view'))
+            <div x-data="{ open: {{ request()->routeIs('students.*') || request()->routeIs('at-risk.*') ? 'true' : 'false' }} }" x-show="navMatch('student records') || navMatch('import file') || navMatch('at-risk') || navMatch('risk')" x-effect="if (navQuery.trim()) open = true">
+                <button @click="if ($root.sidebarCollapsed && window.matchMedia('(min-width: 1024px)').matches) { $root.sidebarCollapsed = false; localStorage.setItem('sidebarCollapsed', '0'); open = true; } else { open = !open }" title="Student Records" class="w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-sm font-medium {{ request()->routeIs('students.*') || request()->routeIs('at-risk.*') ? 'theme-primary-bg text-white' : 'text-emerald-100/80 hover:bg-black/20' }}">
                     <span class="flex items-center gap-3">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 9h3.75M15 12h3.75M15 15h3.75M4.5 19.5h15a2.25 2.25 0 002.25-2.25V6.75A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25v10.5A2.25 2.25 0 004.5 19.5zm6-10.125a1.875 1.875 0 11-3.75 0 1.875 1.875 0 013.75 0zm1.294 6.336a6.721 6.721 0 01-3.17.789 6.721 6.721 0 01-3.168-.789 3.376 3.376 0 016.338 0z"/></svg>
                         Student Records
@@ -612,9 +722,14 @@
                     <svg :class="open && 'rotate-90'" class="w-4 h-4 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
                 </button>
                 <div x-show="open" x-cloak class="ml-8 mt-1 space-y-1">
+                    @if($navUser?->canAccess('enrollment.view'))
                     <a x-show="!navQuery.trim() || navMatch('student records') || navMatch('records')" href="{{ route('students.index') }}" class="block px-3 py-2 rounded-lg text-sm {{ request()->routeIs('students.index') ? 'text-amber-300 bg-emerald-950/50' : 'text-emerald-200/60 hover:text-white' }}">Records</a>
-                    @if($navUser->canAccess('enrollment.manage'))
+                    @endif
+                    @if($navUser?->canAccess('enrollment.manage'))
                     <a x-show="!navQuery.trim() || navMatch('import')" href="{{ route('students.import') }}" class="block px-3 py-2 rounded-lg text-sm {{ request()->routeIs('students.import') ? 'text-amber-300 bg-emerald-950/50' : 'text-emerald-200/60 hover:text-white' }}">Import File</a>
+                    @endif
+                    @if($navUser?->canAccess('at_risk.view'))
+                    <a x-show="!navQuery.trim() || navMatch('at-risk') || navMatch('risk')" href="{{ route('at-risk.index') }}" class="block px-3 py-2 rounded-lg text-sm {{ request()->routeIs('at-risk.*') ? 'text-amber-300 bg-emerald-950/50' : 'text-emerald-200/60 hover:text-white' }}">At-Risk</a>
                     @endif
                 </div>
             </div>
@@ -624,13 +739,6 @@
             <a x-show="navMatch('spr')" href="{{ route('spes.index') }}" title="SPR" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium {{ request()->routeIs('spes.*') ? 'theme-primary-bg text-white' : 'text-emerald-100/80 hover:bg-black/20' }}">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z"/></svg>
                 SPR
-            </a>
-            @endif
-
-            @if($navUser?->canAccess('at_risk.view'))
-            <a x-show="navMatch('at-risk') || navMatch('risk')" href="{{ route('at-risk.index') }}" title="At-risk students" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium {{ request()->routeIs('at-risk.*') ? 'theme-primary-bg text-white' : 'text-emerald-100/80 hover:bg-black/20' }}">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v3.75m0 3.75h.008v.008H12V16.5zM3.75 6.75A2.25 2.25 0 016 4.5h12a2.25 2.25 0 012.25 2.25v10.5A2.25 2.25 0 0118 19.5H6a2.25 2.25 0 01-2.25-2.25V6.75z"/></svg>
-                At-Risk
             </a>
             @endif
 
@@ -874,6 +982,7 @@
 
         {{-- Page Content --}}
         <main class="flex-1 p-4 sm:p-6 lg:p-8">
+            <div class="ui-page-live">
             @unless(View::hasSection('hidePageHead'))
             <div class="page-head">
                 <div class="min-w-0">
@@ -886,6 +995,7 @@
             </div>
             @endunless
             @yield('content')
+            </div>
         </main>
     </div>
 

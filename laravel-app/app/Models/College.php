@@ -10,6 +10,21 @@ use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 #[Fillable(['college_name', 'college_code'])]
 class College extends Model
 {
+    /**
+     * Colleges available in filter dropdowns — CEIT only (system scope).
+     *
+     * @return \Illuminate\Database\Eloquent\Collection<int, self>
+     */
+    public static function forFilters()
+    {
+        $code = strtoupper((string) config('scope.college_code', 'CEIT'));
+
+        return static::query()
+            ->whereRaw('UPPER(college_code) = ?', [$code])
+            ->orderBy('college_name')
+            ->get();
+    }
+
     public function departments(): HasMany
     {
         return $this->hasMany(Department::class);

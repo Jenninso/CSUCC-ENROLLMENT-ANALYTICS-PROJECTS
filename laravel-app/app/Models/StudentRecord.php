@@ -9,11 +9,19 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 #[Fillable([
     'student_id',
+    'last_name',
+    'first_name',
+    'middle_name',
+    'ext_name',
+    'email',
     'gender',
     'age',
+    'date_of_birth',
+    'mobile',
     'program_id',
     'year_level',
     'section',
+    'block',
     'academic_year_id',
     'semester_id',
     'gpa',
@@ -24,7 +32,12 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
     'units_enrolled',
     'enrolled_status',
     'student_type',
+    'academic_standing',
     'scholarship_status',
+    'scholar_code',
+    'home_address',
+    'municipality',
+    'province',
     'tuition_status',
     'risk_level',
 ])]
@@ -33,6 +46,14 @@ class StudentRecord extends Model
     public const GENDERS = [
         'male' => 'Male',
         'female' => 'Female',
+        'unspecified' => 'Unspecified',
+    ];
+
+    public const ACADEMIC_STANDINGS = [
+        'regular' => 'Regular',
+        'warning' => 'Warning',
+        'probation' => 'Probation',
+        'debarred' => 'Debarred',
     ];
 
     public const ENROLLED_STATUSES = [
@@ -43,10 +64,15 @@ class StudentRecord extends Model
         'on_leave' => 'On Leave',
     ];
 
-    /** How the student stands for this term (new, returning, transfer, or stopped). */
+    /**
+     * Enrollment category for this term (from registrar enrollment_status).
+     * Not the same as academic_standing (Regular / Warning / …).
+     */
     public const STUDENT_TYPES = [
         'new' => 'New',
-        'returning' => 'Returning',
+        'returning' => 'Old',
+        'returnee' => 'Returnee',
+        'returnee_shiftee' => 'Returnee-Shiftee',
         'shiftee' => 'Shiftee',
         'transferee' => 'Transferee',
         'withdraw_stop' => 'Withdraw Acad / Stop',
@@ -77,6 +103,7 @@ class StudentRecord extends Model
     {
         return [
             'age' => 'integer',
+            'date_of_birth' => 'date',
             'year_level' => 'integer',
             'gpa' => 'decimal:2',
             'average_grade' => 'decimal:2',
@@ -87,11 +114,40 @@ class StudentRecord extends Model
         ];
     }
 
+    public function fullName(): string
+    {
+        $parts = array_filter([
+            $this->last_name,
+            $this->first_name,
+            $this->middle_name,
+            $this->ext_name,
+        ], fn ($part) => filled($part));
+
+        if ($parts === []) {
+            return $this->student_id;
+        }
+
+        $last = (string) ($this->last_name ?: '');
+        $first = trim(implode(' ', array_filter([
+            $this->first_name,
+            $this->middle_name,
+            $this->ext_name,
+        ], fn ($part) => filled($part))));
+
+        return trim($last.($first !== '' ? ', '.$first : ''));
+    }
+
     protected static function booted(): void
     {
         static::saving(function (StudentRecord $record): void {
             $record->student_id = strtoupper(trim((string) $record->student_id));
             $record->section = strtoupper(trim((string) $record->section));
+
+            $normalized = self::applyNoGradeDropRule($record->getAttributes());
+            if (isset($normalized['enrolled_status'])) {
+                $record->enrolled_status = $normalized['enrolled_status'];
+            }
+
             $record->risk_level = self::assessRisk($record->getAttributes());
         });
 
@@ -122,6 +178,42 @@ class StudentRecord extends Model
     }
 
     /**
+     * Dropped happens only when a term has subject load but no usable grades.
+     * Usable grades = numeric 1.00–5.00, or PASSED / INC / FAILED style marks.
+     * All-DRP / blank terms qualify as Dropped. Terms with real grades must not.
+     *
+     * Pass has_numeric_grades=true/false (from import) to enforce automatically.
+     *
+     * @param  array<string, mixed>  $attributes
+     * @return array<string, mixed>
+     */
+    public static function applyNoGradeDropRule(array $attributes): array
+    {
+        $subjects = (int) ($attributes['subjects_count'] ?? $attributes['number_of_subjects'] ?? 0);
+        $raw = $attributes['has_numeric_grades'] ?? null;
+        $hasUsableGrades = match (true) {
+            is_bool($raw) => $raw,
+            is_numeric($raw) => (int) $raw === 1,
+            is_string($raw) => in_array(strtolower(trim($raw)), ['1', 'true', 'yes', 'y'], true),
+            default => null,
+        };
+
+        if ($hasUsableGrades === false && $subjects > 0) {
+            $attributes['enrolled_status'] = 'dropped';
+        } elseif ($hasUsableGrades === true && ($attributes['enrolled_status'] ?? null) === 'dropped') {
+            $attributes['enrolled_status'] = 'enrolled';
+        }
+
+        // Dropped terms must not keep leftover GPA/average from other terms.
+        if (($attributes['enrolled_status'] ?? null) === 'dropped') {
+            $attributes['gpa'] = 5.00;
+            $attributes['average_grade'] = 0.00;
+        }
+
+        return $attributes;
+    }
+
+    /**
      * GPA uses the 1.00 (highest) to 5.00 (failing) scale.
      * Classification uses academic indicators only. Tuition, income,
      * and family circumstances are never used to raise the risk level.
@@ -129,28 +221,26 @@ class StudentRecord extends Model
     public static function assessRisk(array $attributes): string
     {
         $gpa = (float) ($attributes['gpa'] ?? 0);
-        $attendance = (float) ($attributes['attendance_percent'] ?? 100);
         $failed = (int) ($attributes['failed_subjects'] ?? 0);
         $enrolled = (string) ($attributes['enrolled_status'] ?? 'enrolled');
         $studentType = (string) ($attributes['student_type'] ?? 'new');
 
+        // Attendance is not used — the CEIT dataset does not provide it.
         if (
             in_array($enrolled, ['dropped', 'withdrawn'], true)
             || $studentType === 'withdraw_stop'
             || $failed >= 3
-            || $attendance < 60
             || $gpa > 3
         ) {
             return 'critical';
         }
 
-        if ($failed >= 2 || $attendance < 75 || $gpa >= 2.75) {
+        if ($failed >= 2 || $gpa >= 2.75) {
             return 'high';
         }
 
         if (
             $failed >= 1
-            || $attendance < 85
             || $gpa >= 2.25
             || in_array($enrolled, ['not_enrolled', 'on_leave'], true)
         ) {
@@ -182,7 +272,7 @@ class StudentRecord extends Model
             return '—';
         }
 
-        return $code === 'IT' ? 'Information Technology' : 'Engineering';
+        return in_array($code, ['IT'], true) ? 'Information Technology' : 'Engineering';
     }
 
     public function genderLabel(): string
@@ -205,9 +295,30 @@ class StudentRecord extends Model
         return match ($this->student_type) {
             'new' => 'bg-emerald-100 text-emerald-800',
             'returning' => 'bg-sky-100 text-sky-800',
+            'returnee', 'returnee_shiftee' => 'bg-indigo-100 text-indigo-800',
             'shiftee' => 'bg-amber-100 text-amber-800',
             'transferee' => 'bg-violet-100 text-violet-800',
             'withdraw_stop' => 'bg-red-100 text-red-700',
+            default => 'bg-gray-100 text-gray-700',
+        };
+    }
+
+    public function academicStandingLabel(): string
+    {
+        if ($this->academic_standing === null || $this->academic_standing === '') {
+            return '—';
+        }
+
+        return self::ACADEMIC_STANDINGS[$this->academic_standing] ?? ucfirst((string) $this->academic_standing);
+    }
+
+    public function academicStandingBadgeClass(): string
+    {
+        return match ($this->academic_standing) {
+            'regular' => 'bg-emerald-100 text-emerald-800',
+            'warning' => 'bg-amber-100 text-amber-800',
+            'probation' => 'bg-orange-100 text-orange-800',
+            'debarred' => 'bg-red-100 text-red-700',
             default => 'bg-gray-100 text-gray-700',
         };
     }

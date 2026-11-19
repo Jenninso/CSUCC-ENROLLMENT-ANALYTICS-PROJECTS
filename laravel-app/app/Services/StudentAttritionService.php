@@ -89,7 +89,7 @@ class StudentAttritionService
                 'program' => (string) ($row->program_code ?? ''),
                 'year_level' => (int) $row->year_level,
                 'gpa' => round((float) $row->gpa, 2),
-                'attendance' => round((float) $row->attendance_percent, 1),
+                'attendance' => 100.0,
                 'failed_subjects' => (int) $row->failed_subjects,
                 'chance' => $chancePercent,
                 'suggestion' => $this->suggestion($row, $chancePercent),
@@ -192,7 +192,7 @@ class StudentAttritionService
             (float) $row->year_level,
             (float) $row->age,
             (float) $row->gpa,
-            (float) $row->attendance_percent,
+            100.0, // attendance not in CEIT dataset; held constant
             (float) $row->failed_subjects,
             (float) $row->subjects_count,
             (float) $row->units_enrolled,
@@ -205,7 +205,6 @@ class StudentAttritionService
     {
         $gpa = number_format((float) $row->gpa, 2);
         $failed = (int) $row->failed_subjects;
-        $attendance = number_format((float) $row->attendance_percent, 0);
         $year = (int) $row->year_level;
         $help = [];
 
@@ -214,9 +213,6 @@ class StudentAttritionService
                 ? 'the '.$failed.' failed '.($failed === 1 ? 'subject' : 'subjects').' behind '
                 : '';
             $help[] = 'Arrange tutoring for '.$failedPart.'the '.$gpa.' GPA';
-        }
-        if ((float) $row->attendance_percent < 85) {
-            $help[] = 'follow up on absences while attendance is '.$attendance.'%';
         }
         if ($year === 1) {
             $help[] = 'assign a first-year adviser';

@@ -49,9 +49,8 @@
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">College</label>
                     <select name="college_id" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
-                        <option value="">All</option>
                         @foreach($colleges ?? [] as $college)
-                            <option value="{{ $college->id }}" {{ old('college_id') == $college->id ? 'selected' : '' }}>{{ $college->college_name }}</option>
+                            <option value="{{ $college->id }}" {{ (string) old('college_id', $college->id) === (string) $college->id ? 'selected' : '' }}>{{ $college->college_code }}</option>
                         @endforeach
                     </select>
                 </div>

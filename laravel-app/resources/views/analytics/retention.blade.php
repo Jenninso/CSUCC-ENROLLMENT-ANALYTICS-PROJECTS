@@ -17,9 +17,8 @@
         @endforeach
     </select>
     <select name="college_id" class="ui-input">
-        <option value="">All colleges</option>
         @foreach($colleges ?? [] as $college)
-            <option value="{{ $college->id }}" @selected(($filters['college_id'] ?? '') == $college->id)>{{ $college->college_name }}</option>
+            <option value="{{ $college->id }}" @selected((string) ($filters['college_id'] ?? $college->id) === (string) $college->id)>{{ $college->college_code }}</option>
         @endforeach
     </select>
     <select name="program_id" class="ui-input">
@@ -34,7 +33,7 @@
             <option value="{{ $i }}" @selected(($filters['year_level'] ?? '') == $i)>{{ \App\Models\EnrollmentRecord::yearLevelLabel($i) }}</option>
         @endfor
     </select>
-    <button class="ui-btn-primary">Apply filters</button>
+    <button class="ui-btn-filter">Apply filters</button>
 </form>
 
 <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">

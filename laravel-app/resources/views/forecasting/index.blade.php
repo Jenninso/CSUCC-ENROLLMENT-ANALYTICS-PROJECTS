@@ -13,9 +13,8 @@
         @endforeach
     </select>
     <select name="college_id" class="px-3 py-2 border rounded-lg text-sm">
-        <option value="">No college filter</option>
         @foreach($colleges as $college)
-            <option value="{{ $college->id }}" @selected((string) ($filters['college_id'] ?? '') === (string) $college->id)>{{ $college->college_code }}</option>
+            <option value="{{ $college->id }}" @selected((string) ($filters['college_id'] ?? $college->id) === (string) $college->id)>{{ $college->college_code }}</option>
         @endforeach
     </select>
     <select name="horizon" class="px-3 py-2 border rounded-lg text-sm">

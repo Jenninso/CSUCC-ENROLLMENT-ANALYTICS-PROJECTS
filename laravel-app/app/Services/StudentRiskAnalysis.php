@@ -143,13 +143,14 @@ class StudentRiskAnalysis
      */
     private function lightRow(object $record): array
     {
-        $level = StudentRecord::assessRisk([
+        $attrs = [
             'gpa' => $record->gpa,
             'attendance_percent' => $record->attendance_percent,
             'failed_subjects' => $record->failed_subjects,
             'enrolled_status' => $record->enrolled_status,
             'student_type' => $record->student_type,
-        ]);
+        ];
+        $level = StudentRecord::assessRisk($attrs);
 
         return [
             'student_record_id' => (int) $record->id,
@@ -165,12 +166,56 @@ class StudentRiskAnalysis
             'struggling_subjects' => '',
             'level' => $level,
             'level_label' => StudentRecord::RISK_LEVELS[$level] ?? ucfirst($level),
+            'why' => $this->whyLine($attrs),
             'enrolled' => StudentRecord::ENROLLED_STATUSES[$record->enrolled_status] ?? ucfirst((string) $record->enrolled_status),
             'declining_grades' => false,
-            'frequent_absences' => (float) $record->attendance_percent < 85,
+            'frequent_absences' => false,
             'improved' => false,
             'factor_keys' => [],
         ];
+    }
+
+    /**
+     * One-line academic reason for the list view (same rules as assessRisk).
+     *
+     * @param  array<string, mixed>  $attributes
+     */
+    private function whyLine(array $attributes): string
+    {
+        $gpa = (float) ($attributes['gpa'] ?? 0);
+        $failed = (int) ($attributes['failed_subjects'] ?? 0);
+        $enrolled = (string) ($attributes['enrolled_status'] ?? 'enrolled');
+        $studentType = (string) ($attributes['student_type'] ?? 'new');
+
+        if (in_array($enrolled, ['dropped', 'withdrawn'], true)) {
+            return 'Dropped or withdrawn this term';
+        }
+        if ($studentType === 'withdraw_stop') {
+            return 'Recorded as withdraw / stop';
+        }
+        if ($failed >= 3) {
+            return $failed.' failed subjects';
+        }
+        if ($gpa > 3) {
+            return 'GPA '.number_format($gpa, 2).' (above 3.00)';
+        }
+        if ($failed >= 2) {
+            return $failed.' failed subjects';
+        }
+        if ($gpa >= 2.75) {
+            return 'GPA '.number_format($gpa, 2).' (2.75+)';
+        }
+        if ($failed >= 1) {
+            return $failed.' failed subject'.($failed === 1 ? '' : 's');
+        }
+        if ($gpa >= 2.25) {
+            return 'GPA '.number_format($gpa, 2).' (2.25+)';
+        }
+        if (in_array($enrolled, ['not_enrolled', 'on_leave'], true)) {
+            return StudentRecord::ENROLLED_STATUSES[$enrolled] ?? 'Not currently enrolled';
+        }
+
+        return 'Within academic thresholds';
     }
 
     /**
@@ -210,17 +255,17 @@ class StudentRiskAnalysis
         $academicLevel = StudentRecord::assessRisk($current->getAttributes());
         $gpa = (float) $current->gpa;
         $previousGpa = $previous ? (float) $previous->gpa : null;
-        $attendance = (float) $current->attendance_percent;
-        $previousAttendance = $previous ? (float) $previous->attendance_percent : null;
+        $attendance = 100.0;
+        $previousAttendance = null;
         $gpaWorse = $previousGpa !== null ? round($gpa - $previousGpa, 2) : 0.0;
-        $attendanceChange = $previousAttendance !== null ? round($attendance - $previousAttendance, 2) : 0.0;
+        $attendanceChange = 0.0;
         $decliningGrades = $gpaWorse >= 0.25;
-        $decliningAttendance = $attendanceChange <= -5;
-        $sharpDecline = $gpaWorse >= 0.50 || $attendanceChange <= -10;
+        $decliningAttendance = false;
+        $sharpDecline = $gpaWorse >= 0.50;
         $level = $sharpDecline ? $this->raise($academicLevel) : $academicLevel;
         $failed = (int) $current->failed_subjects;
-        $absences = (int) round(self::TERM_MEETINGS * max(0, 100 - $attendance) / 100);
-        $frequentAbsences = $attendance < 85;
+        $absences = 0;
+        $frequentAbsences = false;
 
         $indicators = $this->indicators($current, $decliningGrades, $frequentAbsences, $absences, $gpaWorse);
         $context = $this->context($current, $spr);
@@ -229,7 +274,7 @@ class StudentRiskAnalysis
         $previousLevel = $previous ? StudentRecord::assessRisk($previous->getAttributes()) : null;
         $improved = $previousLevel !== null
             && $this->rank($previousLevel) >= $this->rank('moderate')
-            && ($gpaWorse <= -0.25 || $attendanceChange >= 5);
+            && $gpaWorse <= -0.25;
 
         return [
             'student_record_id' => $current->id,
@@ -291,7 +336,6 @@ class StudentRiskAnalysis
             ->joinSub($latestIds, 'latest', 'latest.id', '=', 'student_records.id')
             ->where(function ($query): void {
                 $query->where('gpa', '>=', 2.75)
-                    ->orWhere('attendance_percent', '<', 75)
                     ->orWhere('failed_subjects', '>=', 2)
                     ->orWhereIn('enrolled_status', ['dropped', 'withdrawn'])
                     ->orWhere('student_type', 'withdraw_stop');
@@ -372,9 +416,6 @@ class StudentRiskAnalysis
         if ((float) $row->gpa >= 2.75) {
             $items[] = 'GPA '.$this->num($row->gpa).' reached the 2.75 warning threshold.';
         }
-        if ((float) $row->attendance_percent < 75) {
-            $items[] = 'Attendance '.$this->num($row->attendance_percent).'% is below the 75% warning threshold.';
-        }
         if ((int) $row->failed_subjects >= 2) {
             $items[] = (int) $row->failed_subjects.' failed subjects reached the warning threshold of 2.';
         }
@@ -390,9 +431,6 @@ class StudentRiskAnalysis
     {
         if ($gpa >= 2.25 || $failed > 0) {
             return 'Academic tutoring and remedial classes';
-        }
-        if ($attendance < 85) {
-            return 'Attendance monitoring and follow-up';
         }
         if (in_array($level, ['high', 'critical'], true)) {
             return 'Guidance counseling and student consultation';
@@ -443,7 +481,6 @@ class StudentRiskAnalysis
         }
 
         if ($frequentAbsences) {
-            $items[] = 'Attendance is '.$this->num($current->attendance_percent).'%, about '.$absences.' absences in a '.self::TERM_MEETINGS.'-meeting term. Tardiness is not recorded.';
         }
 
         if (in_array($current->enrolled_status, ['dropped', 'withdrawn', 'on_leave', 'not_enrolled'], true) || $current->student_type === 'withdraw_stop') {
@@ -451,7 +488,7 @@ class StudentRiskAnalysis
         }
 
         if ($items === []) {
-            $items[] = 'GPA '.$this->num($gpa).', attendance '.$this->num($current->attendance_percent).'%, and no failed subjects.';
+            $items[] = 'GPA '.$this->num($gpa).' and no failed subjects.';
         }
 
         return $items;
@@ -547,7 +584,7 @@ class StudentRiskAnalysis
     {
         $label = StudentRecord::RISK_LEVELS[$level] ?? ucfirst($level);
         if ($level === 'low') {
-            $text = 'Risk level: Low. Academic performance, attendance, and failed subjects do not show a current academic difficulty. '.implode(' ', $indicators);
+            $text = 'Risk level: Low. Academic performance and failed subjects do not show a current academic difficulty. '.implode(' ', $indicators);
             if ($factors !== []) {
                 $text .= ' SPR circumstances are on file ('.count($factors).') and were not used to raise this classification.';
             }
@@ -578,29 +615,56 @@ class StudentRiskAnalysis
         if ($level === 'low') {
             return [[
                 'title' => 'Continue regular monitoring',
-                'detail' => 'No intervention is indicated from the current academic record. Review the next grading period for a drop in GPA or attendance.',
+                'detail' => 'No intervention is indicated from the current academic record. Review the next grading period for a drop in GPA.',
             ]];
         }
 
         $items = [];
-        if ($decliningGrades || (float) $current->gpa >= 2.25 || (int) $current->failed_subjects > 0) {
+        $academicTrouble = $decliningGrades || (float) $current->gpa >= 2.25 || (int) $current->failed_subjects > 0;
+        $standing = strtolower((string) ($current->academic_standing ?? ''));
+        $underload = (float) $current->units_enrolled > 0 && (float) $current->units_enrolled < 18;
+        $leftOrStopped = in_array($current->enrolled_status, ['dropped', 'withdrawn'], true)
+            || $current->student_type === 'withdraw_stop';
+
+        if ($academicTrouble) {
             $items[] = [
                 'title' => 'Academic tutoring and remedial classes',
                 'detail' => 'Arrange subject help for the failed or declining work before the next grading period.',
             ];
-        }
-        if ($frequentAbsences || (float) $current->attendance_percent < 85) {
             $items[] = [
-                'title' => 'Attendance monitoring and follow-up',
-                'detail' => 'Check absences with the student and record whether they continue after the follow-up.',
+                'title' => 'Faculty consultation for difficult subjects',
+                'detail' => 'Schedule consultation with the subject instructor for topics or assessments the student is failing or repeating.',
             ];
         }
-        if (in_array($level, ['high', 'critical'], true)) {
+
+        if ($underload || in_array($standing, ['warning', 'probation'], true)) {
+            $items[] = [
+                'title' => 'Academic load / underload advising',
+                'detail' => 'Review units enrolled and academic standing with the adviser so the next load plan fits CEIT and scholarship rules.',
+            ];
+        }
+
+        if (in_array($level, ['moderate', 'high', 'critical'], true) || in_array($standing, ['warning', 'probation', 'debarred'], true)) {
+            $items[] = [
+                'title' => 'Program coordinator / course adviser conference',
+                'detail' => 'Meet the program coordinator or course adviser to set a clear recovery plan for the term.',
+            ];
+        }
+
+        if (in_array($level, ['moderate', 'high', 'critical'], true)) {
+            $items[] = [
+                'title' => 'Peer mentoring or study group referral',
+                'detail' => 'Connect the student with a peer mentor or department study group for weekly academic support.',
+            ];
+        }
+
+        if (in_array($level, ['moderate', 'high', 'critical'], true) || $frequentAbsences) {
             $items[] = [
                 'title' => 'Guidance counseling and student consultation',
                 'detail' => 'A counselor should talk with the student about what is getting in the way of classes.',
             ];
         }
+
         if (array_intersect($factorKeys, ['low_income', 'four_ps', 'unpaid_tuition'])) {
             $items[] = [
                 'title' => 'Financial assistance or scholarship referral',
@@ -619,9 +683,17 @@ class StudentRiskAnalysis
                 'detail' => 'Ask about work hours and offer consultation or remedial time that fits that schedule.',
             ];
         }
+
+        if ($leftOrStopped) {
+            $items[] = [
+                'title' => 'Return-to-studies / re-enrollment plan',
+                'detail' => 'Coordinate with the registrar and program coordinator on clearance, reinstatement, and the next available enrollment term.',
+            ];
+        }
+
         $items[] = [
             'title' => 'Referral to a school support program',
-            'detail' => 'Record whatever support is actually provided, then compare the next term GPA and attendance with this term.',
+            'detail' => 'Record whatever support is actually provided, then compare the next term GPA with this term.',
         ];
 
         return $items;
@@ -635,9 +707,6 @@ class StudentRiskAnalysis
         $items = [];
         if ((float) $current->gpa >= 2.75) {
             $items[] = 'GPA '.$this->num($current->gpa).' reached the 2.75 warning threshold.';
-        }
-        if ((float) $current->attendance_percent < 75) {
-            $items[] = 'Attendance '.$this->num($current->attendance_percent).'% is below the 75% warning threshold.';
         }
         if ((int) $current->failed_subjects >= 2) {
             $items[] = (int) $current->failed_subjects.' failed subjects reached the warning threshold of 2.';

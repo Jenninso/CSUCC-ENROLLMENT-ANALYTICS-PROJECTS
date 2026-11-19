@@ -18,7 +18,7 @@ class ForecastController extends Controller
             'result' => ['ok' => false, 'models' => [], 'message' => 'Choose a scope and run a forecast. Historical series will appear after the first run.'],
             'history' => Forecast::query()->with(['program', 'college'])->latest()->limit(20)->get(),
             'programs' => Program::orderBy('program_name')->get(),
-            'colleges' => College::orderBy('college_name')->get(),
+            'colleges' => College::forFilters(),
             'trends' => $analytics->enrollmentTrends(),
             'filters' => ['program_id' => '', 'college_id' => '', 'horizon' => 1],
         ]);
@@ -44,7 +44,7 @@ class ForecastController extends Controller
             'result' => $result,
             'history' => Forecast::with(['program', 'college'])->latest()->limit(20)->get(),
             'programs' => Program::orderBy('program_name')->get(),
-            'colleges' => College::orderBy('college_name')->get(),
+            'colleges' => College::forFilters(),
             'trends' => collect(),
             'filters' => [
                 'program_id' => $validated['program_id'] ?? '',

@@ -103,11 +103,6 @@
                     @error('average_grade') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
                 </div>
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Attendance %</label>
-                    <input type="number" name="attendance_percent" value="{{ old('attendance_percent', isset($student) ? number_format($student->attendance_percent, 2, '.', '') : '') }}" required min="0" max="100" step="0.01" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
-                    @error('attendance_percent') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
-                </div>
-                <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">Number of Subjects</label>
                     <input type="number" name="subjects_count" value="{{ old('subjects_count', $student->subjects_count ?? '') }}" required min="0" max="20" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
                     @error('subjects_count') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
@@ -130,6 +125,7 @@
                             <option value="{{ $value }}" {{ old('enrolled_status', $student->enrolled_status ?? '') === $value ? 'selected' : '' }}>{{ $label }}</option>
                         @endforeach
                     </select>
+                    <p class="text-[11px] text-gray-500 mt-1">Use <span class="font-medium">Dropped</span> only when the student has no usable grades for the term (all DRP/blank).</p>
                     @error('enrolled_status') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
                 </div>
                 <div>
@@ -140,8 +136,19 @@
                             <option value="{{ $value }}" {{ old('student_type', $student->student_type ?? 'new') === $value ? 'selected' : '' }}>{{ $label }}</option>
                         @endforeach
                     </select>
-                    <p class="text-xs text-gray-400 mt-1">Returning, Transferee, or Withdraw Acad / Stop for this term.</p>
+                    <p class="text-xs text-gray-400 mt-1">Enrollment category (New / Old / Returnee / …). Not the same as Academic Standing.</p>
                     @error('student_type') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Academic Standing</label>
+                    <select name="academic_standing" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
+                        <option value="">Select Standing</option>
+                        @foreach(\App\Models\StudentRecord::ACADEMIC_STANDINGS as $value => $label)
+                            <option value="{{ $value }}" {{ old('academic_standing', $student->academic_standing ?? '') === $value ? 'selected' : '' }}>{{ $label }}</option>
+                        @endforeach
+                    </select>
+                    <p class="text-xs text-gray-400 mt-1">Registrar standing (Regular / Warning / Probation / Debarred).</p>
+                    @error('academic_standing') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">Scholarship Status</label>
@@ -168,7 +175,7 @@
                     <div class="px-3 py-2 border border-dashed border-gray-300 rounded-lg text-sm text-gray-600 bg-gray-50">
                         @if(isset($student))
                             <span class="px-2 py-0.5 rounded-full text-xs font-medium {{ $student->riskBadgeClass() }}">{{ $student->riskLabel() }}</span>
-                            <span class="block text-xs text-gray-400 mt-1">Recalculated from GPA, attendance, failed subjects, enrollment, and tuition when you save.</span>
+                            <span class="block text-xs text-gray-400 mt-1">Recalculated from GPA, failed subjects, and enrollment status when you save.</span>
                         @else
                             Calculated automatically when this record is saved.
                         @endif

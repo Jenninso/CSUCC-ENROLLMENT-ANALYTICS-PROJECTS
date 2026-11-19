@@ -108,7 +108,7 @@ class EnrollmentRecordController extends Controller
         return [
             'academicYears' => AcademicYear::orderByDesc('start_date')->get(),
             'semesters' => Semester::with('academicYear')->get(),
-            'colleges' => College::orderBy('college_name')->get(),
+            'colleges' => College::forFilters(),
             'departments' => Department::with('college')->orderBy('department_name')->get(),
             'programs' => Program::orderBy('program_name')->get(),
         ];

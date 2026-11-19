@@ -1,85 +1,89 @@
 @extends('layouts.app')
 @section('title', 'User Management')
-@section('subtitle', 'Staff accounts, roles, and access for this campus system.')
+@section('hidePageHead', '1')
 
 @section('content')
 @php $me = auth()->user(); @endphp
-@if($me?->canAccess('users.create_admin'))
-<div class="flex justify-end mb-6">
-    <a href="{{ route('users.create') }}" class="inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-lg">
-        Add Super Admin / Admin / User
-    </a>
-</div>
-@endif
 
-<div class="bg-white rounded-lg shadow-sm p-4 mb-6">
+<div class="page-head">
+    <div>
+        <p class="page-kicker">CSUCC · CEIT</p>
+        <h3 class="ui-page-title">User Management</h3>
+        <p class="ui-page-sub">Staff accounts, roles, and access for this campus system.</p>
+    </div>
+    @if($me?->canAccess('users.create_admin'))
+    <a href="{{ route('users.create') }}" class="ui-btn-filter shrink-0">Add Super Admin / Admin / User</a>
+    @endif
+</div>
+
+<div class="ui-panel p-4 mb-4 sticky top-2 z-20" style="backdrop-filter: blur(10px); background: color-mix(in srgb, var(--theme-panel) 94%, transparent);">
     <form method="GET" action="{{ route('users.index') }}" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-3">
-        <input name="employee_id" value="{{ request('employee_id') }}" placeholder="Employee ID" class="px-3 py-2 border rounded-lg text-sm">
-        <select name="role_id" class="px-3 py-2 border rounded-lg text-sm">
+        <input name="employee_id" value="{{ request('employee_id') }}" placeholder="Employee ID" class="ui-input">
+        <select name="role_id" class="ui-input">
             <option value="">All roles</option>
             @foreach($roles as $role)
                 <option value="{{ $role->id }}" @selected(request('role_id') == $role->id)>{{ $role->role_name }}</option>
             @endforeach
         </select>
-        <select name="account_category" class="px-3 py-2 border rounded-lg text-sm">
+        <select name="account_category" class="ui-input">
             <option value="">All account kinds</option>
             <option value="institutional" @selected(request('account_category') === 'institutional')>Institutional Account</option>
             <option value="personal" @selected(request('account_category') === 'personal')>Personal Account</option>
         </select>
-        <select name="status" class="px-3 py-2 border rounded-lg text-sm">
+        <select name="status" class="ui-input">
             <option value="">All statuses</option>
             @foreach(['active' => 'Active', 'inactive' => 'Deactivated'] as $value => $label)
                 <option value="{{ $value }}" @selected(request('status') === $value)>{{ $label }}</option>
             @endforeach
         </select>
-        <button class="px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg">Filter</button>
-        <a href="{{ route('users.index') }}" class="px-4 py-2 bg-gray-100 text-gray-700 text-sm font-medium rounded-lg text-center">Reset</a>
+        <button type="submit" class="ui-btn-filter">Filter</button>
+        <a href="{{ route('users.index') }}" class="ui-btn-clear text-center">Clear</a>
     </form>
 </div>
 
-<div class="bg-white rounded-lg shadow-sm" x-data="{ deleteId: @js(session('open_delete_id')), blockId: null }" @block-account.window="blockId = $event.detail" @delete-request.window="deleteId = $event.detail">
-    <div class="overflow-x-auto overflow-y-visible rounded-t-lg">
-        <table class="w-full text-sm">
-            <thead class="bg-slate-50 text-slate-600 text-left">
+<div class="ui-panel overflow-hidden" x-data="{ deleteId: @js(session('open_delete_id')), blockId: null }" @block-account.window="blockId = $event.detail" @delete-request.window="deleteId = $event.detail">
+    <div class="overflow-x-auto overflow-y-visible">
+        <table class="ui-table whitespace-nowrap">
+            <thead>
                 <tr>
-                    <th class="px-4 py-3 font-semibold">Employee ID</th>
-                    <th class="px-4 py-3 font-semibold">Full Name</th>
-                    <th class="px-4 py-3 font-semibold">Username</th>
-                    <th class="px-4 py-3 font-semibold">Email</th>
-                    <th class="px-4 py-3 font-semibold">Account</th>
-                    <th class="px-4 py-3 font-semibold">Role</th>
-                    <th class="px-4 py-3 font-semibold">Status</th>
-                    <th class="px-4 py-3 font-semibold">Presence</th>
-                    <th class="px-4 py-3 font-semibold text-center">Actions</th>
+                    <th>Employee ID</th>
+                    <th>Full Name</th>
+                    <th>Username</th>
+                    <th>Email</th>
+                    <th>Account</th>
+                    <th>Role</th>
+                    <th>Status</th>
+                    <th>Presence</th>
+                    <th class="text-center">Actions</th>
                 </tr>
             </thead>
             <tbody>
                 @forelse($users as $user)
                 @php $locked = $user->isSuperAdmin() && ! $me->isSuperAdmin(); @endphp
-                <tr class="border-t hover:bg-indigo-50/40 even:bg-gray-50/50">
-                    <td class="px-4 py-3 font-mono text-xs">{{ $user->employee_id }}</td>
-                    <td class="px-4 py-3 font-medium">{{ $user->fullName() }}</td>
-                    <td class="px-4 py-3 font-mono text-xs">{{ $user->username }}</td>
-                    <td class="px-4 py-3">{{ $user->email }}</td>
-                    <td class="px-4 py-3">
-                        <span class="px-2 py-0.5 rounded-full text-xs font-medium {{ $user->isInstitutionalAccount() ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-100 text-slate-700' }}">
+                <tr>
+                    <td class="font-mono text-xs font-bold">{{ $user->employee_id }}</td>
+                    <td class="font-semibold">{{ $user->fullName() }}</td>
+                    <td class="font-mono text-xs">{{ $user->username }}</td>
+                    <td>{{ $user->email }}</td>
+                    <td>
+                        <span class="px-2 py-0.5 rounded-full text-xs font-bold {{ $user->isInstitutionalAccount() ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-100 text-slate-700' }}">
                             {{ $user->isInstitutionalAccount() ? 'Institutional' : 'Personal' }}
                         </span>
                     </td>
-                    <td class="px-4 py-3">
-                        <span class="px-2 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-700">{{ $user->role->role_name ?? '—' }}</span>
+                    <td>
+                        <span class="px-2 py-0.5 rounded-full text-xs font-bold bg-teal-100 text-teal-800">{{ $user->role->role_name ?? '—' }}</span>
                     </td>
-                    <td class="px-4 py-3">
-                        <span class="px-2 py-0.5 rounded-full text-xs font-medium {{ $user->status === 'active' ? 'bg-emerald-100 text-emerald-700' : ($user->status === 'blocked' ? 'bg-red-100 text-red-700' : 'bg-gray-100 text-gray-600') }}">
+                    <td>
+                        <span class="px-2 py-0.5 rounded-full text-xs font-bold {{ $user->status === 'active' ? 'bg-emerald-100 text-emerald-700' : ($user->status === 'blocked' ? 'bg-red-100 text-red-700' : 'bg-gray-100 text-gray-600') }}">
                             {{ $user->statusLabel() }}
                         </span>
                     </td>
-                    <td class="px-4 py-3">
-                        <span class="px-2 py-0.5 rounded-full text-xs font-medium {{ $user->isOnline() ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-600' }}">
+                    <td>
+                        <span class="px-2 py-0.5 rounded-full text-xs font-bold {{ $user->isOnline() ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-600' }}">
                             {{ $user->presenceLabel() }}
                         </span>
                     </td>
-                    <td class="px-4 py-3 text-center align-top">
+                    <td class="text-center align-top">
                         @if($locked)
                             <span class="text-xs text-gray-400">Restricted</span>
                         @else
@@ -113,12 +117,12 @@
                             <button
                                 type="button"
                                 @click="toggle($event)"
-                                class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-gray-700 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500/30"
+                                class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-teal-900 bg-teal-50 border border-teal-200 rounded-lg hover:bg-teal-100"
                                 :aria-expanded="open"
                                 aria-haspopup="true"
                             >
                                 Actions
-                                <svg class="w-3.5 h-3.5 text-gray-500 transition-transform" :class="open && 'rotate-180'" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.5 8.25l-7.5 7.5-7.5-7.5"/></svg>
+                                <svg class="w-3.5 h-3.5 transition-transform" :class="open && 'rotate-180'" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.5 8.25l-7.5 7.5-7.5-7.5"/></svg>
                             </button>
                             <template x-teleport="body">
                                 <div
@@ -135,7 +139,7 @@
                                         <p class="text-xs font-semibold text-gray-800 truncate">{{ $user->fullName() }}</p>
                                         <p class="text-[10px] font-mono text-gray-500">{{ $user->employee_id }}</p>
                                     </div>
-                                    <a href="{{ route('users.edit', $user) }}" class="block px-3 py-2 text-xs font-medium text-indigo-700 hover:bg-indigo-50" @click="open = false">Edit</a>
+                                    <a href="{{ route('users.edit', $user) }}" class="block px-3 py-2 text-xs font-bold ui-link hover:bg-gray-50" @click="open = false">Edit</a>
                                     @if($me->canAccess('users.privileges'))
                                         <a href="{{ route('users.privileges', $user) }}" class="block px-3 py-2 text-xs font-medium text-gray-700 hover:bg-gray-50" @click="open = false">Privileges</a>
                                     @endif
@@ -172,29 +176,42 @@
                     </td>
                 </tr>
                 @empty
-                <tr><td colspan="8" class="px-4 py-8 text-center text-gray-400">No accounts match the filter.</td></tr>
+                <tr>
+                    <td colspan="9" class="px-4 py-12 text-center">
+                        <p class="text-base font-bold text-gray-800 mb-1">No accounts match the filter</p>
+                        <p class="text-sm text-gray-500 mb-4">Clear filters or add a new staff account.</p>
+                        <div class="flex flex-wrap justify-center gap-2">
+                            <a href="{{ route('users.index') }}" class="ui-btn-clear">Clear filters</a>
+                            @if($me?->canAccess('users.create_admin'))
+                            <a href="{{ route('users.create') }}" class="ui-btn-filter">Add account</a>
+                            @endif
+                        </div>
+                    </td>
+                </tr>
                 @endforelse
             </tbody>
         </table>
     </div>
+    @if($users->hasPages())
     <div class="px-4 py-3 border-t">{{ $users->links() }}</div>
+    @endif
 
     @foreach($users as $user)
         @if(! $user->isSuperAdmin() || $me->isSuperAdmin())
         <div x-show="blockId === {{ $user->id }}" x-cloak class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-            <form method="POST" action="{{ route('users.block', $user) }}" class="bg-white rounded-lg shadow-lg p-6 w-full max-w-md space-y-4">
+            <form method="POST" action="{{ route('users.block', $user) }}" class="ui-panel p-6 w-full max-w-md space-y-4 shadow-2xl">
                 @csrf
                 <h3 class="font-semibold text-gray-800">Block {{ $user->employee_id }}</h3>
-                <textarea name="reason" rows="3" class="w-full border rounded-lg px-3 py-2 text-sm" placeholder="Reason (optional)"></textarea>
+                <textarea name="reason" rows="3" class="ui-input w-full" placeholder="Reason (optional)"></textarea>
                 <div class="flex justify-end gap-2">
-                    <button type="button" @click="blockId = null" class="px-4 py-2 text-sm bg-gray-100 rounded-lg">Cancel</button>
-                    <button class="px-4 py-2 text-sm bg-amber-600 text-white rounded-lg">Block account</button>
+                    <button type="button" @click="blockId = null" class="ui-btn-clear">Cancel</button>
+                    <button class="ui-btn-filter" style="background: linear-gradient(135deg, #d97706, #b45309);">Block account</button>
                 </div>
             </form>
         </div>
         @if(! $me->isSuperAdmin() && $user->id !== $me->id)
         <div x-show="deleteId === {{ $user->id }}" x-cloak class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-            <form method="POST" action="{{ route('users.destroy', $user) }}" class="bg-white rounded-lg shadow-lg p-6 w-full max-w-md space-y-4">
+            <form method="POST" action="{{ route('users.destroy', $user) }}" class="ui-panel p-6 w-full max-w-md space-y-4 shadow-2xl">
                 @csrf @method('DELETE')
                 <h3 class="font-semibold text-gray-800">Request deletion</h3>
                 <p class="text-sm text-gray-500">This is sent to the Super Administrator with the account snapshot and your reason. Confirm with your email and password before sending.</p>
@@ -202,25 +219,25 @@
                     {{ $user->employee_id }} · {{ $user->fullName() }} · {{ $user->email }} · {{ $user->roleName() }}
                     <span class="block mt-1 font-medium {{ $user->isInstitutionalAccount() ? 'text-emerald-700' : 'text-slate-700' }}">{{ $user->accountCategoryLabel() }}</span>
                 </p>
-                <textarea name="reason" rows="4" required class="w-full border rounded-lg px-3 py-2 text-sm @error('reason') border-red-500 @enderror" placeholder="Reason to delete">{{ old('reason') }}</textarea>
+                <textarea name="reason" rows="4" required class="ui-input w-full @error('reason') border-red-500 @enderror" placeholder="Reason to delete">{{ old('reason') }}</textarea>
                 @error('reason') <p class="text-xs text-red-600 -mt-2">{{ $message }}</p> @enderror
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">Your email</label>
                     <input type="email" name="confirm_email" value="{{ old('confirm_email') }}" required autocomplete="username"
-                        class="w-full border rounded-lg px-3 py-2 text-sm @error('confirm_email') border-red-500 @enderror"
+                        class="ui-input w-full @error('confirm_email') border-red-500 @enderror"
                         placeholder="{{ $me->email }}">
                     @error('confirm_email') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">Your password</label>
                     <input type="password" name="confirm_password" required autocomplete="current-password"
-                        class="w-full border rounded-lg px-3 py-2 text-sm @error('confirm_password') border-red-500 @enderror"
+                        class="ui-input w-full @error('confirm_password') border-red-500 @enderror"
                         placeholder="Current password">
                     @error('confirm_password') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
                 </div>
                 <div class="flex justify-end gap-2">
-                    <button type="button" @click="deleteId = null" class="px-4 py-2 text-sm bg-gray-100 rounded-lg">Cancel</button>
-                    <button class="px-4 py-2 text-sm bg-red-600 text-white rounded-lg">Send to Super Admin</button>
+                    <button type="button" @click="deleteId = null" class="ui-btn-clear">Cancel</button>
+                    <button class="ui-btn-filter" style="background: linear-gradient(135deg, #dc2626, #b91c1c);">Send to Super Admin</button>
                 </div>
             </form>
         </div>

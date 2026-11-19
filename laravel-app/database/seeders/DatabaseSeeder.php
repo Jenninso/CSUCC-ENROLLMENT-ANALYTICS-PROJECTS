@@ -113,15 +113,22 @@ class DatabaseSeeder extends Seeder
         // CEIT college/programs only — never auto-load synthetic students on Render.
         $this->call(CeitBsitScopeSeeder::class);
 
-        // Demo/synthetic cohorts only when explicitly requested (local demos).
-        if (filter_var(env('SEED_DEMO_DATA', false), FILTER_VALIDATE_BOOL)) {
+        // Never auto-load synthetic students on Render / production.
+        $onRender = filled(env('RENDER_EXTERNAL_URL')) || filled(env('RENDER'));
+        $allowDemo = filter_var(env('SEED_DEMO_DATA', false), FILTER_VALIDATE_BOOL)
+            && ! $onRender
+            && ! app()->environment('production');
+
+        if ($allowDemo) {
             $this->call(EnrollmentDemoSeeder::class);
             $this->call(StudentRecordSeeder::class);
             $this->call(StatisticalHistorySeeder::class);
         }
 
-        // Heavy CEIT master import (~13k rows) is opt-in only.
-        if (filter_var(env('CEIT_FORCE_IMPORT', false), FILTER_VALIDATE_BOOL)) {
+        // Heavy CEIT master import (~13k rows) is opt-in only, never on wipe/fresh boots.
+        $allowCeitImport = filter_var(env('CEIT_FORCE_IMPORT', false), FILTER_VALIDATE_BOOL)
+            && ! filter_var(env('CLEAR_RENDER_DATA', false), FILTER_VALIDATE_BOOL);
+        if ($allowCeitImport) {
             $this->call(CeitMasterImportSeeder::class);
         }
     }

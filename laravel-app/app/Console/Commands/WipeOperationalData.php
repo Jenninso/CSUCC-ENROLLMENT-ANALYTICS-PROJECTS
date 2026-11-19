@@ -58,8 +58,11 @@ class WipeOperationalData extends Command
 
     public function handle(): int
     {
-        $all = $this->option('all') || filter_var(env('CLEAR_RENDER_DATA', false), FILTER_VALIDATE_BOOL);
-        if (! $this->option('force') && ! filter_var(env('CLEAR_RENDER_DATA', false), FILTER_VALIDATE_BOOL)) {
+        // CLEAR_RENDER_DATA only unlocks wipe + clears operational rows.
+        // Staff accounts / CEIT setup stay unless --all is passed explicitly.
+        $clearEnv = filter_var(env('CLEAR_RENDER_DATA', false), FILTER_VALIDATE_BOOL);
+        $all = (bool) $this->option('all');
+        if (! $this->option('force') && ! $clearEnv) {
             $this->error('Refusing to wipe. Pass --force or set CLEAR_RENDER_DATA=true.');
 
             return self::FAILURE;
@@ -67,7 +70,10 @@ class WipeOperationalData extends Command
 
         $tables = $all
             ? array_merge($this->operationalTables, $this->accountAndSetupTables)
-            : $this->operationalTables;
+            : array_merge($this->operationalTables, [
+                'semesters',
+                'academic_years',
+            ]);
 
         $driver = DB::getDriverName();
         if ($driver === 'pgsql') {

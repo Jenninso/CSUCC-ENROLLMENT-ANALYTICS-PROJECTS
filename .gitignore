@@ -12,8 +12,8 @@ Desktop.ini
 ~$*
 *.tmp
 
-# Huge raw registrar dump (keep scrubbed CEIT master in laravel-app/database/data only)
-Docs/Dataset/enrollment_csv/
+# Raw registrar dumps / PII extracts (scrubbed CEIT master lives in laravel-app/database/data)
+Docs/Dataset/
 
 # Local thesis binaries (keep markdown sources if needed)
 *.docx

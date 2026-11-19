@@ -110,10 +110,19 @@ class DatabaseSeeder extends Seeder
             ]);
         }
 
-        $this->call(EnrollmentDemoSeeder::class);
+        $clearing = filter_var(env('CLEAR_RENDER_DATA', false), FILTER_VALIDATE_BOOL);
+
+        // Always keep CEIT college/program scope available.
         $this->call(CeitBsitScopeSeeder::class);
-        $this->call(StudentRecordSeeder::class);
-        $this->call(StatisticalHistorySeeder::class);
+
+        if ($clearing) {
+            // Leave the database empty of demo/analytics rows after a wipe.
+            $this->command?->info('CLEAR_RENDER_DATA=true — skipping demo student/enrollment seeders.');
+        } else {
+            $this->call(EnrollmentDemoSeeder::class);
+            $this->call(StudentRecordSeeder::class);
+            $this->call(StatisticalHistorySeeder::class);
+        }
 
         // Heavy CEIT master import (~13k rows) is opt-in only.
         // Running it on every Render boot times out the deploy health check.

@@ -13,5 +13,6 @@ RUN composer install --no-dev --optimize-autoloader --no-interaction \
     && mkdir -p storage/framework/cache storage/framework/sessions storage/framework/views storage/logs bootstrap/cache \
     && chmod -R 775 storage bootstrap/cache
 
-# Keep boot fast for Render health checks. Heavy CEIT CSV import is opt-in via CEIT_FORCE_IMPORT.
-CMD sh -c "php artisan migrate --force && php artisan storage:link --force && (php artisan db:seed --force || true) && php artisan serve --host=0.0.0.0 --port=${PORT:-8000}"
+# Keep boot fast for Render. Optional one-shot wipe: CLEAR_RENDER_DATA=true
+# Optional CEIT import after wipe: CEIT_FORCE_IMPORT=true (slow; avoid on first health check if possible)
+CMD sh -c "php artisan migrate --force && php artisan storage:link --force && if [ \"\$CLEAR_RENDER_DATA\" = \"true\" ] || [ \"\$CLEAR_RENDER_DATA\" = \"1\" ]; then php artisan app:wipe-data --force || true; fi && (php artisan db:seed --force || true) && php artisan serve --host=0.0.0.0 --port=\${PORT:-8000}"

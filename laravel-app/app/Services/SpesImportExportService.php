@@ -164,49 +164,138 @@ class SpesImportExportService
             ];
         }
 
+        @set_time_limit(0);
+        @ini_set('memory_limit', '1024M');
+
         $imported = 0;
         $skipped = 0;
         $createdIds = [];
         $errors = [];
+        $now = now();
+        $batchStarted = $now->copy();
 
-        DB::transaction(function () use ($matrix, $header, $encodedBy, &$imported, &$skipped, &$createdIds, &$errors) {
-            $line = 1;
-            foreach ($matrix as $data) {
-                $line++;
-                if (count($data) < count($header)) {
-                    $data = array_pad($data, count($header), '');
+        // Preload duplicates + student links once (per-row queries were killing Render on large CSVs).
+        $existingByStudentId = [];
+        $existingByPerson = [];
+        SpesApplication::query()
+            ->select(['id', 'student_id', 'last_name', 'first_name', 'middle_name', 'birth_date'])
+            ->orderBy('id')
+            ->chunkById(1000, function ($rows) use (&$existingByStudentId, &$existingByPerson) {
+                foreach ($rows as $row) {
+                    $sid = mb_strtolower(trim((string) $row->student_id));
+                    if ($sid !== '') {
+                        $existingByStudentId[$sid] = true;
+                    }
+                    $existingByPerson[$this->personKey(
+                        $row->last_name,
+                        $row->first_name,
+                        $row->middle_name,
+                        $row->birth_date?->format('Y-m-d')
+                    )] = true;
                 }
-                $combined = array_combine($header, array_slice($data, 0, count($header)));
-                if ($combined === false) {
-                    $skipped++;
-                    continue;
-                }
-                if (trim(implode('', $combined)) === '') {
-                    continue;
-                }
+            });
 
-                try {
-                    $payload = $this->rowToApplication($combined, $encodedBy);
-                } catch (\InvalidArgumentException $e) {
-                    $errors[] = "Row {$line}: ".$e->getMessage();
-                    $skipped++;
-                    continue;
-                }
-
-                if ($this->isDuplicate($payload)) {
-                    $errors[] = "Row {$line}: skipped — matching SPR already exists.";
-                    $skipped++;
-                    continue;
-                }
-
-                $application = SpesApplication::create($payload);
-                $application->update([
-                    'reference_no' => SpesApplication::referenceFor($application->id, (int) $application->application_year),
-                ]);
-                $createdIds[] = $application->id;
-                $imported++;
+        $studentIdsInFile = [];
+        foreach ($matrix as $data) {
+            if (count($data) < count($header)) {
+                $data = array_pad($data, count($header), '');
             }
-        });
+            $combined = @array_combine($header, array_slice($data, 0, count($header)));
+            if (! is_array($combined)) {
+                continue;
+            }
+            $sid = mb_strtolower(trim((string) ($combined['id_no'] ?? '')));
+            if ($sid !== '') {
+                $studentIdsInFile[$sid] = true;
+            }
+        }
+
+        $studentRecordMap = [];
+        foreach (array_chunk(array_keys($studentIdsInFile), 500) as $chunk) {
+            $records = StudentRecord::query()
+                ->select(['id', 'student_id'])
+                ->whereIn('student_id', $chunk)
+                ->orderByDesc('id')
+                ->get();
+            foreach ($records as $record) {
+                $key = mb_strtolower(trim((string) $record->student_id));
+                if ($key !== '' && ! isset($studentRecordMap[$key])) {
+                    $studentRecordMap[$key] = (int) $record->id;
+                }
+            }
+        }
+
+        $pending = [];
+        $line = 1;
+        foreach ($matrix as $data) {
+            $line++;
+            if (count($data) < count($header)) {
+                $data = array_pad($data, count($header), '');
+            }
+            $combined = array_combine($header, array_slice($data, 0, count($header)));
+            if ($combined === false) {
+                $skipped++;
+                continue;
+            }
+            if (trim(implode('', $combined)) === '') {
+                continue;
+            }
+
+            try {
+                $payload = $this->rowToApplication($combined, $encodedBy, $studentRecordMap);
+            } catch (\InvalidArgumentException $e) {
+                if (count($errors) < 50) {
+                    $errors[] = "Row {$line}: ".$e->getMessage();
+                }
+                $skipped++;
+                continue;
+            }
+
+            $sid = mb_strtolower(trim((string) ($payload['student_id'] ?? '')));
+            $person = $this->personKey(
+                $payload['last_name'] ?? '',
+                $payload['first_name'] ?? '',
+                $payload['middle_name'] ?? '',
+                $payload['birth_date'] ?? ''
+            );
+            if (($sid !== '' && isset($existingByStudentId[$sid])) || isset($existingByPerson[$person])) {
+                if (count($errors) < 50) {
+                    $errors[] = "Row {$line}: skipped — matching SPR already exists.";
+                }
+                $skipped++;
+                continue;
+            }
+
+            if ($sid !== '') {
+                $existingByStudentId[$sid] = true;
+            }
+            $existingByPerson[$person] = true;
+
+            $payload['spr_data'] = json_encode($payload['spr_data'] ?? [], JSON_THROW_ON_ERROR);
+            $payload['previous_spes'] = ! empty($payload['previous_spes']) ? 1 : 0;
+            $payload['student_can_edit'] = 0;
+            $payload['has_birth_certificate'] = ! empty($payload['has_birth_certificate']) ? 1 : 0;
+            $payload['has_enrollment_cert'] = ! empty($payload['has_enrollment_cert']) ? 1 : 0;
+            $payload['has_grades'] = ! empty($payload['has_grades']) ? 1 : 0;
+            $payload['has_indigency'] = ! empty($payload['has_indigency']) ? 1 : 0;
+            $payload['has_photo'] = ! empty($payload['has_photo']) ? 1 : 0;
+            $payload['parents_annual_income'] = $payload['parents_annual_income'] ?? 0;
+            $payload['created_at'] = $now;
+            $payload['updated_at'] = $now;
+
+            $pending[] = $payload;
+            if (count($pending) >= 200) {
+                $this->flushInsertChunk($pending, $imported, $createdIds);
+                $pending = [];
+            }
+        }
+
+        if ($pending !== []) {
+            $this->flushInsertChunk($pending, $imported, $createdIds);
+        }
+
+        // Assign real reference numbers for this batch (driver-aware bulk update).
+        $this->assignPendingReferences($encodedBy, $batchStarted);
 
         return [
             'ok' => $imported > 0 || $errors === [],
@@ -218,10 +307,78 @@ class SpesImportExportService
     }
 
     /**
+     * @param  list<array<string, mixed>>  $chunk
+     * @param  list<int>  $createdIds
+     */
+    private function flushInsertChunk(array $chunk, int &$imported, array &$createdIds): void
+    {
+        DB::table('spes_applications')->insert($chunk);
+        $imported += count($chunk);
+
+        // Keep at most one id for single-row “open form” redirect.
+        if (count($createdIds) === 0 && count($chunk) === 1 && $imported === 1) {
+            $id = (int) DB::table('spes_applications')->where('reference_no', 'SPR-PENDING')->orderByDesc('id')->value('id');
+            if ($id > 0) {
+                $createdIds[] = $id;
+            }
+        }
+    }
+
+    private function personKey(mixed $last, mixed $first, mixed $middle, mixed $birth): string
+    {
+        return mb_strtolower(trim((string) $last)).'|'
+            .mb_strtolower(trim((string) $first)).'|'
+            .mb_strtolower(trim((string) ($middle ?? ''))).'|'
+            .trim((string) ($birth ?? ''));
+    }
+
+    private function assignPendingReferences(int $encodedBy, mixed $batchStarted): void
+    {
+        $driver = DB::connection()->getDriverName();
+
+        if ($driver === 'pgsql') {
+            DB::update(
+                "UPDATE spes_applications
+                 SET reference_no = 'SPR-' || application_year::text || '-' || lpad(id::text, 4, '0')
+                 WHERE reference_no = ? AND encoded_by = ? AND created_at >= ?",
+                ['SPR-PENDING', $encodedBy, $batchStarted]
+            );
+
+            return;
+        }
+
+        if ($driver === 'mysql') {
+            DB::update(
+                "UPDATE spes_applications
+                 SET reference_no = CONCAT('SPR-', application_year, '-', LPAD(id, 4, '0'))
+                 WHERE reference_no = ? AND encoded_by = ? AND created_at >= ?",
+                ['SPR-PENDING', $encodedBy, $batchStarted]
+            );
+
+            return;
+        }
+
+        SpesApplication::query()
+            ->select(['id', 'application_year'])
+            ->where('reference_no', 'SPR-PENDING')
+            ->where('encoded_by', $encodedBy)
+            ->where('created_at', '>=', $batchStarted)
+            ->orderBy('id')
+            ->chunkById(500, function ($rows) {
+                foreach ($rows as $app) {
+                    DB::table('spes_applications')->where('id', $app->id)->update([
+                        'reference_no' => SpesApplication::referenceFor((int) $app->id, (int) $app->application_year),
+                    ]);
+                }
+            });
+    }
+
+    /**
      * @param  array<string, mixed>  $row
+     * @param  array<string, int>  $studentRecordMap
      * @return array<string, mixed>
      */
-    private function rowToApplication(array $row, int $encodedBy): array
+    private function rowToApplication(array $row, int $encodedBy, array $studentRecordMap = []): array
     {
         $get = fn (string $key, mixed $default = null) => $this->trimOrNull($row[$key] ?? $default);
 
@@ -277,10 +434,7 @@ class SpesImportExportService
 
         $studentRecordId = null;
         if ($studentId) {
-            $studentRecordId = StudentRecord::query()
-                ->where('student_id', $studentId)
-                ->latest('id')
-                ->value('id');
+            $studentRecordId = $studentRecordMap[mb_strtolower($studentId)] ?? null;
         }
 
         return [
@@ -334,26 +488,6 @@ class SpesImportExportService
             'has_indigency' => $this->truthy($get('has_indigency')),
             'has_photo' => $this->truthy($get('has_photo')),
         ];
-    }
-
-    /**
-     * @param  array<string, mixed>  $payload
-     */
-    private function isDuplicate(array $payload): bool
-    {
-        $studentId = mb_strtolower(trim((string) ($payload['student_id'] ?? '')));
-        if ($studentId !== '' && SpesApplication::query()
-            ->whereRaw('lower(trim(student_id)) = ?', [$studentId])
-            ->exists()) {
-            return true;
-        }
-
-        return SpesApplication::query()
-            ->whereRaw('lower(trim(last_name)) = ?', [mb_strtolower(trim((string) $payload['last_name']))])
-            ->whereRaw('lower(trim(first_name)) = ?', [mb_strtolower(trim((string) $payload['first_name']))])
-            ->whereRaw("lower(trim(coalesce(middle_name, ''))) = ?", [mb_strtolower(trim((string) ($payload['middle_name'] ?? '')))])
-            ->whereDate('birth_date', $payload['birth_date'])
-            ->exists();
     }
 
     private function normalizeHeader(string $header): string

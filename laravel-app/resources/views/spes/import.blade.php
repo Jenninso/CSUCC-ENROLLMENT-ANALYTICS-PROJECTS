@@ -36,7 +36,8 @@
             <p class="font-semibold text-slate-700 mb-2">Required columns</p>
             <p class="text-xs sm:text-sm">last_name, first_name, birth_date <span class="text-slate-500">(or date_of_birth)</span></p>
             <p class="mt-2 text-xs text-slate-500">Optional: id_no / student_id, middle_name, address, parents, course / priority_1, documents (yes/no), and other SPR form columns from the template or Export CSV.</p>
-            <p class="mt-2 text-xs text-slate-500">Use <span class="font-semibold text-slate-700">Download template</span> or Export from SPR — the student master CSV is a different format. Duplicate Student ID or same name + birth date rows are skipped.</p>
+            <p class="mt-2 text-xs text-slate-500">Use <span class="font-semibold text-slate-700">Download template</span> or Export from SPR. <span class="font-semibold text-slate-700">CEIT_system_master.csv</span> belongs under Student Records → Import, not here.</p>
+            <p class="mt-2 text-xs text-slate-500">Duplicate Student ID or same name + birth date rows are skipped.</p>
         </div>
 
         <form method="POST" action="{{ route('spes.import.store') }}" enctype="multipart/form-data" @submit="uploading = true">
@@ -55,6 +56,7 @@
                 <svg x-show="uploading" x-cloak class="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg>
                 <span x-text="uploading ? 'Importing…' : 'Upload & fill SPR forms'"></span>
             </button>
+            <p x-show="uploading" x-cloak class="text-xs text-slate-500 mt-2">Large files can take a few minutes on Render. Keep this tab open.</p>
         </form>
     </div>
 </div>

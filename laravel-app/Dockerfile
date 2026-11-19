@@ -17,11 +17,12 @@ RUN printf '%s\n' \
 COPY docker/apache-uploads.conf /etc/apache2/conf-available/uploads.conf
 RUN a2enconf uploads
 
-ENV APACHE_DOCUMENT_ROOT=/var/www/html/public
-RUN sed -ri -e 's!/var/www/html!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/sites-available/*.conf \
-    && sed -ri -e 's!/var/www/!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/apache2.conf /etc/apache2/conf-available/*.conf \
+# Point Apache at Laravel's public/ folder (use real paths — ENV vars are NOT expanded inside single-quoted sed).
+RUN sed -ri 's!DocumentRoot /var/www/html!DocumentRoot /var/www/html/public!g' /etc/apache2/sites-available/*.conf \
+    && sed -ri 's!<Directory /var/www/>!<Directory /var/www/html/public/>!g' /etc/apache2/apache2.conf \
     && printf '%s\n' \
         '<Directory /var/www/html/public>' \
+        '    Options FollowSymLinks' \
         '    AllowOverride All' \
         '    Require all granted' \
         '</Directory>' \
@@ -35,6 +36,7 @@ COPY . .
 
 RUN composer install --no-dev --optimize-autoloader --no-interaction \
     && mkdir -p storage/framework/cache storage/framework/sessions storage/framework/views storage/logs bootstrap/cache \
+    && chown -R www-data:www-data storage bootstrap/cache \
     && chmod -R 775 storage bootstrap/cache \
     && chmod +x docker/start.sh
 

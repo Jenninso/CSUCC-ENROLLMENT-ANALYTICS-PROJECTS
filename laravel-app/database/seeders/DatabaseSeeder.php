@@ -110,11 +110,15 @@ class DatabaseSeeder extends Seeder
             ]);
         }
 
-        // When CLEAR_RENDER_DATA=true the Dockerfile skips this seeder entirely after a full wipe.
-        $this->call(EnrollmentDemoSeeder::class);
+        // CEIT college/programs only — never auto-load synthetic students on Render.
         $this->call(CeitBsitScopeSeeder::class);
-        $this->call(StudentRecordSeeder::class);
-        $this->call(StatisticalHistorySeeder::class);
+
+        // Demo/synthetic cohorts only when explicitly requested (local demos).
+        if (filter_var(env('SEED_DEMO_DATA', false), FILTER_VALIDATE_BOOL)) {
+            $this->call(EnrollmentDemoSeeder::class);
+            $this->call(StudentRecordSeeder::class);
+            $this->call(StatisticalHistorySeeder::class);
+        }
 
         // Heavy CEIT master import (~13k rows) is opt-in only.
         if (filter_var(env('CEIT_FORCE_IMPORT', false), FILTER_VALIDATE_BOOL)) {

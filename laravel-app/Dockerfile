@@ -13,5 +13,6 @@ RUN composer install --no-dev --optimize-autoloader --no-interaction \
     && mkdir -p storage/framework/cache storage/framework/sessions storage/framework/views storage/logs bootstrap/cache \
     && chmod -R 775 storage bootstrap/cache
 
-# CLEAR_RENDER_DATA=true → full wipe (accounts included) and skip reseeding so DB stays empty.
-CMD sh -c "php artisan migrate --force && php artisan storage:link --force && if [ \"\$CLEAR_RENDER_DATA\" = \"true\" ] || [ \"\$CLEAR_RENDER_DATA\" = \"1\" ]; then php artisan app:wipe-data --force --all || true; else (php artisan db:seed --force || true); fi && php artisan serve --host=0.0.0.0 --port=\${PORT:-8000}"
+# CLEAR_RENDER_DATA=true → delete synthetic/ops data (students, enrollment, SPR, alerts) but keep staff accounts,
+# then seed roles/users/CEIT scope only (no demo students).
+CMD sh -c "php artisan migrate --force && php artisan storage:link --force && if [ \"\$CLEAR_RENDER_DATA\" = \"true\" ] || [ \"\$CLEAR_RENDER_DATA\" = \"1\" ]; then php artisan app:wipe-data --force || true; fi && (php artisan db:seed --force || true) && php artisan serve --host=0.0.0.0 --port=\${PORT:-8000}"

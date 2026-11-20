@@ -47,23 +47,12 @@
 
 <div class="ui-panel p-3 mb-3 sticky top-2 z-20" style="backdrop-filter: blur(10px); background: color-mix(in srgb, var(--theme-panel) 94%, transparent);">
     <form method="GET" action="{{ route('students.index') }}" class="space-y-2">
-        <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-7 gap-2">
+        <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2">
             <input type="text" name="q" value="{{ request('q') }}" placeholder="Student ID" class="ui-input">
             <select name="academic_year_id" class="ui-input">
                 <option value="">Academic Year</option>
                 @foreach($academicYears ?? [] as $ay)
                     <option value="{{ $ay->id }}" {{ request('academic_year_id') == $ay->id ? 'selected' : '' }}>{{ $ay->academic_year }}</option>
-                @endforeach
-            </select>
-            <select name="semester" class="ui-input">
-                <option value="">Semester</option>
-                @foreach($semesterNames ?? ['First Semester', 'Second Semester', 'Summer'] as $semName)
-                    <option value="{{ $semName }}" {{ request('semester') === $semName ? 'selected' : '' }}>{{ $semName }}</option>
-                @endforeach
-            </select>
-            <select name="college_id" class="ui-input">
-                @foreach($colleges ?? [] as $college)
-                    <option value="{{ $college->id }}" {{ (string) request('college_id', $college->id) === (string) $college->id ? 'selected' : '' }}>{{ $college->college_code }}</option>
                 @endforeach
             </select>
             <select name="program_id" class="ui-input">
@@ -85,13 +74,7 @@
                 @endforeach
             </select>
         </div>
-        <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-7 gap-2 items-center">
-            <select name="gender" class="ui-input">
-                <option value="">Gender</option>
-                @foreach(\App\Models\StudentRecord::GENDERS as $value => $label)
-                    <option value="{{ $value }}" {{ request('gender') === $value ? 'selected' : '' }}>{{ $label }}</option>
-                @endforeach
-            </select>
+        <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2 items-center">
             <select name="enrolled_status" class="ui-input">
                 <option value="">Enrollment Status</option>
                 @foreach(\App\Models\StudentRecord::ENROLLED_STATUSES as $value => $label)
@@ -102,18 +85,6 @@
                 <option value="">Student Type</option>
                 @foreach(\App\Models\StudentRecord::STUDENT_TYPES as $value => $label)
                     <option value="{{ $value }}" {{ request('student_type') === $value ? 'selected' : '' }}>{{ $label }}</option>
-                @endforeach
-            </select>
-            <select name="scholarship_status" class="ui-input">
-                <option value="">Scholarship</option>
-                @foreach(\App\Models\StudentRecord::SCHOLARSHIP_STATUSES as $value => $label)
-                    <option value="{{ $value }}" {{ request('scholarship_status') === $value ? 'selected' : '' }}>{{ $label }}</option>
-                @endforeach
-            </select>
-            <select name="tuition_status" class="ui-input">
-                <option value="">Tuition</option>
-                @foreach(\App\Models\StudentRecord::TUITION_STATUSES as $value => $label)
-                    <option value="{{ $value }}" {{ request('tuition_status') === $value ? 'selected' : '' }}>{{ $label }}</option>
                 @endforeach
             </select>
             <select name="risk_level" class="ui-input">

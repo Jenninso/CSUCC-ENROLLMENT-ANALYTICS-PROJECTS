@@ -46,8 +46,8 @@
 </div>
 
 <div class="ui-panel p-3 mb-3 sticky top-2 z-20" style="backdrop-filter: blur(10px); background: color-mix(in srgb, var(--theme-panel) 94%, transparent);">
-    <form method="GET" action="{{ route('students.index') }}" class="space-y-2">
-        <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2">
+    <form method="GET" action="{{ route('students.index') }}">
+        <div class="grid grid-cols-2 sm:grid-cols-4 xl:grid-cols-8 gap-2 items-center">
             <input type="text" name="q" value="{{ request('q') }}" placeholder="Student ID" class="ui-input">
             <select name="academic_year_id" class="ui-input">
                 <option value="">Academic Year</option>
@@ -67,14 +67,6 @@
                     <option value="{{ $i }}" {{ request('year_level') == $i ? 'selected' : '' }}>{{ \App\Models\EnrollmentRecord::yearLevelLabel($i) }}</option>
                 @endfor
             </select>
-            <select name="section" class="ui-input">
-                <option value="">Section</option>
-                @foreach($sections ?? [] as $section)
-                    <option value="{{ $section }}" {{ request('section') == $section ? 'selected' : '' }}>{{ $section }}</option>
-                @endforeach
-            </select>
-        </div>
-        <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2 items-center">
             <select name="enrolled_status" class="ui-input">
                 <option value="">Enrollment Status</option>
                 @foreach(\App\Models\StudentRecord::ENROLLED_STATUSES as $value => $label)

@@ -7,13 +7,12 @@
     <div>
         <p class="page-kicker">CSUCC · CEIT</p>
         <h3 class="ui-page-title">Student Records</h3>
-        <p class="ui-page-sub">One record per student per term by Student ID. Use Import for bulk CEIT data; open a row for full details.</p>
+        <p class="ui-page-sub">One record per student per term by Student ID. Open a row for full details.</p>
     </div>
     <div class="flex flex-wrap gap-2 shrink-0">
-        <a href="{{ route('students.export', request()->query()) }}" class="ui-btn-secondary">Export</a>
+        <a href="{{ route('students.export', request()->query()) }}" class="ui-btn-primary">Export</a>
         @if(auth()->user()?->canAccess('enrollment.manage'))
-        <a href="{{ route('students.import') }}" class="ui-btn-filter">Import Excel / CSV</a>
-        <a href="{{ route('students.create') }}" class="ui-btn-secondary text-xs">Add one (advanced)</a>
+        <a href="{{ route('students.create') }}" class="ui-btn-primary">Add one (advanced)</a>
         @endif
     </div>
 </div>
@@ -47,45 +46,45 @@
 
 <div class="ui-panel p-3 mb-3 sticky top-2 z-20" style="backdrop-filter: blur(10px); background: color-mix(in srgb, var(--theme-panel) 94%, transparent);">
     <form method="GET" action="{{ route('students.index') }}">
-        <div class="grid grid-cols-2 sm:grid-cols-4 xl:grid-cols-8 gap-2 items-center">
-            <input type="text" name="q" value="{{ request('q') }}" placeholder="Student ID" class="ui-input">
-            <select name="academic_year_id" class="ui-input">
+        <div class="flex flex-nowrap gap-2 items-center">
+            <input type="text" name="q" value="{{ request('q') }}" placeholder="Student ID" class="ui-input min-w-0 flex-1 basis-0">
+            <select name="academic_year_id" class="ui-input min-w-0 flex-1 basis-0">
                 <option value="">Academic Year</option>
                 @foreach($academicYears ?? [] as $ay)
                     <option value="{{ $ay->id }}" {{ request('academic_year_id') == $ay->id ? 'selected' : '' }}>{{ $ay->academic_year }}</option>
                 @endforeach
             </select>
-            <select name="program_id" class="ui-input">
+            <select name="program_id" class="ui-input min-w-0 flex-1 basis-0">
                 <option value="">Course</option>
                 @foreach($programs ?? [] as $program)
                     <option value="{{ $program->id }}" {{ request('program_id') == $program->id ? 'selected' : '' }}>{{ $program->program_code }}</option>
                 @endforeach
             </select>
-            <select name="year_level" class="ui-input">
+            <select name="year_level" class="ui-input min-w-0 flex-1 basis-0">
                 <option value="">Year Level</option>
                 @for($i = 1; $i <= 4; $i++)
                     <option value="{{ $i }}" {{ request('year_level') == $i ? 'selected' : '' }}>{{ \App\Models\EnrollmentRecord::yearLevelLabel($i) }}</option>
                 @endfor
             </select>
-            <select name="enrolled_status" class="ui-input">
+            <select name="enrolled_status" class="ui-input min-w-0 flex-1 basis-0">
                 <option value="">Enrollment Status</option>
                 @foreach(\App\Models\StudentRecord::ENROLLED_STATUSES as $value => $label)
                     <option value="{{ $value }}" {{ request('enrolled_status') === $value ? 'selected' : '' }}>{{ $label }}</option>
                 @endforeach
             </select>
-            <select name="student_type" class="ui-input">
+            <select name="student_type" class="ui-input min-w-0 flex-1 basis-0">
                 <option value="">Student Type</option>
                 @foreach(\App\Models\StudentRecord::STUDENT_TYPES as $value => $label)
                     <option value="{{ $value }}" {{ request('student_type') === $value ? 'selected' : '' }}>{{ $label }}</option>
                 @endforeach
             </select>
-            <select name="risk_level" class="ui-input">
+            <select name="risk_level" class="ui-input min-w-0 flex-1 basis-0">
                 <option value="">Risk Level</option>
                 @foreach(\App\Models\StudentRecord::RISK_LEVELS as $value => $label)
                     <option value="{{ $value }}" {{ request('risk_level') === $value ? 'selected' : '' }}>{{ $label }}</option>
                 @endforeach
             </select>
-            <div class="flex gap-2 justify-end">
+            <div class="flex gap-2 shrink-0">
                 <button type="submit" class="ui-btn-filter">Filter</button>
                 <a href="{{ route('students.index') }}" class="ui-btn-clear">Clear</a>
             </div>

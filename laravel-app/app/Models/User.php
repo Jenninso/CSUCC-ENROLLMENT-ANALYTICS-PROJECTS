@@ -56,6 +56,7 @@ class User extends Authenticatable
         '#0b5d3b' => 'Forest green',
         '#047857' => 'Emerald',
         '#0f766e' => 'Teal',
+        '#0e7490' => 'Cyan',
         '#1d4ed8' => 'Royal blue',
         '#4338ca' => 'Indigo',
         '#b45309' => 'Amber',
@@ -64,12 +65,66 @@ class User extends Authenticatable
         '#ffffff' => 'White',
     ];
 
+    /** Soft two-tone previews for the theme color picker (primary hex stays solid in CSS). */
+    public const THEME_COLOR_SWATCHES = [
+        '#0b5d3b' => 'linear-gradient(145deg, #34d399 0%, #0b5d3b 72%)',
+        '#047857' => 'linear-gradient(145deg, #6ee7b7 0%, #047857 72%)',
+        '#0f766e' => 'linear-gradient(145deg, #5eead4 0%, #0f766e 72%)',
+        '#0e7490' => 'linear-gradient(145deg, #67e8f9 0%, #0e7490 72%)',
+        '#1d4ed8' => 'linear-gradient(145deg, #93c5fd 0%, #1d4ed8 72%)',
+        '#4338ca' => 'linear-gradient(145deg, #a5b4fc 0%, #4338ca 72%)',
+        '#b45309' => 'linear-gradient(145deg, #fcd34d 0%, #b45309 72%)',
+        '#be123c' => 'linear-gradient(145deg, #fb7185 0%, #be123c 72%)',
+        '#334155' => 'linear-gradient(145deg, #94a3b8 0%, #334155 72%)',
+        '#ffffff' => 'linear-gradient(145deg, #ffffff 0%, #e2e8f0 100%)',
+    ];
+
     public const THEME_BACKGROUNDS = [
         'default' => ['label' => 'Soft gray', 'type' => 'color', 'light' => '#f3f4f6', 'dark' => '#0f172a'],
         'mint' => ['label' => 'Mint wash', 'type' => 'color', 'light' => '#ecfdf5', 'dark' => '#042f2e'],
         'sky' => ['label' => 'Sky wash', 'type' => 'color', 'light' => '#eff6ff', 'dark' => '#0c1a2e'],
         'sand' => ['label' => 'Warm sand', 'type' => 'color', 'light' => '#faf6f1', 'dark' => '#1c1917'],
         'slate' => ['label' => 'Cool slate', 'type' => 'color', 'light' => '#f1f5f9', 'dark' => '#020617'],
+        'aurora' => [
+            'label' => 'Emerald aurora',
+            'type' => 'gradient',
+            'light' => '#ecfdf5',
+            'dark' => '#042f2e',
+            'light_css' => 'radial-gradient(1200px 520px at 12% -8%, rgba(16,185,129,0.28), transparent 58%), radial-gradient(900px 480px at 88% 8%, rgba(45,212,191,0.22), transparent 55%), linear-gradient(160deg, #f0fdf4 0%, #ecfeff 48%, #f8fafc 100%)',
+            'dark_css' => 'radial-gradient(1000px 480px at 10% -10%, rgba(16,185,129,0.22), transparent 55%), radial-gradient(820px 420px at 90% 0%, rgba(45,212,191,0.16), transparent 50%), linear-gradient(165deg, #022c22 0%, #0f172a 55%, #042f2e 100%)',
+        ],
+        'lagoon' => [
+            'label' => 'Teal lagoon',
+            'type' => 'gradient',
+            'light' => '#f0fdfa',
+            'dark' => '#042f2e',
+            'light_css' => 'radial-gradient(1100px 500px at 0% 0%, rgba(20,184,166,0.26), transparent 56%), radial-gradient(860px 460px at 100% 20%, rgba(14,165,233,0.18), transparent 52%), linear-gradient(155deg, #f0fdfa 0%, #ecfeff 45%, #f8fafc 100%)',
+            'dark_css' => 'radial-gradient(980px 460px at 5% -8%, rgba(20,184,166,0.2), transparent 54%), radial-gradient(780px 400px at 95% 5%, rgba(14,165,233,0.14), transparent 50%), linear-gradient(165deg, #042f2e 0%, #0c4a6e 50%, #0f172a 100%)',
+        ],
+        'horizon' => [
+            'label' => 'Sky horizon',
+            'type' => 'gradient',
+            'light' => '#eff6ff',
+            'dark' => '#0c1a2e',
+            'light_css' => 'radial-gradient(1000px 480px at 15% -5%, rgba(59,130,246,0.22), transparent 55%), radial-gradient(880px 440px at 85% 10%, rgba(56,189,248,0.2), transparent 52%), linear-gradient(160deg, #eff6ff 0%, #f0f9ff 50%, #f8fafc 100%)',
+            'dark_css' => 'radial-gradient(960px 440px at 12% -8%, rgba(59,130,246,0.2), transparent 55%), radial-gradient(760px 400px at 90% 0%, rgba(14,165,233,0.14), transparent 50%), linear-gradient(165deg, #0c1a2e 0%, #0f172a 55%, #082f49 100%)',
+        ],
+        'dawn' => [
+            'label' => 'Campus dawn',
+            'type' => 'gradient',
+            'light' => '#fffbeb',
+            'dark' => '#1c1917',
+            'light_css' => 'radial-gradient(1100px 500px at 8% -10%, rgba(251,191,36,0.22), transparent 56%), radial-gradient(900px 460px at 92% 5%, rgba(16,185,129,0.16), transparent 52%), linear-gradient(155deg, #fffbeb 0%, #f0fdf4 48%, #f8fafc 100%)',
+            'dark_css' => 'radial-gradient(980px 460px at 8% -8%, rgba(245,158,11,0.16), transparent 54%), radial-gradient(780px 400px at 92% 0%, rgba(16,185,129,0.12), transparent 50%), linear-gradient(165deg, #1c1917 0%, #14532d 48%, #0f172a 100%)',
+        ],
+        'mist' => [
+            'label' => 'Forest mist',
+            'type' => 'gradient',
+            'light' => '#f3faf6',
+            'dark' => '#0a2f22',
+            'light_css' => 'radial-gradient(1050px 480px at 20% -8%, rgba(11,93,59,0.18), transparent 58%), radial-gradient(820px 420px at 80% 15%, rgba(52,211,153,0.16), transparent 52%), linear-gradient(150deg, #f3faf6 0%, #ecfdf5 40%, #f8fafc 100%)',
+            'dark_css' => 'radial-gradient(960px 440px at 15% -10%, rgba(16,185,129,0.18), transparent 55%), radial-gradient(740px 380px at 88% 5%, rgba(5,150,105,0.12), transparent 50%), linear-gradient(165deg, #0a2f22 0%, #052e16 50%, #0f172a 100%)',
+        ],
         'theme1' => [
             'label' => 'Campus theme 1',
             'type' => 'image',
@@ -416,6 +471,13 @@ class User extends Authenticatable
         return ($preset['type'] ?? 'color') === 'image';
     }
 
+    public function themeBackgroundIsGradient(): bool
+    {
+        $preset = self::THEME_BACKGROUNDS[$this->resolvedThemeBackgroundKey()];
+
+        return ($preset['type'] ?? 'color') === 'gradient';
+    }
+
     public function themeBackgroundImageUrl(): ?string
     {
         $preset = self::THEME_BACKGROUNDS[$this->resolvedThemeBackgroundKey()];
@@ -426,6 +488,25 @@ class User extends Authenticatable
         return asset($preset['image']);
     }
 
+    public function themeBackgroundGradientCss(bool $dark = false): ?string
+    {
+        $preset = self::THEME_BACKGROUNDS[$this->resolvedThemeBackgroundKey()];
+        if (($preset['type'] ?? 'color') !== 'gradient') {
+            return null;
+        }
+
+        $key = $dark ? 'dark_css' : 'light_css';
+
+        return $preset[$key] ?? null;
+    }
+
+    public function themeColorSwatchCss(): string
+    {
+        $color = $this->resolvedThemeColor();
+
+        return self::THEME_COLOR_SWATCHES[$color] ?? $color;
+    }
+
     public function themeSidebarColor(): string
     {
         $color = $this->resolvedThemeColor();
@@ -433,6 +514,7 @@ class User extends Authenticatable
             '#0b5d3b' => '#0a2f22',
             '#047857' => '#064e3b',
             '#0f766e' => '#134e4a',
+            '#0e7490' => '#164e63',
             '#1d4ed8' => '#1e3a8a',
             '#4338ca' => '#312e81',
             '#b45309' => '#78350f',

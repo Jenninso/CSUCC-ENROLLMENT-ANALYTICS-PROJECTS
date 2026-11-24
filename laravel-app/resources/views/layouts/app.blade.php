@@ -12,7 +12,10 @@
     $themeBgLight = $themeBackgrounds[$themeBgKey]['light'] ?? '#f3f4f6';
     $themeBgDark = $themeBackgrounds[$themeBgKey]['dark'] ?? '#0f172a';
     $themeBgIsImage = $themeUser?->themeBackgroundIsImage() ?? false;
+    $themeBgIsGradient = $themeUser?->themeBackgroundIsGradient() ?? false;
     $themeBgImageUrl = $themeUser?->themeBackgroundImageUrl();
+    $themeBgGradientLight = $themeUser?->themeBackgroundGradientCss(false);
+    $themeBgGradientDark = $themeUser?->themeBackgroundGradientCss(true);
 @endphp
 <!DOCTYPE html>
 <html lang="en"
@@ -125,6 +128,16 @@
             font-family: var(--font-ui);
             -webkit-font-smoothing: antialiased;
         }
+        @if($themeBgIsGradient && $themeBgGradientLight)
+        body.app-shell {
+            background: {{ $themeBgGradientLight }};
+            background-attachment: fixed;
+        }
+        html.dark body.app-shell {
+            background: {{ $themeBgGradientDark ?: $themeBgGradientLight }};
+            background-attachment: fixed;
+        }
+        @endif
         .font-brand { font-family: var(--font-brand); }
 
         @keyframes ui-rise {

@@ -100,10 +100,11 @@
             <p class="text-sm font-medium text-gray-700 mb-2">Theme color</p>
             <div class="flex flex-wrap gap-3">
                 @foreach($themeColors as $hex => $label)
+                @php $swatch = \App\Models\User::THEME_COLOR_SWATCHES[$hex] ?? $hex; @endphp
                 <label class="cursor-pointer" title="{{ $label }}">
                     <input type="radio" name="theme_color" value="{{ $hex }}" class="sr-only peer" x-model="themeColor">
-                    <span class="block w-10 h-10 rounded-full border-2 shadow ring-2 ring-transparent peer-checked:ring-offset-2 peer-checked:ring-gray-800 {{ strtolower($hex) === '#ffffff' ? 'border-gray-300' : 'border-white' }}"
-                          style="background: {{ $hex }}"></span>
+                    <span class="block w-10 h-10 rounded-full border-2 shadow-md ring-2 ring-transparent peer-checked:ring-offset-2 peer-checked:ring-gray-800 {{ strtolower($hex) === '#ffffff' ? 'border-gray-300' : 'border-white' }}"
+                          style="background: {{ $swatch }}"></span>
                 </label>
                 @endforeach
             </div>
@@ -112,6 +113,7 @@
 
         <div>
             <p class="text-sm font-medium text-gray-700 mb-2">Theme background</p>
+            <p class="text-xs text-gray-500 mb-2">Solid washes, modern gradients, or campus photos.</p>
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                 @foreach($themeBackgrounds as $key => $bg)
                 <label class="cursor-pointer">
@@ -120,10 +122,16 @@
                         @if(($bg['type'] ?? 'color') === 'image')
                             <span class="block h-20 rounded-lg mb-2 border border-black/5 bg-cover bg-center"
                                   style="background-image: linear-gradient(180deg, rgba(255,255,255,0.25), rgba(255,255,255,0.45)), url('{{ asset($bg['image']) }}')"></span>
+                        @elseif(($bg['type'] ?? 'color') === 'gradient')
+                            <span class="block h-20 rounded-lg mb-2 border border-black/5"
+                                  style="background: {{ $bg['light_css'] ?? $bg['light'] }}"></span>
                         @else
                             <span class="block h-12 rounded-lg mb-2 border border-black/5" style="background: {{ $bg['light'] }}"></span>
                         @endif
                         <span class="text-sm font-medium text-gray-800">{{ $bg['label'] }}</span>
+                        @if(($bg['type'] ?? 'color') === 'gradient')
+                            <span class="block text-[11px] text-gray-500 mt-0.5">Gradient</span>
+                        @endif
                     </span>
                 </label>
                 @endforeach

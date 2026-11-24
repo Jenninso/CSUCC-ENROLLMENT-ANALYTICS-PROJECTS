@@ -42,6 +42,8 @@ class ProfileAppearanceTest extends TestCase
         $this->assertSame('#1d4ed8', $user->theme_color);
         $this->assertSame('theme1', $user->theme_background);
         $this->assertArrayHasKey('#ffffff', User::THEME_COLORS);
+        $this->assertArrayHasKey('#0e7490', User::THEME_COLORS);
+        $this->assertArrayHasKey('aurora', User::THEME_BACKGROUNDS);
         $whiteTheme = new User(['theme_color' => '#ffffff']);
         $this->assertTrue($whiteTheme->themeSidebarIsLight());
         $this->assertSame('#ffffff', $whiteTheme->themeSidebarColor());
@@ -53,10 +55,30 @@ class ProfileAppearanceTest extends TestCase
         $this->assertSame('USER, Theme', $user->fullName());
 
         $this->actingAs($user)
+            ->post(route('profile.update'), [
+                'name' => 'Theme User',
+                'theme_mode' => 'light',
+                'theme_color' => '#0e7490',
+                'theme_background' => 'aurora',
+            ])
+            ->assertRedirect();
+
+        $user->refresh();
+        $this->assertSame('#0e7490', $user->theme_color);
+        $this->assertSame('aurora', $user->theme_background);
+        $this->assertTrue($user->themeBackgroundIsGradient());
+        $this->assertFalse($user->themeBackgroundIsImage());
+        $this->assertNotEmpty($user->themeBackgroundGradientCss(false));
+        $this->assertStringContainsString('linear-gradient', (string) $user->themeColorSwatchCss());
+
+        $this->actingAs($user)
             ->get(route('profile.edit'))
             ->assertOk()
             ->assertSee('Theme User')
             ->assertSee('Appearance')
+            ->assertSee('Emerald aurora')
+            ->assertSee('Teal lagoon')
+            ->assertSee('Campus dawn')
             ->assertSee('Campus theme 1')
             ->assertSee('images/themes/theme1.png');
     }

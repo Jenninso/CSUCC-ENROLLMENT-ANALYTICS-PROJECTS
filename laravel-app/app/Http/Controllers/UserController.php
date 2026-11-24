@@ -200,9 +200,9 @@ class UserController extends Controller
 
         $roleChanged = $previousRoleId !== (int) $user->role_id;
         $message = 'Account updated.';
+        $user->load('role');
 
         if ($roleChanged || $temporaryPassword) {
-            $user->load('role');
             $roleName = $user->roleName() ?: 'User';
 
             if ($temporaryPassword) {
@@ -215,6 +215,27 @@ class UserController extends Controller
                     : ' Warning: the credentials email could not be sent. Check SMTP settings.';
             } elseif ($roleChanged) {
                 $message = 'Account role updated to '.$roleName.'.';
+            }
+        }
+
+        // Same handoff as Create: only one active Super Administrator.
+        // Promoting via Edit must deactivate the previous Super Admin and end their session.
+        if ($roleChanged && $user->isSuperAdmin()) {
+            $deactivated = $accounts->deactivatePreviousSuperAdmins($user);
+            if ($deactivated > 0) {
+                $audit->log('deactivate', 'users', 'Deactivated the previous Super Administrator account after promoting '.$user->employee_id.'.');
+                $message .= ' Previous Super Administrator accounts are now Deactivated.';
+            }
+
+            if (auth()->id() !== $user->id) {
+                Auth::logout();
+                $request->session()->invalidate();
+                $request->session()->regenerateToken();
+
+                return redirect()->route('login')->with(
+                    'success',
+                    $message.' Sign in again with the new Super Administrator account.'
+                );
             }
         }
 
@@ -333,7 +354,7 @@ class UserController extends Controller
         return back()->with('success', 'Account unblocked.');
     }
 
-    public function activate(User $user, AccountService $accounts, AuditLogger $audit)
+    public function activate(Request $request, User $user, AccountService $accounts, AuditLogger $audit)
     {
         abort_unless(auth()->user()->isSuperAdmin(), 403);
         $this->assertCanUpdate($user);
@@ -349,6 +370,15 @@ class UserController extends Controller
         $message = 'Account activated.';
         if ($user->fresh()->isSuperAdmin()) {
             $message .= ' Other Super Administrator accounts were set to Deactivated.';
+
+            Auth::logout();
+            $request->session()->invalidate();
+            $request->session()->regenerateToken();
+
+            return redirect()->route('login')->with(
+                'success',
+                $message.' Sign in again with the activated Super Administrator account.'
+            );
         }
 
         return back()->with('success', $message);

@@ -134,6 +134,34 @@ class AccountSecurityTest extends TestCase
         $this->assertGuest();
     }
 
+    public function test_promoting_to_super_admin_via_edit_deactivates_and_logs_out_previous(): void
+    {
+        $this->seedRolesAndQuestions();
+        $current = $this->makeUser('Super Administrator', 'old-super-edit@example.com');
+        $target = $this->makeUser('Administrator', 'promoted-super@example.com');
+        $superRole = Role::query()->where('role_name', 'Super Administrator')->firstOrFail();
+
+        $this->actingAs($current)->put(route('users.update', $target), [
+            'employee_id' => $target->employee_id,
+            'first_name' => $target->first_name,
+            'middle_name' => $target->middle_name,
+            'last_name' => $target->last_name,
+            'username' => $target->username,
+            'email' => $target->email,
+            'role_id' => $superRole->id,
+            'address' => $target->address,
+            'status' => 'active',
+        ])->assertRedirect(route('login'));
+
+        $this->assertGuest();
+        $this->assertDatabaseHas('users', ['email' => 'old-super-edit@example.com', 'status' => 'inactive']);
+        $this->assertDatabaseHas('users', [
+            'email' => 'promoted-super@example.com',
+            'role_id' => $superRole->id,
+            'status' => 'active',
+        ]);
+    }
+
     public function test_inactive_account_cannot_use_forgot_password(): void
     {
         $this->seedRolesAndQuestions();
@@ -166,8 +194,9 @@ class AccountSecurityTest extends TestCase
 
         $this->actingAs($active)
             ->post(route('users.activate', $inactive))
-            ->assertRedirect();
+            ->assertRedirect(route('login'));
 
+        $this->assertGuest();
         $this->assertDatabaseHas('users', ['email' => 'inactive-super@example.com', 'status' => 'active']);
         $this->assertDatabaseHas('users', ['email' => 'active-super@example.com', 'status' => 'inactive']);
     }
@@ -462,6 +491,36 @@ class AccountSecurityTest extends TestCase
             'employee_id' => $staff->employee_id,
             'action' => 'login',
         ]);
+    }
+
+    public function test_visiting_deleted_user_routes_redirects_to_accounts_list_not_404(): void
+    {
+        $this->seedRolesAndQuestions();
+        $super = $this->makeUser('Super Administrator', 'super@example.com');
+        $staff = $this->makeUser('User', 'gone@example.com');
+        $staffId = $staff->id;
+
+        $this->actingAs($super)
+            ->delete(route('users.destroy', $staff), [
+                'confirm_email' => 'super@example.com',
+                'confirm_password' => 'password',
+            ])
+            ->assertRedirect(route('users.index'));
+
+        $this->actingAs($super)
+            ->get('/users/'.$staffId.'/edit')
+            ->assertRedirect('/users')
+            ->assertSessionHas('error');
+
+        $this->actingAs($super)
+            ->get('/users/'.$staffId)
+            ->assertRedirect('/users')
+            ->assertSessionHas('error');
+
+        $this->actingAs($super)
+            ->get('/users/'.$staffId.'/confirm-delete')
+            ->assertRedirect('/users')
+            ->assertSessionHas('error');
     }
 
     public function test_last_super_admin_cannot_be_deleted(): void

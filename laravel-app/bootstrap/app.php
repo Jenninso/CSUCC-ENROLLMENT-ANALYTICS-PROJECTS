@@ -34,16 +34,31 @@ return Application::configure(basePath: dirname(__DIR__))
             fn (Request $request) => $request->is('api/*') || $request->expectsJson(),
         );
 
-        // Redirect to the section's index with a friendly message when a model is not found.
-        $exceptions->render(function (\Illuminate\Database\Eloquent\ModelNotFoundException $e, Request $request) {
+        // Redirect to the section's index when a bound model is missing.
+        // Laravel converts ModelNotFoundException → NotFoundHttpException before render callbacks,
+        // so catch NotFoundHttpException and check $e->getPrevious().
+        // e.g. /users/23/edit → /users  (not /users/23, which used to 404)
+        // e.g. /data-management/academic-years/5 → /data-management/academic-years
+        $exceptions->render(function (\Symfony\Component\HttpKernel\Exception\NotFoundHttpException $e, Request $request) {
             if ($request->expectsJson()) {
-                return null; // Let the default JSON handler run.
+                return null;
             }
 
-            $segments = $request->segments();
-            // Build an index URL from the first two URL segments (e.g. /data-management/academic-years).
-            $indexUrl = count($segments) >= 2
-                ? url(implode('/', array_slice($segments, 0, 2)))
+            if (! $e->getPrevious() instanceof \Illuminate\Database\Eloquent\ModelNotFoundException) {
+                return null; // Real missing route → keep the normal 404 page.
+            }
+
+            $indexSegments = [];
+            foreach ($request->segments() as $segment) {
+                // Stop before resource IDs so we land on the list page, not a dead /resource/{id} URL.
+                if (ctype_digit($segment) || preg_match('/^[0-9a-fA-F-]{8,}$/', $segment) === 1) {
+                    break;
+                }
+                $indexSegments[] = $segment;
+            }
+
+            $indexUrl = $indexSegments !== []
+                ? url(implode('/', $indexSegments))
                 : route('dashboard');
 
             return redirect($indexUrl)

@@ -196,6 +196,8 @@ Route::middleware(['auth', 'active', 'setup', 'student.scope'])->group(function 
         Route::get('users', [UserController::class, 'index'])->name('users.index');
         Route::get('users/{user}/confirm-delete', [UserController::class, 'confirmDestroy'])->name('users.confirm-delete');
         Route::get('users/{user}/edit', [UserController::class, 'edit'])->name('users.edit');
+        // Safety net: bare /users/{id} (e.g. after a removed account) → edit, or index via ModelNotFound handler.
+        Route::get('users/{user}', fn (\App\Models\User $user) => redirect()->route('users.edit', $user))->name('users.show');
         Route::put('users/{user}', [UserController::class, 'update'])->name('users.update');
         Route::post('users/{user}/block', [UserController::class, 'block'])->name('users.block');
         Route::post('users/{user}/unblock', [UserController::class, 'unblock'])->name('users.unblock');

@@ -435,6 +435,42 @@
         }
         .theme-primary-bg.text-white { color: var(--theme-on-primary) !important; }
 
+        /* Sidebar nav scrollbar — match dark teal, thin, no Windows chrome */
+        .theme-sidebar nav {
+            scrollbar-width: thin;
+            scrollbar-color: rgba(255, 255, 255, 0.28) transparent;
+        }
+        .theme-sidebar nav::-webkit-scrollbar {
+            width: 6px;
+        }
+        .theme-sidebar nav::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .theme-sidebar nav::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.22);
+            border-radius: 999px;
+        }
+        .theme-sidebar nav::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.38);
+        }
+        .theme-sidebar nav::-webkit-scrollbar-button {
+            display: none;
+            width: 0;
+            height: 0;
+        }
+        .theme-sidebar nav::-webkit-scrollbar-corner {
+            background: transparent;
+        }
+        .theme-sidebar[data-sidebar-tone="light"] nav {
+            scrollbar-color: rgba(4, 47, 36, 0.28) transparent;
+        }
+        .theme-sidebar[data-sidebar-tone="light"] nav::-webkit-scrollbar-thumb {
+            background: rgba(4, 47, 36, 0.22);
+        }
+        .theme-sidebar[data-sidebar-tone="light"] nav::-webkit-scrollbar-thumb:hover {
+            background: rgba(4, 47, 36, 0.38);
+        }
+
         /* White theme: light sidebar with CSUCC green text */
         .theme-sidebar[data-sidebar-tone="light"] {
             color: #042f24;
